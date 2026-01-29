@@ -12,7 +12,7 @@ import {
 	ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, ArrowLeft, Save } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '@/app/store/useStore';
@@ -23,10 +23,10 @@ const nodeTypes = {
 };
 
 // Default connection styling
-const connectionLineStyle = { stroke: '#a855f7', strokeWidth: 2 }; // Purple-500
+const connectionLineStyle = { stroke: '#52525b', strokeWidth: 2 }; // Zinc-600
 const defaultEdgeOptions = {
 	type: 'smoothstep',
-	style: { stroke: '#a855f7', strokeWidth: 2 },
+	style: { stroke: '#52525b', strokeWidth: 2 },
 	animated: true,
 };
 
@@ -45,7 +45,6 @@ function Flow({ projectId }: { projectId: string }) {
 	} = useStore();
 
 	const router = useRouter();
-	const { setCenter } = useReactFlow();
 
 	useEffect(() => {
 		loadProject(projectId);
@@ -73,29 +72,31 @@ function Flow({ projectId }: { projectId: string }) {
 	return (
 		<div className="h-full w-full bg-zinc-950 text-white font-sans relative">
 			{/* Toolbar Panel */}
-			<Panel position="top-left" className="m-4 flex items-center gap-4">
+			<Panel position="top-left" className="m-4 flex items-center gap-4 bg-zinc-950/80 backdrop-blur-sm p-2 rounded-lg border border-zinc-800 shadow-xl">
 				<button
 					onClick={() => router.push('/')}
-					className="p-2 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-400 hover:text-white hover:border-purple-500 transition-colors shadow-lg"
+					className="btn btn-secondary w-9 px-0"
 					title="Back to Dashboard"
 				>
-					<ArrowLeft className="w-5 h-5" />
+					<ArrowLeft className="w-4 h-4" />
 				</button>
 
-				<div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 shadow-lg">
-					<input
-						value={project?.name || ''}
-						onChange={(e) => setProjectName(e.target.value)}
-						className="bg-transparent text-sm font-semibold text-zinc-200 focus:outline-none w-48"
-						placeholder="Untitled Project"
-					/>
-				</div>
+				<div className="h-6 w-px bg-zinc-800 mx-2"></div>
+
+				<input
+					value={project?.name || ''}
+					onChange={(e) => setProjectName(e.target.value)}
+					className="bg-transparent text-sm font-semibold text-zinc-200 focus:outline-none w-48 px-2 placeholder:text-zinc-600"
+					placeholder="Untitled Project"
+				/>
+
+				<div className="h-6 w-px bg-zinc-800 mx-2"></div>
 
 				<button
 					onClick={handleAddTable}
-					className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium shadow-lg transition-colors shadow-purple-900/20"
+					className="btn btn-primary h-8 text-xs"
 				>
-					<Plus className="w-4 h-4" />
+					<Plus className="w-3.5 h-3.5 mr-1.5" />
 					Add Table
 				</button>
 			</Panel>
@@ -120,7 +121,7 @@ function Flow({ projectId }: { projectId: string }) {
 					gap={24}
 					size={1.5}
 					color="#3f3f46" // zinc-700
-					className="opacity-50"
+					className="opacity-30"
 				/>
 				<Controls className="bg-zinc-900 border-zinc-800 fill-zinc-200 [&>button]:border-zinc-800 [&>button]:hover:bg-zinc-800" />
 			</ReactFlow>

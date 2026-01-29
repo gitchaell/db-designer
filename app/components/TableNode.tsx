@@ -54,15 +54,16 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 	const headerColor = data.color || 'bg-zinc-900';
 
 	return (
+		// Removed overflow-hidden to allow popover to overflow
 		<div
 			ref={nodeRef}
 			className={clsx(
-				'min-w-[320px] overflow-hidden rounded-lg border shadow-xl transition-all bg-zinc-950',
+				'min-w-[320px] rounded-lg border shadow-xl transition-all bg-zinc-950',
 				selected ? 'border-zinc-400 ring-1 ring-zinc-400/50' : 'border-zinc-800'
 			)}
 		>
 			{/* Header - Applies color only here */}
-			<div className={clsx("px-3 py-2 border-b border-white/10 flex items-center gap-2 group/header transition-colors", headerColor)}>
+			<div className={clsx("px-3 py-2 border-b border-white/10 flex items-center gap-2 group/header transition-colors rounded-t-lg", headerColor)}>
 				<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing" />
 				<input
 					type="text"
@@ -81,11 +82,11 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<Palette className="w-3.5 h-3.5" />
 						</button>
 						{isColorPickerOpen && (
-							<div className="absolute right-0 top-full mt-2 p-2 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl grid grid-cols-4 gap-2 z-50 w-48">
+							<div className="absolute right-0 top-full mt-2 p-2 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl grid grid-cols-4 gap-2 z-[100] w-48">
 								{COLORS.map((c) => (
 									<button
 										key={c}
-										className={clsx("w-8 h-8 rounded-md border border-white/10 hover:scale-110 transition-transform", c)}
+										className={clsx("w-8 h-8 rounded-md border border-white/10 hover:scale-110 transition-transform cursor-pointer", c)}
 										onClick={() => {
 											updateNodeData(id, { color: c });
 											setIsColorPickerOpen(false);
@@ -115,8 +116,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						<Handle
 							type="target"
 							position={Position.Left}
-							id={`${col.id}-target`}
-							className="!bg-zinc-400 !w-2 !h-2 !-left-1 !border-zinc-950 opacity-0 group-hover/col:opacity-100 transition-opacity"
+							id={col.id} // ID should just be the column ID for simplicity, or we can use specific naming
+							className="!bg-zinc-400 !w-2.5 !h-2.5 !-left-1.5 !border-2 !border-zinc-950 opacity-0 group-hover/col:opacity-100 transition-opacity"
+							isConnectable={true}
 						/>
 
 						{/* PK/FK Toggles */}
@@ -174,8 +176,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						<Handle
 							type="source"
 							position={Position.Right}
-							id={`${col.id}-source`}
-							className="!bg-zinc-400 !w-2 !h-2 !-right-1 !border-zinc-950 opacity-0 group-hover/col:opacity-100 transition-opacity"
+							id={col.id} // Matching ID for source
+							className="!bg-zinc-400 !w-2.5 !h-2.5 !-right-1.5 !border-2 !border-zinc-950 opacity-0 group-hover/col:opacity-100 transition-opacity"
+							isConnectable={true}
 						/>
 					</div>
 				))}
@@ -184,7 +187,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 			{/* Footer Action */}
 			<button
 				onClick={handleAddColumn}
-				className="w-full py-2 flex items-center justify-center gap-2 text-xs text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-colors border-t border-zinc-800/50"
+				className="w-full py-2 flex items-center justify-center gap-2 text-xs text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-colors border-t border-zinc-800/50 rounded-b-lg"
 			>
 				<Plus className="w-3 h-3" /> Add Column
 			</button>

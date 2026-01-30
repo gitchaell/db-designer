@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Database } from 'lucide-react';
-import { getAllProjects, saveProject, deleteProject } from './lib/db';
-import type { Project } from './types';
-import { useRouter } from 'next/navigation';
-import { ThemeToggle } from './components/ThemeToggle';
+import { Database, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { deleteProject, getAllProjects, saveProject } from "./lib/db";
+import type { Project } from "./types";
 
 export default function Dashboard() {
 	const [projects, setProjects] = useState<Project[]>([]);
@@ -25,7 +25,7 @@ export default function Dashboard() {
 	const createProject = async () => {
 		const newProject: Project = {
 			id: uuidv4(),
-			name: 'Untitled Project',
+			name: "Untitled Project",
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
 			nodes: [],
@@ -37,7 +37,7 @@ export default function Dashboard() {
 
 	const handleDelete = async (e: React.MouseEvent, id: string) => {
 		e.preventDefault();
-		if (confirm('Are you sure you want to delete this project?')) {
+		if (confirm("Are you sure you want to delete this project?")) {
 			await deleteProject(id);
 			loadProjects();
 		}
@@ -50,13 +50,12 @@ export default function Dashboard() {
 					<div className="p-2 bg-secondary rounded-lg border border-border">
 						<Database className="w-6 h-6 text-foreground" />
 					</div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						My Projects
-					</h1>
+					<h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
 				</div>
 				<div className="flex items-center gap-4">
 					<ThemeToggle />
 					<button
+						type="button"
 						onClick={createProject}
 						className="btn btn-primary"
 					>
@@ -69,8 +68,11 @@ export default function Dashboard() {
 			{projects.length === 0 ? (
 				<div className="flex flex-col items-center justify-center py-24 border border-dashed border-border rounded-xl bg-muted/20">
 					<Database className="w-12 h-12 text-muted-foreground mb-4" />
-					<p className="text-muted-foreground mb-6 text-lg">No projects found</p>
+					<p className="text-muted-foreground mb-6 text-lg">
+						No projects found
+					</p>
 					<button
+						type="button"
 						onClick={createProject}
 						className="btn btn-secondary"
 					>
@@ -90,6 +92,7 @@ export default function Dashboard() {
 									<Database className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
 								</div>
 								<button
+									type="button"
 									onClick={(e) => handleDelete(e, project.id)}
 									className="p-2 text-muted-foreground hover:text-destructive hover:bg-muted rounded-md transition-all opacity-0 group-hover:opacity-100"
 								>
@@ -101,8 +104,10 @@ export default function Dashboard() {
 							</h3>
 							<div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
 								<span>{project.nodes.length} tables</span>
-								<span className="w-1 h-1 rounded-full bg-border"></span>
-								<span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+								<span className="w-1 h-1 rounded-full bg-border" />
+								<span>
+									Updated {new Date(project.updatedAt).toLocaleDateString()}
+								</span>
 							</div>
 						</Link>
 					))}

@@ -1,6 +1,13 @@
-import { type Edge, type Node } from '@xyflow/react';
+import type { Edge, Node } from "@xyflow/react";
 
-export type ColumnType = 'uuid' | 'varchar' | 'int' | 'boolean' | 'timestamp' | 'text' | 'json';
+export type ColumnType =
+	| "uuid"
+	| "varchar"
+	| "int"
+	| "boolean"
+	| "timestamp"
+	| "text"
+	| "json";
 
 export type Column = {
 	id: string;
@@ -16,7 +23,7 @@ export type TableNodeData = {
 	columns: Column[];
 };
 
-export type AppNode = Node<TableNodeData, 'table'>;
+export type AppNode = Node<TableNodeData, "table">;
 
 export type Project = {
 	id: string;

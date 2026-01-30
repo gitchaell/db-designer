@@ -117,7 +117,10 @@ export const useStore = create<AppState>((set, get) => ({
 
 		// Only recalculate edges if nodes moved (position change)
 		const movedNodeIds = changes
-			.filter((c) => c.type === "position" && c.dragging)
+			.filter(
+				(c): c is Extract<typeof c, { type: "position" }> =>
+					c.type === "position" && !!c.dragging,
+			)
 			.map((c) => c.id);
 
 		let newEdges = edges;

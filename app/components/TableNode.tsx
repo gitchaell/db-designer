@@ -106,7 +106,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						headerColor,
 					)}
 				>
-					<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing" />
+					<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing flex-none" />
 					<input
 						type="text"
 						value={data.label}
@@ -115,7 +115,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						placeholder="Table Name"
 					/>
 
-					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none">
 						{/* Autofit Button */}
 						<button
 							type="button"
@@ -180,7 +180,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							/>
 
 							{/* PK/FK Toggles */}
-							<div className="flex items-center gap-0.5 min-w-[36px]">
+							<div className="flex items-center gap-0.5 min-w-[36px] flex-none">
 								<button
 									type="button"
 									onClick={() => updateColumn(id, col.id, { isPk: !col.isPk })}
@@ -232,7 +232,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 										type: e.target.value as ColumnType,
 									})
 								}
-								className="bg-transparent text-xs text-muted-foreground font-mono focus:outline-none text-right appearance-none hover:text-foreground cursor-pointer py-0.5"
+								className="bg-transparent text-xs text-muted-foreground font-mono focus:outline-none text-right appearance-none hover:text-foreground cursor-pointer py-0.5 flex-none"
 							>
 								{COLUMN_TYPES.map((t) => (
 									<option
@@ -249,7 +249,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<button
 								type="button"
 								onClick={() => deleteColumn(id, col.id)}
-								className="opacity-0 group-hover/col:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity"
+								className="opacity-0 group-hover/col:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity flex-none"
 							>
 								<X className="w-3 h-3" />
 							</button>

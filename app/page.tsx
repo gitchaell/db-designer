@@ -1,12 +1,13 @@
 "use client";
 
-import { Database, Plus, Trash2 } from "lucide-react";
+import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { deleteProject, getAllProjects, saveProject } from "./lib/db";
+import { createSaaSTemplate } from "./lib/templates";
 import type { Project } from "./types";
 
 export default function Dashboard() {
@@ -35,6 +36,20 @@ export default function Dashboard() {
 		router.push(`/project/${newProject.id}`);
 	};
 
+	const createProjectFromTemplate = async () => {
+		const { nodes, edges } = createSaaSTemplate();
+		const newProject: Project = {
+			id: uuidv4(),
+			name: "SaaS Starter Kit",
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+			nodes,
+			edges,
+		};
+		await saveProject(newProject);
+		router.push(`/project/${newProject.id}`);
+	};
+
 	const handleDelete = async (e: React.MouseEvent, id: string) => {
 		e.preventDefault();
 		if (confirm("Are you sure you want to delete this project?")) {
@@ -56,6 +71,14 @@ export default function Dashboard() {
 					<ThemeToggle />
 					<button
 						type="button"
+						onClick={createProjectFromTemplate}
+						className="btn btn-secondary"
+					>
+						<FileText className="w-4 h-4 mr-2" />
+						SaaS Template
+					</button>
+					<button
+						type="button"
 						onClick={createProject}
 						className="btn btn-primary"
 					>
@@ -71,13 +94,24 @@ export default function Dashboard() {
 					<p className="text-muted-foreground mb-6 text-lg">
 						No projects found
 					</p>
-					<button
-						type="button"
-						onClick={createProject}
-						className="btn btn-secondary"
-					>
-						Create your first diagram
-					</button>
+					<div className="flex gap-4">
+						<button
+							type="button"
+							onClick={createProjectFromTemplate}
+							className="btn btn-secondary"
+						>
+							<FileText className="w-4 h-4 mr-2" />
+							Use SaaS Template
+						</button>
+						<button
+							type="button"
+							onClick={createProject}
+							className="btn btn-primary"
+						>
+							<Plus className="w-4 h-4 mr-2" />
+							Create Empty Diagram
+						</button>
+					</div>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

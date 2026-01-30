@@ -10,6 +10,7 @@ import {
 } from "@xyflow/react";
 import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
+import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
 import type { AppNode, Column, Project, TableNodeData } from "../types";
 
 type AppState = {
@@ -49,6 +50,31 @@ const debouncedSave = (project: Project) => {
 	}, 1000);
 };
 
+// Recalculate smart handles for a list of edges
+const recalculateEdges = (edges: Edge[], nodes: AppNode[]): Edge[] => {
+	return edges.map((edge) => {
+		const sourceColId = extractColumnId(edge.sourceHandle);
+		const targetColId = extractColumnId(edge.targetHandle);
+
+		if (sourceColId && targetColId) {
+			const { sourceHandle, targetHandle } = getSmartHandleIds(
+				edge.source,
+				edge.target,
+				sourceColId,
+				targetColId,
+				nodes,
+			);
+			if (
+				sourceHandle !== edge.sourceHandle ||
+				targetHandle !== edge.targetHandle
+			) {
+				return { ...edge, sourceHandle, targetHandle };
+			}
+		}
+		return edge;
+	});
+};
+
 export const useStore = create<AppState>((set, get) => ({
 	project: null,
 	nodes: [],
@@ -60,10 +86,12 @@ export const useStore = create<AppState>((set, get) => ({
 		try {
 			const project = await getProject(id);
 			if (project) {
+				// Recalculate edges on load to fix legacy or mismatch
+				const smartEdges = recalculateEdges(project.edges, project.nodes);
 				set({
 					project,
 					nodes: project.nodes,
-					edges: project.edges,
+					edges: smartEdges,
 					isLoading: false,
 				});
 			} else {
@@ -84,11 +112,37 @@ export const useStore = create<AppState>((set, get) => ({
 	},
 
 	onNodesChange: (changes) => {
-		const { nodes, project } = get();
+		const { nodes, edges, project } = get();
 		const newNodes = applyNodeChanges(changes, nodes);
-		set({ nodes: newNodes });
+
+		// Only recalculate edges if nodes moved (position change)
+		const movedNodeIds = changes
+			.filter(
+				(c): c is Extract<typeof c, { type: "position" }> =>
+					c.type === "position" && !!c.dragging,
+			)
+			.map((c) => c.id);
+
+		let newEdges = edges;
+		if (movedNodeIds.length > 0) {
+			// Find edges connected to moved nodes
+			const relevantEdges = edges.filter(
+				(e) =>
+					movedNodeIds.includes(e.source) || movedNodeIds.includes(e.target),
+			);
+			// Calculate new handles for them
+			// We need to pass ALL nodes to getSmartHandleIds, so use newNodes
+			const updatedRelevantEdges = recalculateEdges(relevantEdges, newNodes);
+
+			// Merge back
+			newEdges = edges.map(
+				(e) => updatedRelevantEdges.find((ue) => ue.id === e.id) || e,
+			);
+		}
+
+		set({ nodes: newNodes, edges: newEdges });
 		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+			debouncedSave({ ...project, nodes: newNodes, edges: newEdges });
 	},
 
 	onEdgesChange: (changes) => {
@@ -100,11 +154,27 @@ export const useStore = create<AppState>((set, get) => ({
 	},
 
 	onConnect: (connection) => {
-		const { edges, project } = get();
-		const newEdges = addEdge(connection, edges);
+		const { edges, nodes, project } = get();
+
+		// Optimize connection handles immediately
+		const sourceColId = extractColumnId(connection.sourceHandle);
+		const targetColId = extractColumnId(connection.targetHandle);
+
+		let smartConnection = connection;
+		if (sourceColId && targetColId) {
+			const { sourceHandle, targetHandle } = getSmartHandleIds(
+				connection.source,
+				connection.target,
+				sourceColId,
+				targetColId,
+				nodes,
+			);
+			smartConnection = { ...connection, sourceHandle, targetHandle };
+		}
+
+		const newEdges = addEdge(smartConnection, edges);
 		set({ edges: newEdges });
-		if (project)
-			debouncedSave({ ...project, nodes: get().nodes, edges: newEdges });
+		if (project) debouncedSave({ ...project, nodes: nodes, edges: newEdges });
 	},
 
 	addNode: (node) => {

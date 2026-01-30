@@ -319,53 +319,54 @@ export const createSaaSTemplate = (): {
 	];
 
 	const edges: AppEdge[] = [
-		// User -> Role
+		// User -> Role (Left to Right)
 		{
 			id: uuidv4(),
 			source: rolesId,
 			target: usersId,
-			sourceHandle: rolesIdCol,
-			targetHandle: usersRoleIdCol,
+			sourceHandle: `sr-${rolesIdCol}`,
+			targetHandle: `tl-${usersRoleIdCol}`,
 		},
-		// Workspace -> Owner (User)
+		// Workspace -> Owner (User) (Bottom to Top -> Right to Left)
+		// Assuming layout, let's default to Right -> Left for consistency, smart logic will fix on load
 		{
 			id: uuidv4(),
 			source: usersId,
 			target: workspacesId,
-			sourceHandle: usersIdCol,
-			targetHandle: workspacesOwnerIdCol,
+			sourceHandle: `sr-${usersIdCol}`,
+			targetHandle: `tl-${workspacesOwnerIdCol}`,
 		},
 		// Company -> Workspace
 		{
 			id: uuidv4(),
 			source: workspacesId,
 			target: companiesId,
-			sourceHandle: workspacesIdCol,
-			targetHandle: companiesWorkspaceIdCol,
+			sourceHandle: `sr-${workspacesIdCol}`,
+			targetHandle: `tl-${companiesWorkspaceIdCol}`,
 		},
 		// Department -> Company
 		{
 			id: uuidv4(),
 			source: companiesId,
 			target: departmentsId,
-			sourceHandle: companiesIdCol,
-			targetHandle: departmentsCompanyIdCol,
+			sourceHandle: `sr-${companiesIdCol}`,
+			targetHandle: `tl-${departmentsCompanyIdCol}`,
 		},
 		// Subscription -> Workspace
 		{
 			id: uuidv4(),
 			source: workspacesId,
 			target: subscriptionsId,
-			sourceHandle: workspacesIdCol,
-			targetHandle: subscriptionsWorkspaceIdCol,
+			sourceHandle: `sr-${workspacesIdCol}`,
+			targetHandle: `tl-${subscriptionsWorkspaceIdCol}`,
 		},
 		// Payment -> Subscription
 		{
 			id: uuidv4(),
 			source: subscriptionsId,
 			target: paymentsId,
-			sourceHandle: subscriptionsIdCol,
-			targetHandle: paymentsSubscriptionIdCol,
+			sourceHandle: `sr-${subscriptionsIdCol}`,
+			targetHandle: `tl-${paymentsSubscriptionIdCol}`,
 		},
 	];
 

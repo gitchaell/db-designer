@@ -27,6 +27,7 @@ type AppState = {
 	onConnect: OnConnect;
 
 	addNode: (node: AppNode) => void;
+	updateNode: (id: string, data: Partial<AppNode>) => void; // New action for root properties
 	updateNodeData: (id: string, data: Partial<TableNodeData>) => void;
 	deleteNode: (id: string) => void;
 
@@ -102,6 +103,15 @@ export const useStore = create<AppState>((set, get) => ({
 	addNode: (node) => {
 		const { nodes, project } = get();
 		const newNodes = [...nodes, node];
+		set({ nodes: newNodes });
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+	},
+
+	updateNode: (id, data) => {
+		const { nodes, project } = get();
+		const newNodes = nodes.map((node) =>
+			node.id === id ? { ...node, ...data } : node
+		);
 		set({ nodes: newNodes });
 		if (project) debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
 	},

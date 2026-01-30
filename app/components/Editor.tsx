@@ -17,16 +17,18 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '@/app/store/useStore';
 import TableNode from './TableNode';
+import { ThemeToggle } from './ThemeToggle';
+import { useTheme } from 'next-themes';
 
 const nodeTypes = {
 	table: TableNode,
 };
 
 // Default connection styling
-const connectionLineStyle = { stroke: '#52525b', strokeWidth: 2 }; // Zinc-600
+const connectionLineStyle = { stroke: '#71717a', strokeWidth: 2 }; // Zinc-500
 const defaultEdgeOptions = {
 	type: 'smoothstep',
-	style: { stroke: '#52525b', strokeWidth: 2 },
+	style: { stroke: '#71717a', strokeWidth: 2 },
 	animated: true,
 };
 
@@ -45,6 +47,7 @@ function Flow({ projectId }: { projectId: string }) {
 	} = useStore();
 
 	const router = useRouter();
+	const { resolvedTheme } = useTheme();
 
 	useEffect(() => {
 		loadProject(projectId);
@@ -66,13 +69,13 @@ function Flow({ projectId }: { projectId: string }) {
 	}, [addNode]);
 
 	if (isLoading) {
-		return <div className="flex items-center justify-center h-full text-zinc-500">Loading project...</div>;
+		return <div className="flex items-center justify-center h-full text-muted-foreground">Loading project...</div>;
 	}
 
 	return (
-		<div className="h-full w-full bg-zinc-950 text-white font-sans relative">
+		<div className="h-full w-full bg-background text-foreground font-sans relative transition-colors">
 			{/* Toolbar Panel */}
-			<Panel position="top-left" className="m-4 flex items-center gap-4 bg-zinc-950/80 backdrop-blur-sm p-2 rounded-lg border border-zinc-800 shadow-xl">
+			<Panel position="top-left" className="m-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm p-2 rounded-lg border border-border shadow-xl">
 				<button
 					onClick={() => router.push('/')}
 					className="btn btn-secondary w-9 px-0"
@@ -81,16 +84,16 @@ function Flow({ projectId }: { projectId: string }) {
 					<ArrowLeft className="w-4 h-4" />
 				</button>
 
-				<div className="h-6 w-px bg-zinc-800 mx-2"></div>
+				<div className="h-6 w-px bg-border mx-2"></div>
 
 				<input
 					value={project?.name || ''}
 					onChange={(e) => setProjectName(e.target.value)}
-					className="bg-transparent text-sm font-semibold text-zinc-200 focus:outline-none w-48 px-2 placeholder:text-zinc-600"
+					className="bg-transparent text-sm font-semibold text-foreground focus:outline-none w-48 px-2 placeholder:text-muted-foreground"
 					placeholder="Untitled Project"
 				/>
 
-				<div className="h-6 w-px bg-zinc-800 mx-2"></div>
+				<div className="h-6 w-px bg-border mx-2"></div>
 
 				<button
 					onClick={handleAddTable}
@@ -99,6 +102,9 @@ function Flow({ projectId }: { projectId: string }) {
 					<Plus className="w-3.5 h-3.5 mr-1.5" />
 					Add Table
 				</button>
+
+        <div className="h-6 w-px bg-border mx-2"></div>
+        <ThemeToggle />
 			</Panel>
 
 			<ReactFlow
@@ -108,7 +114,7 @@ function Flow({ projectId }: { projectId: string }) {
 				onEdgesChange={onEdgesChange}
 				onConnect={onConnect}
 				nodeTypes={nodeTypes}
-				colorMode="dark"
+				colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
 				connectionLineType={ConnectionLineType.SmoothStep}
 				connectionLineStyle={connectionLineStyle}
 				defaultEdgeOptions={defaultEdgeOptions}
@@ -120,10 +126,10 @@ function Flow({ projectId }: { projectId: string }) {
 					variant={BackgroundVariant.Dots}
 					gap={24}
 					size={1.5}
-					color="#3f3f46" // zinc-700
-					className="opacity-30"
+					color={resolvedTheme === 'dark' ? '#3f3f46' : '#d4d4d8'} // zinc-700 / zinc-300
+					className="opacity-50"
 				/>
-				<Controls className="bg-zinc-900 border-zinc-800 fill-zinc-200 [&>button]:border-zinc-800 [&>button]:hover:bg-zinc-800" />
+				<Controls className="!bg-background !border-border !fill-foreground [&>button]:!border-border [&>button]:!hover:bg-muted" />
 			</ReactFlow>
 		</div>
 	);

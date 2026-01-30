@@ -172,9 +172,16 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						>
 							{/* Handles */}
 							<Handle
+								type="source"
+								position={Position.Left}
+								id={`sl-${col.id}`}
+								className="!bg-muted-foreground !w-2.5 !h-2.5 !left-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
+								isConnectable={true}
+							/>
+							<Handle
 								type="target"
 								position={Position.Left}
-								id={col.id}
+								id={`tl-${col.id}`}
 								className="!bg-muted-foreground !w-2.5 !h-2.5 !left-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
 								isConnectable={true}
 							/>
@@ -257,7 +264,14 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<Handle
 								type="source"
 								position={Position.Right}
-								id={col.id}
+								id={`sr-${col.id}`}
+								className="!bg-muted-foreground !w-2.5 !h-2.5 !right-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
+								isConnectable={true}
+							/>
+							<Handle
+								type="target"
+								position={Position.Right}
+								id={`tr-${col.id}`}
 								className="!bg-muted-foreground !w-2.5 !h-2.5 !right-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
 								isConnectable={true}
 							/>

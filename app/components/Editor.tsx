@@ -1,34 +1,34 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback } from 'react';
 import {
-	ReactFlow,
 	Background,
-	Controls,
-	ReactFlowProvider,
 	BackgroundVariant,
-	Panel,
-	useReactFlow,
 	ConnectionLineType,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { Plus, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { v4 as uuidv4 } from 'uuid';
-import { useStore } from '@/app/store/useStore';
-import TableNode from './TableNode';
-import { ThemeToggle } from './ThemeToggle';
-import { useTheme } from 'next-themes';
+	Controls,
+	Panel,
+	ReactFlow,
+	ReactFlowProvider,
+	useReactFlow,
+} from "@xyflow/react";
+import { useCallback, useEffect } from "react";
+import "@xyflow/react/dist/style.css";
+import { useStore } from "@/app/store/useStore";
+import { ArrowLeft, Plus } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
+import TableNode from "./TableNode";
+import { ThemeToggle } from "./ThemeToggle";
 
 const nodeTypes = {
 	table: TableNode,
 };
 
 // Default connection styling
-const connectionLineStyle = { stroke: '#71717a', strokeWidth: 2 }; // Zinc-500
+const connectionLineStyle = { stroke: "#71717a", strokeWidth: 2 }; // Zinc-500
 const defaultEdgeOptions = {
-	type: 'smoothstep',
-	style: { stroke: '#71717a', strokeWidth: 2 },
+	type: "smoothstep",
+	style: { stroke: "#71717a", strokeWidth: 2 },
 	animated: true,
 };
 
@@ -43,7 +43,7 @@ function Flow({ projectId }: { projectId: string }) {
 		addNode,
 		project,
 		setProjectName,
-		isLoading
+		isLoading,
 	} = useStore();
 
 	const router = useRouter();
@@ -57,45 +57,54 @@ function Flow({ projectId }: { projectId: string }) {
 		const id = uuidv4();
 		addNode({
 			id,
-			type: 'table',
+			type: "table",
 			position: { x: Math.random() * 400, y: Math.random() * 400 },
 			data: {
-				label: 'New Table',
+				label: "New Table",
 				columns: [
-					{ id: uuidv4(), name: 'id', type: 'uuid', isPk: true, isFk: false },
+					{ id: uuidv4(), name: "id", type: "uuid", isPk: true, isFk: false },
 				],
 			},
 		});
 	}, [addNode]);
 
 	if (isLoading) {
-		return <div className="flex items-center justify-center h-full text-muted-foreground">Loading project...</div>;
+		return (
+			<div className="flex items-center justify-center h-full text-muted-foreground">
+				Loading project...
+			</div>
+		);
 	}
 
 	return (
 		<div className="h-full w-full bg-background text-foreground font-sans relative transition-colors">
 			{/* Toolbar Panel */}
-			<Panel position="top-left" className="m-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm p-2 rounded-lg border border-border shadow-xl">
+			<Panel
+				position="top-left"
+				className="m-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm p-2 rounded-lg border border-border shadow-xl"
+			>
 				<button
-					onClick={() => router.push('/')}
+					type="button"
+					onClick={() => router.push("/")}
 					className="btn btn-secondary w-9 px-0"
 					title="Back to Dashboard"
 				>
 					<ArrowLeft className="w-4 h-4" />
 				</button>
 
-				<div className="h-6 w-px bg-border mx-2"></div>
+				<div className="h-6 w-px bg-border mx-2" />
 
 				<input
-					value={project?.name || ''}
+					value={project?.name || ""}
 					onChange={(e) => setProjectName(e.target.value)}
 					className="bg-transparent text-sm font-semibold text-foreground focus:outline-none w-48 px-2 placeholder:text-muted-foreground"
 					placeholder="Untitled Project"
 				/>
 
-				<div className="h-6 w-px bg-border mx-2"></div>
+				<div className="h-6 w-px bg-border mx-2" />
 
 				<button
+					type="button"
 					onClick={handleAddTable}
 					className="btn btn-primary h-8 text-xs"
 				>
@@ -103,8 +112,8 @@ function Flow({ projectId }: { projectId: string }) {
 					Add Table
 				</button>
 
-        <div className="h-6 w-px bg-border mx-2"></div>
-        <ThemeToggle />
+				<div className="h-6 w-px bg-border mx-2" />
+				<ThemeToggle />
 			</Panel>
 
 			<ReactFlow
@@ -114,7 +123,7 @@ function Flow({ projectId }: { projectId: string }) {
 				onEdgesChange={onEdgesChange}
 				onConnect={onConnect}
 				nodeTypes={nodeTypes}
-				colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
+				colorMode={resolvedTheme === "dark" ? "dark" : "light"}
 				connectionLineType={ConnectionLineType.SmoothStep}
 				connectionLineStyle={connectionLineStyle}
 				defaultEdgeOptions={defaultEdgeOptions}
@@ -126,7 +135,7 @@ function Flow({ projectId }: { projectId: string }) {
 					variant={BackgroundVariant.Dots}
 					gap={24}
 					size={1.5}
-					color={resolvedTheme === 'dark' ? '#3f3f46' : '#d4d4d8'} // zinc-700 / zinc-300
+					color={resolvedTheme === "dark" ? "#3f3f46" : "#d4d4d8"} // zinc-700 / zinc-300
 					className="opacity-50"
 				/>
 				<Controls className="!bg-background !border-border !fill-foreground [&>button]:!border-border [&>button]:!hover:bg-muted" />

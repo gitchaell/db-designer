@@ -12,6 +12,9 @@
 		"enabled": true,
 		"indentStyle": "tab"
 	},
+	"organizeImports": {
+		"enabled": true
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -21,14 +24,6 @@
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
-		}
-	},
-	"assist": {
-		"enabled": true,
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
 		}
 	}
 }

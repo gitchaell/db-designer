@@ -24,6 +24,7 @@ export type TableNodeData = {
 };
 
 export type AppNode = Node<TableNodeData, "table">;
+export type AppEdge = Edge;
 
 export type Project = {
 	id: string;
@@ -31,5 +32,5 @@ export type Project = {
 	createdAt: number;
 	updatedAt: number;
 	nodes: AppNode[];
-	edges: Edge[];
+	edges: AppEdge[];
 };

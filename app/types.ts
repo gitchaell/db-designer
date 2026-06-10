@@ -26,6 +26,14 @@ export type TableNodeData = {
 export type AppNode = Node<TableNodeData, "table">;
 export type AppEdge = Edge;
 
+export type EdgeMarkerType = "none" | "arrow" | "one-to-many" | "many-to-many" | "one-to-one";
+
+export type EdgeSettings = {
+	type: "smoothstep" | "step" | "straight" | "bezier";
+	animated: boolean;
+	markerEnd?: EdgeMarkerType;
+};
+
 export type Project = {
 	id: string;
 	name: string;
@@ -33,4 +41,5 @@ export type Project = {
 	updatedAt: number;
 	nodes: AppNode[];
 	edges: AppEdge[];
+	edgeSettings?: EdgeSettings;
 };

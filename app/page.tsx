@@ -14,14 +14,22 @@ export default function Dashboard() {
 	const [projects, setProjects] = useState<Project[]>([]);
 	const router = useRouter();
 
-	useEffect(() => {
-		loadProjects();
-	}, []);
-
 	const loadProjects = async () => {
 		const data = await getAllProjects();
 		setProjects(data.sort((a, b) => b.updatedAt - a.updatedAt));
 	};
+
+	useEffect(() => {
+		let isMounted = true;
+		getAllProjects().then((data) => {
+			if (isMounted) {
+				setProjects(data.sort((a, b) => b.updatedAt - a.updatedAt));
+			}
+		});
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
 	const createProject = async () => {
 		const newProject: Project = {

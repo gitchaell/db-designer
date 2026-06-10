@@ -11,13 +11,15 @@ import {
 import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
-import type { AppNode, Column, Project, TableNodeData } from "../types";
+import { MarkerType } from "@xyflow/react";
+import type { AppNode, Column, EdgeSettings, EdgeMarkerType, Project, TableNodeData } from "../types";
 
 type AppState = {
 	project: Project | null;
 	nodes: AppNode[];
 	edges: Edge[];
 	isLoading: boolean;
+	edgeSettings: EdgeSettings;
 
 	// Actions
 	loadProject: (id: string) => Promise<void>;
@@ -29,6 +31,7 @@ type AppState = {
 
 	addNode: (node: AppNode) => void;
 	updateNode: (id: string, data: Partial<AppNode>) => void; // New action for root properties
+	setNodes: (nodes: AppNode[]) => void;
 	updateNodeData: (id: string, data: Partial<TableNodeData>) => void;
 	deleteNode: (id: string) => void;
 
@@ -39,6 +42,8 @@ type AppState = {
 		data: Partial<Column>,
 	) => void;
 	deleteColumn: (nodeId: string, columnId: string) => void;
+
+	updateEdgeSettings: (settings: Partial<EdgeSettings>) => void;
 };
 
 // Helper to debounce save
@@ -48,6 +53,23 @@ const debouncedSave = (project: Project) => {
 	saveTimeout = setTimeout(() => {
 		saveProject({ ...project, updatedAt: Date.now() });
 	}, 1000);
+};
+
+const getMarkerProps = (markerType?: EdgeMarkerType) => {
+	switch (markerType) {
+		case "arrow":
+			return { type: MarkerType.ArrowClosed, width: 20, height: 20 };
+		case "one-to-many":
+			// A simple representation of 1:N with an arrow
+			return { type: MarkerType.ArrowClosed, width: 15, height: 15, color: "#71717a" };
+		case "many-to-many":
+			// Custom markers would require SVG definitions in ReactFlow, we use standard for now
+			return { type: MarkerType.ArrowClosed, width: 15, height: 15 };
+		case "one-to-one":
+			return { type: MarkerType.Arrow, width: 15, height: 15 };
+		default:
+			return undefined;
+	}
 };
 
 // Recalculate smart handles for a list of edges
@@ -80,6 +102,7 @@ export const useStore = create<AppState>((set, get) => ({
 	nodes: [],
 	edges: [],
 	isLoading: false,
+	edgeSettings: { type: "smoothstep", animated: true },
 
 	loadProject: async (id: string) => {
 		set({ isLoading: true });
@@ -93,6 +116,7 @@ export const useStore = create<AppState>((set, get) => ({
 					nodes: project.nodes,
 					edges: smartEdges,
 					isLoading: false,
+					edgeSettings: project.edgeSettings || { type: "smoothstep", animated: true },
 				});
 			} else {
 				set({ isLoading: false }); // Handle 404?
@@ -154,13 +178,19 @@ export const useStore = create<AppState>((set, get) => ({
 	},
 
 	onConnect: (connection) => {
-		const { edges, nodes, project } = get();
+		const { edges, nodes, project, edgeSettings } = get();
 
 		// Optimize connection handles immediately
 		const sourceColId = extractColumnId(connection.sourceHandle);
 		const targetColId = extractColumnId(connection.targetHandle);
 
-		let smartConnection = connection;
+		let smartConnection: Edge = {
+			...connection,
+			id: `e-${connection.source}-${connection.target}`,
+			type: edgeSettings.type,
+			animated: edgeSettings.animated,
+			markerEnd: getMarkerProps(edgeSettings.markerEnd),
+		} as Edge;
 		if (sourceColId && targetColId) {
 			const { sourceHandle, targetHandle } = getSmartHandleIds(
 				connection.source,
@@ -169,7 +199,7 @@ export const useStore = create<AppState>((set, get) => ({
 				targetColId,
 				nodes,
 			);
-			smartConnection = { ...connection, sourceHandle, targetHandle };
+			smartConnection = { ...smartConnection, sourceHandle, targetHandle };
 		}
 
 		const newEdges = addEdge(smartConnection, edges);
@@ -180,6 +210,13 @@ export const useStore = create<AppState>((set, get) => ({
 	addNode: (node) => {
 		const { nodes, project } = get();
 		const newNodes = [...nodes, node];
+		set({ nodes: newNodes });
+		if (project)
+			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+	},
+
+	setNodes: (newNodes) => {
+		const { project } = get();
 		set({ nodes: newNodes });
 		if (project)
 			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
@@ -272,5 +309,31 @@ export const useStore = create<AppState>((set, get) => ({
 		set({ nodes: newNodes });
 		if (project)
 			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+	},
+
+	updateEdgeSettings: (settings) => {
+		const { edgeSettings, project, edges } = get();
+		const newSettings = { ...edgeSettings, ...settings };
+
+		// Update all existing edges with the new settings
+		const newEdges = edges.map(edge => {
+			const baseEdge = {
+				...edge,
+				type: newSettings.type,
+				animated: newSettings.animated,
+			};
+
+			if (newSettings.markerEnd && newSettings.markerEnd !== "none") {
+				baseEdge.markerEnd = getMarkerProps(newSettings.markerEnd);
+			} else {
+				delete baseEdge.markerEnd;
+			}
+
+			return baseEdge;
+		});
+
+		set({ edgeSettings: newSettings, edges: newEdges });
+		if (project)
+			debouncedSave({ ...project, edgeSettings: newSettings, edges: newEdges });
 	},
 }));

@@ -245,6 +245,8 @@ export const useStore = create<AppState>((set, get) => ({
 					nodes: project.nodes,
 					edges: smartEdges,
 					isLoading: false,
+					history: [{ nodes: project.nodes, edges: smartEdges }],
+					historyIndex: 0,
 					edgeSettings: project.edgeSettings || {
 						type: "smoothstep",
 						animated: true,

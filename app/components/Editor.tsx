@@ -15,13 +15,13 @@ import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { useStore } from "@/app/store/useStore";
 import { toPng } from "html-to-image";
-import { ArrowLeft, Plus } from "lucide-react";
-import { Download, Edit2, Eye, LayoutGrid, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Waypoints } from "lucide-react";
+import { Download, Eye, LayoutGrid, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
 import { getLayoutedElements } from "../lib/autoLayout";
-import EdgeSettings from "./EdgeSettings";
 import SettingsPopover from "./SettingsPopover";
+import { Select } from "./Select";
 import SqlPreviewModal from "./SqlPreviewModal";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
@@ -46,6 +46,7 @@ function Flow({ projectId }: { projectId: string }) {
 		setProjectName,
 		isLoading,
 		edgeSettings,
+		updateEdgeSettings,
 		setNodes: setStoreNodes,
 		isReadOnly,
 		toggleReadOnly,
@@ -89,6 +90,17 @@ function Flow({ projectId }: { projectId: string }) {
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (isReadOnly) return;
+
+			// Don't trigger board undo/redo if user is typing in an input
+			const activeTag = document.activeElement?.tagName.toLowerCase();
+			if (
+				activeTag === "input" ||
+				activeTag === "textarea" ||
+				activeTag === "select"
+			) {
+				return;
+			}
+
 			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
 				if (e.shiftKey) {
 					redo();
@@ -192,21 +204,38 @@ function Flow({ projectId }: { projectId: string }) {
 						<button
 							type="button"
 							onClick={onLayout}
-							className="btn btn-secondary btn-sm w-full justify-start font-space"
+							className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
 							title="Auto Layout"
 						>
 							<LayoutGrid className="w-4 h-4 mr-2" />
 							Auto Layout
 						</button>
 
-						<EdgeSettings />
+						<div className="flex items-center justify-between gap-2 p-1 border border-border bg-card rounded-md">
+							<Waypoints className="w-4 h-4 ml-2 text-muted-foreground" />
+							<Select
+								value={edgeSettings.type}
+								onChange={(val) =>
+									updateEdgeSettings({
+										type: val as "step" | "smoothstep" | "straight" | "bezier",
+									})
+								}
+								className="w-full flex-1 border-none shadow-none ring-0 bg-transparent"
+								options={[
+									{ label: "Smooth Step", value: "smoothstep" },
+									{ label: "Step", value: "step" },
+									{ label: "Straight", value: "straight" },
+									{ label: "Bezier", value: "bezier" },
+								]}
+							/>
+						</div>
 
 						<SqlPreviewModal />
 
 						<button
 							type="button"
 							onClick={downloadImage}
-							className="btn btn-secondary btn-sm w-full justify-start font-space"
+							className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
 							title="Download Diagram as Image"
 							disabled={isDownloading}
 						>
@@ -218,35 +247,33 @@ function Flow({ projectId }: { projectId: string }) {
 							Download PNG
 						</button>
 
-						<div className="h-px bg-border my-1 w-full" />
+						<div className="h-px bg-border my-2 w-full" />
 
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-muted-foreground ml-1">
+							<span className="text-sm font-medium text-muted-foreground">
 								Read Only
 							</span>
 							<button
 								type="button"
 								onClick={toggleReadOnly}
-								className="btn btn-secondary btn-sm w-12"
+								className="btn btn-secondary h-8 w-11 flex items-center justify-center"
 								title={
 									isReadOnly
 										? "Switch to Edit Mode"
 										: "Switch to Read Only Mode"
 								}
 							>
-								{isReadOnly ? (
-									<Edit2 className="w-4 h-4" />
-								) : (
-									<Eye className="w-4 h-4" />
-								)}
+								<Eye className="w-4 h-4" />
 							</button>
 						</div>
 
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-muted-foreground ml-1">
+							<span className="text-sm font-medium text-muted-foreground">
 								Theme
 							</span>
-							<ThemeToggle />
+							<div className="scale-90 origin-right">
+								<ThemeToggle />
+							</div>
 						</div>
 					</SettingsPopover>
 				</div>

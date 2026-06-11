@@ -1,6 +1,6 @@
 import { useStore } from "@/app/store/useStore";
 import Editor from "@monaco-editor/react";
-import { Download, FileCode2, X } from "lucide-react";
+import { Download, FileCode2, Loader2, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { Select } from "./Select";
@@ -129,9 +129,18 @@ export default function SqlPreviewModal() {
 									language="sql"
 									theme="vs-dark"
 									value={sql}
+									loading={
+										<div className="flex justify-center items-center h-full text-muted-foreground">
+											<Loader2 className="w-6 h-6 animate-spin mr-2" />
+											Loading editor...
+										</div>
+									}
 									options={{
 										readOnly: true,
-										minimap: { enabled: false },
+										minimap: { enabled: true },
+										renderWhitespace: "all",
+										stickyScroll: { enabled: false },
+										lineNumbers: "on",
 										fontSize: 14,
 										fontFamily: "var(--font-geist-mono), monospace",
 										padding: { top: 16 },

@@ -1,8 +1,8 @@
 import { useStore } from "@/app/store/useStore";
 import { Settings2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Select } from "./Select";
 import type { EdgeSettings as EdgeSettingsType } from "../types";
+import { Select } from "./Select";
 
 export default function EdgeSettings() {
 	const { edgeSettings, updateEdgeSettings } = useStore();
@@ -56,28 +56,6 @@ export default function EdgeSettings() {
 									{ label: "Step", value: "step" },
 									{ label: "Straight", value: "straight" },
 									{ label: "Bezier (Curve)", value: "bezier" },
-								]}
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<label
-								htmlFor="edge-marker"
-								className="text-xs text-muted-foreground font-medium"
-							>
-								Connection End
-							</label>
-							<Select
-								value={edgeSettings.markerEnd || "none"}
-								onChange={(val) =>
-									updateEdgeSettings({
-										markerEnd: val as EdgeSettingsType["markerEnd"],
-									})
-								}
-								className="w-full"
-								options={[
-									{ label: "None", value: "none" },
-									{ label: "Arrow", value: "arrow" },
 								]}
 							/>
 						</div>

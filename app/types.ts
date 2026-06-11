@@ -26,12 +26,13 @@ export type TableNodeData = {
 export type AppNode = Node<TableNodeData, "table">;
 export type AppEdge = Edge;
 
-export type EdgeMarkerType = "none" | "arrow" | "one-to-many" | "many-to-many" | "one-to-one";
+export type EdgeMarkerType = "none" | "arrow";
 
 export type EdgeSettings = {
 	type: "smoothstep" | "step" | "straight" | "bezier";
 	animated: boolean;
 	markerEnd?: EdgeMarkerType;
+	showRelationMarkers?: boolean;
 };
 
 export type Project = {

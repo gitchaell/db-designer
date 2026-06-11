@@ -1,6 +1,7 @@
 import { useStore } from "@/app/store/useStore";
 import { Settings2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Select } from "./Select";
 import type { EdgeSettings as EdgeSettingsType } from "../types";
 
 export default function EdgeSettings() {
@@ -44,45 +45,60 @@ export default function EdgeSettings() {
 							>
 								Type
 							</label>
-							<select
-								id="edge-type"
+							<Select
 								value={edgeSettings.type}
-								onChange={(e) =>
-									updateEdgeSettings({
-										type: e.target.value as EdgeSettingsType["type"],
-									})
+								onChange={(val) =>
+									updateEdgeSettings({ type: val as EdgeSettingsType["type"] })
 								}
-								className="select w-full"
-							>
-								<option value="smoothstep">Smooth Step</option>
-								<option value="step">Step</option>
-								<option value="straight">Straight</option>
-								<option value="bezier">Bezier (Curve)</option>
-							</select>
+								className="w-full"
+								options={[
+									{ label: "Smooth Step", value: "smoothstep" },
+									{ label: "Step", value: "step" },
+									{ label: "Straight", value: "straight" },
+									{ label: "Bezier (Curve)", value: "bezier" },
+								]}
+							/>
 						</div>
 
 						<div className="space-y-2">
-							<label htmlFor="edge-marker" className="text-xs text-muted-foreground font-medium">
+							<label
+								htmlFor="edge-marker"
+								className="text-xs text-muted-foreground font-medium"
+							>
 								Connection End
 							</label>
-							<select
-								id="edge-marker"
+							<Select
 								value={edgeSettings.markerEnd || "none"}
-								onChange={(e) =>
+								onChange={(val) =>
 									updateEdgeSettings({
-										markerEnd: e.target.value as EdgeSettingsType["markerEnd"],
+										markerEnd: val as EdgeSettingsType["markerEnd"],
 									})
 								}
-								className="select w-full"
-							>
-								<option value="none">None</option>
-								<option value="arrow">Arrow</option>
-								<option value="one-to-many">1:N (One to Many)</option>
-								<option value="many-to-many">N:M (Many to Many)</option>
-								<option value="one-to-one">1:1 (One to One)</option>
-							</select>
+								className="w-full"
+								options={[
+									{ label: "None", value: "none" },
+									{ label: "Arrow", value: "arrow" },
+								]}
+							/>
 						</div>
 
+						<div className="flex items-center justify-between">
+							<label
+								className="text-xs text-muted-foreground font-medium cursor-pointer"
+								htmlFor="relation-markers-toggle"
+							>
+								Show Relation Markers
+							</label>
+							<input
+								id="relation-markers-toggle"
+								type="checkbox"
+								checked={edgeSettings.showRelationMarkers || false}
+								onChange={(e) =>
+									updateEdgeSettings({ showRelationMarkers: e.target.checked })
+								}
+								className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-ring"
+							/>
+						</div>
 						<div className="flex items-center justify-between">
 							<label
 								className="text-xs text-muted-foreground font-medium cursor-pointer"

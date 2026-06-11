@@ -1,8 +1,8 @@
 "use client";
+import { useRouter } from "next/navigation";
 
 import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -12,7 +12,17 @@ import type { Project } from "./types";
 
 export default function Dashboard() {
 	const [projects, setProjects] = useState<Project[]>([]);
+
 	const router = useRouter();
+	const navigateTo = (url: string) => {
+		if (document.startViewTransition) {
+			document.startViewTransition(() => {
+				router.push(url);
+			});
+		} else {
+			router.push(url);
+		}
+	};
 
 	const loadProjects = async () => {
 		const data = await getAllProjects();
@@ -41,7 +51,7 @@ export default function Dashboard() {
 			edges: [],
 		};
 		await saveProject(newProject);
-		router.push(`/project/${newProject.id}`);
+		navigateTo(`/project/${newProject.id}`);
 	};
 
 	const createProjectFromTemplate = async () => {
@@ -55,7 +65,7 @@ export default function Dashboard() {
 			edges,
 		};
 		await saveProject(newProject);
-		router.push(`/project/${newProject.id}`);
+		navigateTo(`/project/${newProject.id}`);
 	};
 
 	const handleDelete = async (e: React.MouseEvent, id: string) => {

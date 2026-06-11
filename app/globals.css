@@ -121,6 +121,14 @@ h1, h2, h3, h4, h5, h6, .font-space {
 		@apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
 	}
 
+	.btn-sm {
+		@apply h-8 px-3 text-xs;
+	}
+
+	.select-sm {
+		@apply h-6 px-1 text-xs py-0.5 border-transparent bg-transparent hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring;
+	}
+
 	.btn-destructive {
 		@apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
 	}

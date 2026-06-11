@@ -1,6 +1,5 @@
 import {
 	type Edge,
-	type Node,
 	type OnConnect,
 	type OnEdgesChange,
 	type OnNodesChange,
@@ -12,16 +11,25 @@ import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
 import { MarkerType } from "@xyflow/react";
-import type { AppNode, Column, EdgeSettings, EdgeMarkerType, Project, TableNodeData } from "../types";
+import type {
+	AppNode,
+	Column,
+	EdgeSettings,
+	EdgeMarkerType,
+	Project,
+	TableNodeData,
+} from "../types";
 
 type AppState = {
 	project: Project | null;
 	nodes: AppNode[];
 	edges: Edge[];
 	isLoading: boolean;
+	isReadOnly: boolean;
 	edgeSettings: EdgeSettings;
 
 	// Actions
+	toggleReadOnly: () => void;
 	loadProject: (id: string) => Promise<void>;
 	setProjectName: (name: string) => void;
 
@@ -55,21 +63,69 @@ const debouncedSave = (project: Project) => {
 	}, 1000);
 };
 
+const getRelationMarkerProps = (
+	sourceColId: string,
+	targetColId: string,
+	nodes: AppNode[],
+) => {
+	const sourceNode = nodes.find((n) =>
+		n.data.columns.some((c) => c.id === sourceColId),
+	);
+	const targetNode = nodes.find((n) =>
+		n.data.columns.some((c) => c.id === targetColId),
+	);
+
+	if (!sourceNode || !targetNode) return undefined;
+
+	const sourceCol = sourceNode.data.columns.find((c) => c.id === sourceColId);
+	const targetCol = targetNode.data.columns.find((c) => c.id === targetColId);
+
+	if (!sourceCol || !targetCol) return undefined;
+
+	if (sourceCol.isPk && targetCol.isFk) {
+		return {
+			type: MarkerType.ArrowClosed,
+			width: 15,
+			height: 15,
+			color: "#71717a",
+		};
+	} else if (sourceCol.isFk && targetCol.isPk) {
+		return {
+			type: MarkerType.ArrowClosed,
+			width: 15,
+			height: 15,
+			color: "#71717a",
+		};
+	} else if (sourceCol.isPk && targetCol.isPk) {
+		return { type: MarkerType.Arrow, width: 15, height: 15 };
+	}
+
+	return { type: MarkerType.ArrowClosed, width: 15, height: 15 };
+};
+
 const getMarkerProps = (markerType?: EdgeMarkerType) => {
 	switch (markerType) {
 		case "arrow":
 			return { type: MarkerType.ArrowClosed, width: 20, height: 20 };
-		case "one-to-many":
-			// A simple representation of 1:N with an arrow
-			return { type: MarkerType.ArrowClosed, width: 15, height: 15, color: "#71717a" };
-		case "many-to-many":
-			// Custom markers would require SVG definitions in ReactFlow, we use standard for now
-			return { type: MarkerType.ArrowClosed, width: 15, height: 15 };
-		case "one-to-one":
-			return { type: MarkerType.Arrow, width: 15, height: 15 };
 		default:
 			return undefined;
 	}
+};
+
+const resolveEdgeMarker = (
+	edgeSettings: EdgeSettings,
+	sourceColId: string | undefined | null,
+	targetColId: string | undefined | null,
+	nodes: AppNode[],
+) => {
+	if (edgeSettings.showRelationMarkers && sourceColId && targetColId) {
+		const relMarker = getRelationMarkerProps(sourceColId, targetColId, nodes);
+		if (relMarker) return relMarker;
+	}
+	if (edgeSettings.markerEnd && edgeSettings.markerEnd !== "none") {
+		return getMarkerProps(edgeSettings.markerEnd);
+	}
+	return undefined;
 };
 
 // Recalculate smart handles for a list of edges
@@ -102,8 +158,14 @@ export const useStore = create<AppState>((set, get) => ({
 	nodes: [],
 	edges: [],
 	isLoading: false,
-	edgeSettings: { type: "smoothstep", animated: true },
+	isReadOnly: false,
+	edgeSettings: {
+		type: "smoothstep",
+		animated: true,
+		showRelationMarkers: false,
+	},
 
+	toggleReadOnly: () => set((state) => ({ isReadOnly: !state.isReadOnly })),
 	loadProject: async (id: string) => {
 		set({ isLoading: true });
 		try {
@@ -116,7 +178,11 @@ export const useStore = create<AppState>((set, get) => ({
 					nodes: project.nodes,
 					edges: smartEdges,
 					isLoading: false,
-					edgeSettings: project.edgeSettings || { type: "smoothstep", animated: true },
+					edgeSettings: project.edgeSettings || {
+						type: "smoothstep",
+						animated: true,
+						showRelationMarkers: false,
+					},
 				});
 			} else {
 				set({ isLoading: false }); // Handle 404?
@@ -189,7 +255,12 @@ export const useStore = create<AppState>((set, get) => ({
 			id: `e-${connection.source}-${connection.target}`,
 			type: edgeSettings.type,
 			animated: edgeSettings.animated,
-			markerEnd: getMarkerProps(edgeSettings.markerEnd),
+			markerEnd: resolveEdgeMarker(
+				edgeSettings,
+				sourceColId,
+				targetColId,
+				nodes,
+			),
 		} as Edge;
 		if (sourceColId && targetColId) {
 			const { sourceHandle, targetHandle } = getSmartHandleIds(
@@ -316,15 +387,24 @@ export const useStore = create<AppState>((set, get) => ({
 		const newSettings = { ...edgeSettings, ...settings };
 
 		// Update all existing edges with the new settings
-		const newEdges = edges.map(edge => {
+		const newEdges = edges.map((edge) => {
+			const sourceColId = extractColumnId(edge.sourceHandle);
+			const targetColId = extractColumnId(edge.targetHandle);
+
 			const baseEdge = {
 				...edge,
 				type: newSettings.type,
 				animated: newSettings.animated,
 			};
 
-			if (newSettings.markerEnd && newSettings.markerEnd !== "none") {
-				baseEdge.markerEnd = getMarkerProps(newSettings.markerEnd);
+			const marker = resolveEdgeMarker(
+				newSettings,
+				sourceColId,
+				targetColId,
+				get().nodes,
+			);
+			if (marker) {
+				baseEdge.markerEnd = marker;
 			} else {
 				delete baseEdge.markerEnd;
 			}

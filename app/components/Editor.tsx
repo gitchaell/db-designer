@@ -14,16 +14,16 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { useStore } from "@/app/store/useStore";
+import { toPng } from "html-to-image";
 import { ArrowLeft, Plus } from "lucide-react";
+import { Download, Edit2, Eye, LayoutGrid, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
-import TableNode from "./TableNode";
-import { ThemeToggle } from "./ThemeToggle";
+import { getLayoutedElements } from "../lib/autoLayout";
 import EdgeSettings from "./EdgeSettings";
 import SqlPreviewModal from "./SqlPreviewModal";
-import { getLayoutedElements } from "../lib/autoLayout";
-import { LayoutGrid, Download, Eye, Edit2, Loader2 } from "lucide-react";
-import { toPng } from "html-to-image";
+import TableNode from "./TableNode";
+import { ThemeToggle } from "./ThemeToggle";
 
 const nodeTypes = {
 	table: TableNode,
@@ -136,85 +136,94 @@ function Flow({ projectId }: { projectId: string }) {
 				position="top-left"
 				className="m-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm p-2 rounded-lg border border-border shadow-xl"
 			>
-				<button
-					type="button"
-					onClick={() => navigateTo("/")}
-					className="btn btn-secondary w-9 px-0"
-					title="Back to Dashboard"
-				>
-					<ArrowLeft className="w-4 h-4" />
-				</button>
+				{/* Group 1: Back Button, Project Name */}
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => navigateTo("/")}
+						className="btn btn-secondary w-9 px-0"
+						title="Back to Dashboard"
+					>
+						<ArrowLeft className="w-4 h-4" />
+					</button>
+
+					<input
+						value={project?.name || ""}
+						onChange={(e) => setProjectName(e.target.value)}
+						className="bg-transparent text-sm font-semibold text-foreground focus:outline-none w-48 px-2 placeholder:text-muted-foreground"
+						placeholder="Untitled Project"
+					/>
+				</div>
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				<input
-					value={project?.name || ""}
-					onChange={(e) => setProjectName(e.target.value)}
-					className="bg-transparent text-sm font-semibold text-foreground focus:outline-none w-48 px-2 placeholder:text-muted-foreground"
-					placeholder="Untitled Project"
-				/>
+				{/* Group 2: Add Table, Auto Layout */}
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={handleAddTable}
+						className="btn btn-primary btn-sm"
+					>
+						<Plus className="w-3.5 h-3.5 mr-1.5" />
+						Add Table
+					</button>
+
+					<button
+						type="button"
+						onClick={onLayout}
+						className="btn btn-secondary btn-sm font-space"
+						title="Auto Layout"
+					>
+						<LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
+						Auto Layout
+					</button>
+				</div>
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				<button
-					type="button"
-					onClick={handleAddTable}
-					className="btn btn-primary btn-sm"
-				>
-					<Plus className="w-3.5 h-3.5 mr-1.5" />
-					Add Table
-				</button>
+				{/* Group 3: Edge Settings, SQL Preview, Download PNG */}
+				<div className="flex items-center gap-2">
+					<EdgeSettings />
+
+					<SqlPreviewModal />
+
+					<button
+						type="button"
+						onClick={downloadImage}
+						className="btn btn-secondary btn-sm font-space"
+						title="Download Diagram as Image"
+						disabled={isDownloading}
+					>
+						{isDownloading ? (
+							<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+						) : (
+							<Download className="w-3.5 h-3.5 mr-1.5" />
+						)}
+						Download PNG
+					</button>
+				</div>
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				<button
-					type="button"
-					onClick={onLayout}
-					className="btn btn-secondary btn-sm font-space"
-					title="Auto Layout"
-				>
-					<LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
-					Auto Layout
-				</button>
+				{/* Group 4: Read-Only Toggle, Theme Toggle */}
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={toggleReadOnly}
+						className="btn btn-secondary w-9 px-0"
+						title={
+							isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"
+						}
+					>
+						{isReadOnly ? (
+							<Edit2 className="w-4 h-4" />
+						) : (
+							<Eye className="w-4 h-4" />
+						)}
+					</button>
 
-				<div className="h-6 w-px bg-border mx-2" />
-				<button
-					type="button"
-					onClick={toggleReadOnly}
-					className="btn btn-secondary w-9 px-0"
-					title={
-						isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"
-					}
-				>
-					{isReadOnly ? (
-						<Edit2 className="w-4 h-4" />
-					) : (
-						<Eye className="w-4 h-4" />
-					)}
-				</button>
-				<div className="h-6 w-px bg-border mx-2" />
-				<EdgeSettings />
-
-				<div className="h-6 w-px bg-border mx-2" />
-				<SqlPreviewModal />
-
-				<div className="h-6 w-px bg-border mx-2" />
-				<button
-					type="button"
-					onClick={downloadImage}
-					className="btn btn-secondary btn-sm font-space"
-					title="Download Diagram as Image"
-					disabled={isDownloading}
-				>
-					{isDownloading ? (
-						<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-					) : (
-						<Download className="w-3.5 h-3.5 mr-1.5" />
-					)}
-					Download PNG
-				</button>
-
-				<ThemeToggle />
+					<ThemeToggle />
+				</div>
 			</Panel>
 
 			<ReactFlow

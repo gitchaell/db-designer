@@ -1,6 +1,6 @@
-import { ChevronDown, Check } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
+import { Check, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SelectOption {
 	label: string;
@@ -13,6 +13,7 @@ interface SelectProps {
 	onChange: (value: string) => void;
 	className?: string;
 	placeholder?: string;
+	disabled?: boolean;
 }
 
 export function Select({
@@ -21,6 +22,7 @@ export function Select({
 	onChange,
 	className,
 	placeholder,
+	disabled = false,
 }: SelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -44,12 +46,14 @@ export function Select({
 		<div className={clsx("relative", className)} ref={containerRef}>
 			<button
 				type="button"
-				onClick={() => setIsOpen(!isOpen)}
+				disabled={disabled}
+				onClick={() => !disabled && setIsOpen(!isOpen)}
 				className={clsx(
 					"select w-full flex items-center justify-between gap-2",
 					className?.includes("select-sm") &&
 						"!h-6 !px-1 !text-xs !py-0.5 !border-transparent !bg-transparent hover:!bg-muted focus:!bg-muted focus:!ring-1 focus:!ring-ring",
 					!selectedOption && "text-muted-foreground",
+					disabled && "opacity-50 cursor-not-allowed",
 				)}
 			>
 				<span className="truncate">

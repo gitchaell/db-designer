@@ -7,15 +7,15 @@ import {
 	applyEdgeChanges,
 	applyNodeChanges,
 } from "@xyflow/react";
+import { MarkerType } from "@xyflow/react";
 import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
-import { MarkerType } from "@xyflow/react";
 import type {
 	AppNode,
 	Column,
-	EdgeSettings,
 	EdgeMarkerType,
+	EdgeSettings,
 	Project,
 	TableNodeData,
 } from "../types";
@@ -89,14 +89,16 @@ const getRelationMarkerProps = (
 			height: 15,
 			color: "#71717a",
 		};
-	} else if (sourceCol.isFk && targetCol.isPk) {
+	}
+	if (sourceCol.isFk && targetCol.isPk) {
 		return {
 			type: MarkerType.ArrowClosed,
 			width: 15,
 			height: 15,
 			color: "#71717a",
 		};
-	} else if (sourceCol.isPk && targetCol.isPk) {
+	}
+	if (sourceCol.isPk && targetCol.isPk) {
 		return { type: MarkerType.Arrow, width: 15, height: 15 };
 	}
 
@@ -406,7 +408,7 @@ export const useStore = create<AppState>((set, get) => ({
 			if (marker) {
 				baseEdge.markerEnd = marker;
 			} else {
-				delete baseEdge.markerEnd;
+				baseEdge.markerEnd = undefined;
 			}
 
 			return baseEdge;

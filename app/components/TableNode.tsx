@@ -13,8 +13,8 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Select } from "./Select";
 import { v4 as uuidv4 } from "uuid";
+import { Select } from "./Select";
 
 const COLUMN_TYPES: ColumnType[] = [
 	"uuid",
@@ -50,6 +50,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		updateColumn,
 		deleteColumn,
 		deleteNode,
+		isReadOnly,
 	} = useStore();
 	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 	const nodeRef = useRef<HTMLDivElement>(null);
@@ -110,8 +111,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 					<input
 						type="text"
 						value={data.label}
+						disabled={isReadOnly}
 						onChange={(e) => updateNodeData(id, { label: e.target.value })}
-						className="bg-transparent text-sm font-bold text-white focus:outline-none flex-1 font-sans placeholder-white/40"
+						className="bg-transparent text-sm font-bold text-white focus:outline-none flex-1 font-sans placeholder-white/40 disabled:opacity-80"
 						placeholder="Table Name"
 					/>
 
@@ -126,40 +128,44 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<Minimize className="w-3.5 h-3.5" />
 						</button>
 
-						<div className="relative">
-							<button
-								type="button"
-								onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
-								className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-white transition-colors"
-							>
-								<Palette className="w-3.5 h-3.5" />
-							</button>
-							{isColorPickerOpen && (
-								<div className="absolute right-0 top-full mt-2 p-2 bg-popover border border-border rounded-lg shadow-xl grid grid-cols-4 gap-2 z-[100] w-48">
-									{COLORS.map((c) => (
-										<button
-											type="button"
-											key={c}
-											className={clsx(
-												"w-8 h-8 rounded-md border border-white/10 hover:scale-110 transition-transform cursor-pointer",
-												c,
-											)}
-											onClick={() => {
-												updateNodeData(id, { color: c });
-												setIsColorPickerOpen(false);
-											}}
-										/>
-									))}
+						{!isReadOnly && (
+							<>
+								<div className="relative">
+									<button
+										type="button"
+										onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+										className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-white transition-colors"
+									>
+										<Palette className="w-3.5 h-3.5" />
+									</button>
+									{isColorPickerOpen && (
+										<div className="absolute right-0 top-full mt-2 p-2 bg-popover border border-border rounded-lg shadow-xl grid grid-cols-4 gap-2 z-[100] w-48">
+											{COLORS.map((c) => (
+												<button
+													type="button"
+													key={c}
+													className={clsx(
+														"w-8 h-8 rounded-md border border-white/10 hover:scale-110 transition-transform cursor-pointer",
+														c,
+													)}
+													onClick={() => {
+														updateNodeData(id, { color: c });
+														setIsColorPickerOpen(false);
+													}}
+												/>
+											))}
+										</div>
+									)}
 								</div>
-							)}
-						</div>
-						<button
-							type="button"
-							onClick={() => deleteNode(id)}
-							className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-red-300 transition-colors"
-						>
-							<Trash2 className="w-3.5 h-3.5" />
-						</button>
+								<button
+									type="button"
+									onClick={() => deleteNode(id)}
+									className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-red-300 transition-colors"
+								>
+									<Trash2 className="w-3.5 h-3.5" />
+								</button>
+							</>
+						)}
 					</div>
 				</div>
 
@@ -190,12 +196,14 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<div className="flex items-center gap-0.5 min-w-[36px] flex-none">
 								<button
 									type="button"
+									disabled={isReadOnly}
 									onClick={() => updateColumn(id, col.id, { isPk: !col.isPk })}
 									className={clsx(
 										"p-0.5 rounded transition-colors",
 										col.isPk
 											? "text-amber-500 bg-amber-500/10"
 											: "text-muted-foreground hover:text-foreground",
+										isReadOnly && "cursor-not-allowed opacity-80",
 									)}
 									title="Primary Key"
 								>
@@ -203,12 +211,14 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 								</button>
 								<button
 									type="button"
+									disabled={isReadOnly}
 									onClick={() => updateColumn(id, col.id, { isFk: !col.isFk })}
 									className={clsx(
 										"p-0.5 rounded transition-colors",
 										col.isFk
 											? "text-blue-500 bg-blue-500/10"
 											: "text-muted-foreground hover:text-foreground",
+										isReadOnly && "cursor-not-allowed opacity-80",
 									)}
 									title="Foreign Key"
 								>
@@ -220,11 +230,12 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							<input
 								type="text"
 								value={col.name}
+								disabled={isReadOnly}
 								onChange={(e) =>
 									updateColumn(id, col.id, { name: e.target.value })
 								}
 								className={clsx(
-									"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all",
+									"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all disabled:opacity-80 disabled:cursor-not-allowed disabled:hover:bg-transparent",
 									col.isPk
 										? "text-foreground font-medium"
 										: "text-muted-foreground",
@@ -234,21 +245,24 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							{/* Column Type */}
 							<Select
 								value={col.type}
+								disabled={isReadOnly}
 								onChange={(val) =>
 									updateColumn(id, col.id, { type: val as ColumnType })
 								}
-								className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground"
+								className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0"
 								options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
 							/>
 
 							{/* Delete Column */}
-							<button
-								type="button"
-								onClick={() => deleteColumn(id, col.id)}
-								className="opacity-0 group-hover/col:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity flex-none"
-							>
-								<X className="w-3 h-3" />
-							</button>
+							{!isReadOnly && (
+								<button
+									type="button"
+									onClick={() => deleteColumn(id, col.id)}
+									className="opacity-0 group-hover/col:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity flex-none"
+								>
+									<X className="w-3 h-3" />
+								</button>
+							)}
 
 							<Handle
 								type="source"
@@ -269,13 +283,15 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				</div>
 
 				{/* Footer Action */}
-				<button
-					type="button"
-					onClick={handleAddColumn}
-					className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
-				>
-					<Plus className="w-3 h-3" /> Add Column
-				</button>
+				{!isReadOnly && (
+					<button
+						type="button"
+						onClick={handleAddColumn}
+						className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
+					>
+						<Plus className="w-3 h-3" /> Add Column
+					</button>
+				)}
 			</div>
 		</>
 	);

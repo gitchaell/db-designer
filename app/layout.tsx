@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { SchemaMarkup } from "./components/SchemaMarkup";
 import { ThemeProvider } from "./components/ThemeProvider";
 
 const geistSans = Geist({
@@ -19,8 +20,25 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-	title: "db-designer",
-	description: "Database Schema Designer",
+	title: "DB Designer - Database Schema Designer",
+	description:
+		"A powerful, web-based tool for designing database schemas with an intuitive, drag-and-drop interface. Create, edit, and export your database designs easily.",
+	keywords: [
+		"database",
+		"schema",
+		"designer",
+		"ERD",
+		"entity relationship diagram",
+		"SQL",
+		"web application",
+	],
+	authors: [{ name: "Michaell Alavedra", url: "https://michaellalavedra.com" }],
+	openGraph: {
+		title: "DB Designer - Database Schema Designer",
+		description:
+			"A powerful, web-based tool for designing database schemas with an intuitive, drag-and-drop interface.",
+		type: "website",
+	},
 };
 
 export default function RootLayout({
@@ -41,6 +59,7 @@ export default function RootLayout({
 				>
 					<div className="noise-overlay" />
 					{children}
+					<SchemaMarkup />
 				</ThemeProvider>
 			</body>
 		</html>

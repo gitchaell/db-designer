@@ -108,14 +108,19 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 					)}
 				>
 					<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing flex-none" />
-					<input
-						type="text"
-						value={data.label}
-						disabled={isReadOnly}
-						onChange={(e) => updateNodeData(id, { label: e.target.value })}
-						className="bg-transparent text-sm font-bold text-white focus:outline-none flex-1 font-sans placeholder-white/40 disabled:opacity-80"
-						placeholder="Table Name"
-					/>
+					{isReadOnly ? (
+						<span className="bg-transparent text-sm font-bold text-white flex-1 font-sans truncate">
+							{data.label}
+						</span>
+					) : (
+						<input
+							type="text"
+							value={data.label}
+							onChange={(e) => updateNodeData(id, { label: e.target.value })}
+							className="bg-transparent text-sm font-bold text-white focus:outline-none flex-1 font-sans placeholder-white/40"
+							placeholder="Table Name"
+						/>
+					)}
 
 					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none">
 						{/* Autofit Button */}
@@ -235,31 +240,48 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							</div>
 
 							{/* Column Name */}
-							<input
-								type="text"
-								value={col.name}
-								disabled={isReadOnly}
-								onChange={(e) =>
-									updateColumn(id, col.id, { name: e.target.value })
-								}
-								className={clsx(
-									"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all disabled:cursor-not-allowed disabled:hover:bg-transparent",
-									col.isPk || isReadOnly
-										? "text-foreground font-medium"
-										: "text-muted-foreground",
-								)}
-							/>
+							{isReadOnly ? (
+								<span
+									className={clsx(
+										"bg-transparent flex-1 font-sans min-w-0 h-6 px-1 flex items-center",
+										col.isPk
+											? "text-foreground font-medium"
+											: "text-muted-foreground",
+									)}
+								>
+									{col.name}
+								</span>
+							) : (
+								<input
+									type="text"
+									value={col.name}
+									onChange={(e) =>
+										updateColumn(id, col.id, { name: e.target.value })
+									}
+									className={clsx(
+										"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all",
+										col.isPk
+											? "text-foreground font-medium"
+											: "text-muted-foreground",
+									)}
+								/>
+							)}
 
 							{/* Column Type */}
-							<Select
-								value={col.type}
-								disabled={isReadOnly}
-								onChange={(val) =>
-									updateColumn(id, col.id, { type: val as ColumnType })
-								}
-								className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0"
-								options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
-							/>
+							{isReadOnly ? (
+								<span className="w-28 flex-none text-right font-mono text-muted-foreground px-1">
+									{col.type}
+								</span>
+							) : (
+								<Select
+									value={col.type}
+									onChange={(val) =>
+										updateColumn(id, col.id, { type: val as ColumnType })
+									}
+									className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0 !bg-transparent"
+									options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
+								/>
+							)}
 
 							{/* Delete Column */}
 							{!isReadOnly && (

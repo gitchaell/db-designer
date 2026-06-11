@@ -2,6 +2,7 @@ import { clsx } from "clsx";
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { twMerge } from "tailwind-merge";
 
 interface SelectOption {
 	label: string;
@@ -78,12 +79,15 @@ export function Select({
 				type="button"
 				disabled={disabled}
 				onClick={() => !disabled && setIsOpen(!isOpen)}
-				className={clsx(
-					"select w-full flex items-center justify-between gap-2",
-					className?.includes("select-sm") &&
-						"!h-6 !px-1 !text-xs !py-0.5 !border-transparent !bg-transparent hover:!bg-muted focus:!bg-muted focus:!ring-1 focus:!ring-ring",
-					!selectedOption && "text-muted-foreground",
-					disabled && "opacity-50 cursor-not-allowed",
+				className={twMerge(
+					clsx(
+						"select w-full flex items-center justify-between gap-2",
+						className?.includes("select-sm") &&
+							"!h-6 !px-1 !text-xs !py-0.5 !border-transparent !bg-transparent hover:!bg-muted focus:!bg-muted focus:!ring-1 focus:!ring-ring",
+						!selectedOption && "text-muted-foreground",
+						disabled && "opacity-50 cursor-not-allowed",
+					),
+					className,
 				)}
 			>
 				<span className="truncate">

@@ -21,6 +21,7 @@ import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
 import { getLayoutedElements } from "../lib/autoLayout";
 import EdgeSettings from "./EdgeSettings";
+import SettingsPopover from "./SettingsPopover";
 import SqlPreviewModal from "./SqlPreviewModal";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
@@ -48,6 +49,8 @@ function Flow({ projectId }: { projectId: string }) {
 		setNodes: setStoreNodes,
 		isReadOnly,
 		toggleReadOnly,
+		undo,
+		redo,
 	} = useStore();
 	const { fitView } = useReactFlow();
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -82,6 +85,23 @@ function Flow({ projectId }: { projectId: string }) {
 			},
 		});
 	}, [addNode]);
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (isReadOnly) return;
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+				if (e.shiftKey) {
+					redo();
+				} else {
+					undo();
+				}
+			} else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+				redo();
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [isReadOnly, undo, redo]);
 
 	const onLayout = useCallback(() => {
 		const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, "LR");
@@ -157,7 +177,7 @@ function Flow({ projectId }: { projectId: string }) {
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				{/* Group 2: Add Table, Auto Layout */}
+				{/* Group 2: Add Table and Settings */}
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
@@ -168,61 +188,67 @@ function Flow({ projectId }: { projectId: string }) {
 						Add Table
 					</button>
 
-					<button
-						type="button"
-						onClick={onLayout}
-						className="btn btn-secondary btn-sm font-space"
-						title="Auto Layout"
-					>
-						<LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
-						Auto Layout
-					</button>
-				</div>
+					<SettingsPopover>
+						<button
+							type="button"
+							onClick={onLayout}
+							className="btn btn-secondary btn-sm w-full justify-start font-space"
+							title="Auto Layout"
+						>
+							<LayoutGrid className="w-4 h-4 mr-2" />
+							Auto Layout
+						</button>
 
-				<div className="h-6 w-px bg-border mx-2" />
+						<EdgeSettings />
 
-				{/* Group 3: Edge Settings, SQL Preview, Download PNG */}
-				<div className="flex items-center gap-2">
-					<EdgeSettings />
+						<SqlPreviewModal />
 
-					<SqlPreviewModal />
+						<button
+							type="button"
+							onClick={downloadImage}
+							className="btn btn-secondary btn-sm w-full justify-start font-space"
+							title="Download Diagram as Image"
+							disabled={isDownloading}
+						>
+							{isDownloading ? (
+								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+							) : (
+								<Download className="w-4 h-4 mr-2" />
+							)}
+							Download PNG
+						</button>
 
-					<button
-						type="button"
-						onClick={downloadImage}
-						className="btn btn-secondary btn-sm font-space"
-						title="Download Diagram as Image"
-						disabled={isDownloading}
-					>
-						{isDownloading ? (
-							<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-						) : (
-							<Download className="w-3.5 h-3.5 mr-1.5" />
-						)}
-						Download PNG
-					</button>
-				</div>
+						<div className="h-px bg-border my-1 w-full" />
 
-				<div className="h-6 w-px bg-border mx-2" />
+						<div className="flex items-center justify-between gap-2">
+							<span className="text-sm font-medium text-muted-foreground ml-1">
+								Read Only
+							</span>
+							<button
+								type="button"
+								onClick={toggleReadOnly}
+								className="btn btn-secondary btn-sm w-12"
+								title={
+									isReadOnly
+										? "Switch to Edit Mode"
+										: "Switch to Read Only Mode"
+								}
+							>
+								{isReadOnly ? (
+									<Edit2 className="w-4 h-4" />
+								) : (
+									<Eye className="w-4 h-4" />
+								)}
+							</button>
+						</div>
 
-				{/* Group 4: Read-Only Toggle, Theme Toggle */}
-				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						onClick={toggleReadOnly}
-						className="btn btn-secondary w-9 px-0"
-						title={
-							isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"
-						}
-					>
-						{isReadOnly ? (
-							<Edit2 className="w-4 h-4" />
-						) : (
-							<Eye className="w-4 h-4" />
-						)}
-					</button>
-
-					<ThemeToggle />
+						<div className="flex items-center justify-between gap-2">
+							<span className="text-sm font-medium text-muted-foreground ml-1">
+								Theme
+							</span>
+							<ThemeToggle />
+						</div>
+					</SettingsPopover>
 				</div>
 			</Panel>
 
@@ -259,9 +285,9 @@ function Flow({ projectId }: { projectId: string }) {
 				<Background
 					variant={BackgroundVariant.Dots}
 					gap={24}
-					size={1.5}
-					color={resolvedTheme === "dark" ? "#3f3f46" : "#d4d4d8"} // zinc-700 / zinc-300
-					className="opacity-50"
+					size={2}
+					color={resolvedTheme === "dark" ? "#71717a" : "#a1a1aa"} // zinc-500 / zinc-400 for better contrast
+					className="opacity-80"
 				/>
 				<Controls className="!bg-background !border-border !fill-foreground [&>button]:!border-border [&>button]:!hover:bg-muted" />
 			</ReactFlow>

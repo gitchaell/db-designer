@@ -10,6 +10,8 @@ import { deleteProject, getAllProjects, saveProject } from "./lib/db";
 import { templates } from "./lib/templates";
 import type { Project } from "./types";
 
+const getTimestamp = () => Date.now();
+
 export default function Dashboard() {
 	const [projects, setProjects] = useState<Project[]>([]);
 
@@ -45,8 +47,8 @@ export default function Dashboard() {
 		const newProject: Project = {
 			id: uuidv4(),
 			name: "Untitled Project",
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
+			createdAt: getTimestamp(),
+			updatedAt: getTimestamp(),
 			nodes: [],
 			edges: [],
 		};
@@ -58,11 +60,12 @@ export default function Dashboard() {
 		const template = templates.find((t) => t.id === templateId);
 		if (!template) return;
 		const { nodes, edges } = template.create();
+		const now = getTimestamp();
 		const newProject: Project = {
 			id: uuidv4(),
 			name: template.name,
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
+			createdAt: now,
+			updatedAt: now,
 			nodes,
 			edges,
 		};
@@ -89,14 +92,7 @@ export default function Dashboard() {
 				</div>
 				<div className="flex items-center gap-4">
 					<ThemeToggle />
-					<button
-						type="button"
-						onClick={() => createProjectFromTemplate("saas")}
-						className="btn btn-secondary"
-					>
-						<FileText className="w-4 h-4 mr-2" />
-						SaaS Template
-					</button>
+
 					<button
 						type="button"
 						onClick={createProject}
@@ -115,14 +111,6 @@ export default function Dashboard() {
 						No projects found
 					</p>
 					<div className="flex gap-4">
-						<button
-							type="button"
-							onClick={() => createProjectFromTemplate("saas")}
-							className="btn btn-secondary"
-						>
-							<FileText className="w-4 h-4 mr-2" />
-							Use SaaS Template
-						</button>
 						<button
 							type="button"
 							onClick={createProject}

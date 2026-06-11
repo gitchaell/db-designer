@@ -1,7 +1,9 @@
 import { useStore } from "@/app/store/useStore";
 import Editor from "@monaco-editor/react";
 import { Download, FileCode2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
+import { Select } from "./Select";
 
 type Dialect = "postgresql" | "mysql" | "sqlite";
 
@@ -73,69 +75,73 @@ export default function SqlPreviewModal() {
 			<button
 				type="button"
 				onClick={() => setIsOpen(true)}
-				className="btn btn-secondary h-8 text-xs font-space"
+				className="btn btn-secondary btn-sm font-space"
 			>
 				<FileCode2 className="w-3.5 h-3.5 mr-1.5" />
 				Export SQL
 			</button>
 
-			{isOpen && (
-				<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-					<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
-						{/* Header */}
-						<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-							<div className="flex items-center gap-4">
-								<h2 className="text-lg font-bold font-space text-foreground">
-									SQL Preview
-								</h2>
-								<select
-									value={dialect}
-									onChange={(e) => setDialect(e.target.value as Dialect)}
-									className="select w-40"
-								>
-									<option value="postgresql">PostgreSQL</option>
-									<option value="mysql">MySQL</option>
-									<option value="sqlite">SQLite</option>
-								</select>
+			{isOpen &&
+				typeof document !== "undefined" &&
+				createPortal(
+					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+						<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
+							{/* Header */}
+							<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+								<div className="flex items-center gap-4">
+									<h2 className="text-lg font-bold font-space text-foreground">
+										SQL Preview
+									</h2>
+									<Select
+										value={dialect}
+										onChange={(val) => setDialect(val as Dialect)}
+										className="w-40"
+										options={[
+											{ label: "PostgreSQL", value: "postgresql" },
+											{ label: "MySQL", value: "mysql" },
+											{ label: "SQLite", value: "sqlite" },
+										]}
+									/>
+								</div>
+								<div className="flex items-center gap-2">
+									<button
+										type="button"
+										onClick={downloadSql}
+										className="btn btn-primary btn-sm"
+									>
+										<Download className="w-3.5 h-3.5 mr-1.5" />
+										Download
+									</button>
+									<button
+										type="button"
+										onClick={() => setIsOpen(false)}
+										className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
+									>
+										<X className="w-5 h-5" />
+									</button>
+								</div>
 							</div>
-							<div className="flex items-center gap-2">
-								<button
-									type="button"
-									onClick={downloadSql}
-									className="btn btn-primary h-8 text-xs"
-								>
-									<Download className="w-3.5 h-3.5 mr-1.5" />
-									Download
-								</button>
-								<button
-									type="button"
-									onClick={() => setIsOpen(false)}
-									className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
-								>
-									<X className="w-5 h-5" />
-								</button>
-							</div>
-						</div>
 
-						{/* Editor container */}
-						<div className="flex-1 w-full bg-[#1e1e1e]">
-							<Editor
-								height="100%"
-								language="sql"
-								theme="vs-dark"
-								value={sql}
-								options={{
-									readOnly: true,
-									minimap: { enabled: false },
-									fontSize: 14,
-									fontFamily: "var(--font-geist-mono), monospace",
-									padding: { top: 16 },
-								}}
-							/>
+							{/* Editor container */}
+							<div className="flex-1 w-full bg-[#1e1e1e]">
+								<Editor
+									height="100%"
+									language="sql"
+									theme="vs-dark"
+									value={sql}
+									options={{
+										readOnly: true,
+										minimap: { enabled: false },
+										fontSize: 14,
+										fontFamily: "var(--font-geist-mono), monospace",
+										padding: { top: 16 },
+									}}
+								/>
+							</div>
 						</div>
-					</div>
-				</div>
-			)}
+					</div>,
+					document.body,
+				)}
 		</>
 	);
 }

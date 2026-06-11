@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 
 import {
 	Background,
@@ -10,19 +11,18 @@ import {
 	ReactFlowProvider,
 	useReactFlow,
 } from "@xyflow/react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { useStore } from "@/app/store/useStore";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
 import EdgeSettings from "./EdgeSettings";
 import SqlPreviewModal from "./SqlPreviewModal";
 import { getLayoutedElements } from "../lib/autoLayout";
-import { LayoutGrid, Download } from "lucide-react";
+import { LayoutGrid, Download, Eye, Edit2, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 
 const nodeTypes = {
@@ -46,11 +46,23 @@ function Flow({ projectId }: { projectId: string }) {
 		isLoading,
 		edgeSettings,
 		setNodes: setStoreNodes,
+		isReadOnly,
+		toggleReadOnly,
 	} = useStore();
 	const { fitView } = useReactFlow();
+	const [isDownloading, setIsDownloading] = useState(false);
 
-	const router = useRouter();
 	const { resolvedTheme } = useTheme();
+	const router = useRouter();
+	const navigateTo = (url: string) => {
+		if (document.startViewTransition) {
+			document.startViewTransition(() => {
+				router.push(url);
+			});
+		} else {
+			router.push(url);
+		}
+	};
 
 	useEffect(() => {
 		loadProject(projectId);
@@ -82,30 +94,32 @@ function Flow({ projectId }: { projectId: string }) {
 		});
 	}, [nodes, edges, setStoreNodes, fitView]);
 
-	const downloadImage = useCallback(() => {
-		// Use a slight timeout to ensure UI is ready
-		setTimeout(() => {
+	const downloadImage = useCallback(async () => {
+		setIsDownloading(true);
+		const wasEditing = !isReadOnly;
+		if (wasEditing) toggleReadOnly();
+		setTimeout(async () => {
 			const viewport = document.querySelector(
 				".react-flow__viewport",
 			) as HTMLElement;
 			if (viewport) {
-				toPng(viewport, {
-					backgroundColor:
-						resolvedTheme === "dark" ? "#09090b" : "#f9fafb",
-					pixelRatio: 2,
-				})
-					.then((dataUrl) => {
-						const a = document.createElement("a");
-						a.setAttribute("download", `${project?.name || "diagram"}.png`);
-						a.setAttribute("href", dataUrl);
-						a.click();
-					})
-					.catch((err) => {
-						console.error("Failed to export image", err);
+				try {
+					const dataUrl = await toPng(viewport, {
+						backgroundColor: resolvedTheme === "dark" ? "#09090b" : "#f9fafb",
+						pixelRatio: 2,
 					});
+					const a = document.createElement("a");
+					a.setAttribute("download", `${project?.name || "diagram"}.png`);
+					a.setAttribute("href", dataUrl);
+					a.click();
+				} catch (err) {
+					console.error("Failed to export image", err);
+				}
 			}
-		}, 100);
-	}, [project?.name, resolvedTheme]);
+			if (wasEditing) toggleReadOnly();
+			setIsDownloading(false);
+		}, 200);
+	}, [project, resolvedTheme, isReadOnly, toggleReadOnly]);
 
 	if (isLoading) {
 		return (
@@ -124,7 +138,7 @@ function Flow({ projectId }: { projectId: string }) {
 			>
 				<button
 					type="button"
-					onClick={() => router.push("/")}
+					onClick={() => navigateTo("/")}
 					className="btn btn-secondary w-9 px-0"
 					title="Back to Dashboard"
 				>
@@ -145,7 +159,7 @@ function Flow({ projectId }: { projectId: string }) {
 				<button
 					type="button"
 					onClick={handleAddTable}
-					className="btn btn-primary h-8 text-xs"
+					className="btn btn-primary btn-sm"
 				>
 					<Plus className="w-3.5 h-3.5 mr-1.5" />
 					Add Table
@@ -156,13 +170,28 @@ function Flow({ projectId }: { projectId: string }) {
 				<button
 					type="button"
 					onClick={onLayout}
-					className="btn btn-secondary h-8 text-xs font-space"
+					className="btn btn-secondary btn-sm font-space"
 					title="Auto Layout"
 				>
 					<LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
 					Auto Layout
 				</button>
 
+				<div className="h-6 w-px bg-border mx-2" />
+				<button
+					type="button"
+					onClick={toggleReadOnly}
+					className="btn btn-secondary w-9 px-0"
+					title={
+						isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"
+					}
+				>
+					{isReadOnly ? (
+						<Edit2 className="w-4 h-4" />
+					) : (
+						<Eye className="w-4 h-4" />
+					)}
+				</button>
 				<div className="h-6 w-px bg-border mx-2" />
 				<EdgeSettings />
 
@@ -173,10 +202,15 @@ function Flow({ projectId }: { projectId: string }) {
 				<button
 					type="button"
 					onClick={downloadImage}
-					className="btn btn-secondary h-8 text-xs font-space"
+					className="btn btn-secondary btn-sm font-space"
 					title="Download Diagram as Image"
+					disabled={isDownloading}
 				>
-					<Download className="w-3.5 h-3.5 mr-1.5" />
+					{isDownloading ? (
+						<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+					) : (
+						<Download className="w-3.5 h-3.5 mr-1.5" />
+					)}
 					Download PNG
 				</button>
 
@@ -195,10 +229,10 @@ function Flow({ projectId }: { projectId: string }) {
 					edgeSettings.type === "step"
 						? ConnectionLineType.Step
 						: edgeSettings.type === "straight"
-						? ConnectionLineType.Straight
-						: edgeSettings.type === "bezier"
-						? ConnectionLineType.Bezier
-						: ConnectionLineType.SmoothStep
+							? ConnectionLineType.Straight
+							: edgeSettings.type === "bezier"
+								? ConnectionLineType.Bezier
+								: ConnectionLineType.SmoothStep
 				}
 				connectionLineStyle={connectionLineStyle}
 				defaultEdgeOptions={{
@@ -209,6 +243,9 @@ function Flow({ projectId }: { projectId: string }) {
 				fitView
 				proOptions={{ hideAttribution: true }}
 				minZoom={0.1}
+				nodesDraggable={!isReadOnly}
+				nodesConnectable={!isReadOnly}
+				elementsSelectable={!isReadOnly}
 			>
 				<Background
 					variant={BackgroundVariant.Dots}

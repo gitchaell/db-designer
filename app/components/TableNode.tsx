@@ -6,7 +6,6 @@ import {
 	GripVertical,
 	Key,
 	Lock,
-	Maximize,
 	Minimize,
 	Palette,
 	Plus,
@@ -14,6 +13,7 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Select } from "./Select";
 import { v4 as uuidv4 } from "uuid";
 
 const COLUMN_TYPES: ColumnType[] = [
@@ -232,25 +232,14 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 							/>
 
 							{/* Column Type */}
-							<select
+							<Select
 								value={col.type}
-								onChange={(e) =>
-									updateColumn(id, col.id, {
-										type: e.target.value as ColumnType,
-									})
+								onChange={(val) =>
+									updateColumn(id, col.id, { type: val as ColumnType })
 								}
-								className="bg-transparent text-xs text-muted-foreground font-mono focus:outline-none text-right appearance-none hover:text-foreground cursor-pointer py-0.5 flex-none"
-							>
-								{COLUMN_TYPES.map((t) => (
-									<option
-										key={t}
-										value={t}
-										className="bg-popover text-popover-foreground"
-									>
-										{t}
-									</option>
-								))}
-							</select>
+								className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground"
+								options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
+							/>
 
 							{/* Delete Column */}
 							<button

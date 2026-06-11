@@ -194,36 +194,44 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 							{/* PK/FK Toggles */}
 							<div className="flex items-center gap-0.5 min-w-[36px] flex-none">
-								<button
-									type="button"
-									disabled={isReadOnly}
-									onClick={() => updateColumn(id, col.id, { isPk: !col.isPk })}
-									className={clsx(
-										"p-0.5 rounded transition-colors",
-										col.isPk
-											? "text-amber-500 bg-amber-500/10"
-											: "text-muted-foreground hover:text-foreground",
-										isReadOnly && "cursor-not-allowed opacity-80",
-									)}
-									title="Primary Key"
-								>
-									<Key className="w-3 h-3" />
-								</button>
-								<button
-									type="button"
-									disabled={isReadOnly}
-									onClick={() => updateColumn(id, col.id, { isFk: !col.isFk })}
-									className={clsx(
-										"p-0.5 rounded transition-colors",
-										col.isFk
-											? "text-blue-500 bg-blue-500/10"
-											: "text-muted-foreground hover:text-foreground",
-										isReadOnly && "cursor-not-allowed opacity-80",
-									)}
-									title="Foreign Key"
-								>
-									<Lock className="w-3 h-3" />
-								</button>
+								{(!isReadOnly || col.isPk) && (
+									<button
+										type="button"
+										disabled={isReadOnly}
+										onClick={() =>
+											updateColumn(id, col.id, { isPk: !col.isPk })
+										}
+										className={clsx(
+											"p-0.5 rounded transition-colors",
+											col.isPk
+												? "text-amber-500 bg-amber-500/10"
+												: "text-muted-foreground hover:text-foreground",
+											isReadOnly && "cursor-not-allowed opacity-80",
+										)}
+										title="Primary Key"
+									>
+										<Key className="w-3 h-3" />
+									</button>
+								)}
+								{(!isReadOnly || col.isFk) && (
+									<button
+										type="button"
+										disabled={isReadOnly}
+										onClick={() =>
+											updateColumn(id, col.id, { isFk: !col.isFk })
+										}
+										className={clsx(
+											"p-0.5 rounded transition-colors",
+											col.isFk
+												? "text-blue-500 bg-blue-500/10"
+												: "text-muted-foreground hover:text-foreground",
+											isReadOnly && "cursor-not-allowed opacity-80",
+										)}
+										title="Foreign Key"
+									>
+										<Lock className="w-3 h-3" />
+									</button>
+								)}
 							</div>
 
 							{/* Column Name */}
@@ -235,8 +243,8 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 									updateColumn(id, col.id, { name: e.target.value })
 								}
 								className={clsx(
-									"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all disabled:opacity-80 disabled:cursor-not-allowed disabled:hover:bg-transparent",
-									col.isPk
+									"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all disabled:cursor-not-allowed disabled:hover:bg-transparent",
+									col.isPk || isReadOnly
 										? "text-foreground font-medium"
 										: "text-muted-foreground",
 								)}

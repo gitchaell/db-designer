@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./Button";
 
 export default function SettingsPopover({
 	children,
@@ -46,16 +47,16 @@ export default function SettingsPopover({
 
 	return (
 		<>
-			<button
+			<Button
 				ref={buttonRef}
-				type="button"
+				variant="secondary"
+				size="sm"
 				onClick={() => setIsOpen(!isOpen)}
-				className="btn btn-secondary btn-sm"
 				title="Settings"
 			>
 				<Settings className="w-4 h-4 mr-1.5" />
 				Settings
-			</button>
+			</Button>
 
 			{isOpen &&
 				createPortal(

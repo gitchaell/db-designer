@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { Download, FileCode2, Loader2, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./Button";
 import { Select } from "./Select";
 
 type Dialect = "postgresql" | "mysql" | "sqlite";
@@ -72,14 +73,14 @@ export default function SqlPreviewModal() {
 
 	return (
 		<>
-			<button
-				type="button"
+			<Button
+				variant="secondary"
 				onClick={() => setIsOpen(true)}
-				className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
+				className="w-full justify-start text-sm font-medium text-foreground py-2"
 			>
 				<FileCode2 className="w-4 h-4 mr-2" />
 				Export SQL
-			</button>
+			</Button>
 
 			{isOpen &&
 				typeof document !== "undefined" &&
@@ -104,14 +105,10 @@ export default function SqlPreviewModal() {
 									/>
 								</div>
 								<div className="flex items-center gap-2">
-									<button
-										type="button"
-										onClick={downloadSql}
-										className="btn btn-primary btn-sm"
-									>
+									<Button size="sm" onClick={downloadSql}>
 										<Download className="w-3.5 h-3.5 mr-1.5" />
 										Download
-									</button>
+									</Button>
 									<button
 										type="button"
 										onClick={() => setIsOpen(false)}

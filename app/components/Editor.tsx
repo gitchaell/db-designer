@@ -20,6 +20,8 @@ import { Download, Eye, LayoutGrid, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
 import { getLayoutedElements } from "../lib/autoLayout";
+import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 import SettingsPopover from "./SettingsPopover";
 import { Select } from "./Select";
 import SqlPreviewModal from "./SqlPreviewModal";
@@ -170,14 +172,14 @@ function Flow({ projectId }: { projectId: string }) {
 			>
 				{/* Group 1: Back Button, Project Name */}
 				<div className="flex items-center gap-2">
-					<button
-						type="button"
+					<Button
+						variant="secondary"
+						size="icon"
 						onClick={() => navigateTo("/")}
-						className="btn btn-secondary w-9 px-0"
 						title="Back to Dashboard"
 					>
 						<ArrowLeft className="w-4 h-4" />
-					</button>
+					</Button>
 
 					<input
 						value={project?.name || ""}
@@ -191,25 +193,21 @@ function Flow({ projectId }: { projectId: string }) {
 
 				{/* Group 2: Add Table and Settings */}
 				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						onClick={handleAddTable}
-						className="btn btn-primary btn-sm"
-					>
+					<Button size="sm" onClick={handleAddTable}>
 						<Plus className="w-3.5 h-3.5 mr-1.5" />
 						Add Table
-					</button>
+					</Button>
 
 					<SettingsPopover>
-						<button
-							type="button"
+						<Button
+							variant="secondary"
 							onClick={onLayout}
-							className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
+							className="w-full justify-start text-sm font-medium text-foreground py-2"
 							title="Auto Layout"
 						>
 							<LayoutGrid className="w-4 h-4 mr-2" />
 							Auto Layout
-						</button>
+						</Button>
 
 						<div className="flex flex-col gap-2">
 							<div className="flex items-center justify-between gap-2 p-1 border border-border bg-card rounded-md">
@@ -242,16 +240,14 @@ function Flow({ projectId }: { projectId: string }) {
 								>
 									Show Relation Markers
 								</label>
-								<input
+								<Checkbox
 									id="relation-markers-toggle"
-									type="checkbox"
 									checked={edgeSettings.showRelationMarkers || false}
 									onChange={(e) =>
 										updateEdgeSettings({
 											showRelationMarkers: e.target.checked,
 										})
 									}
-									className="checkbox-custom"
 								/>
 							</div>
 
@@ -262,24 +258,22 @@ function Flow({ projectId }: { projectId: string }) {
 								>
 									Animated Edges
 								</label>
-								<input
+								<Checkbox
 									id="animated-toggle"
-									type="checkbox"
 									checked={edgeSettings.animated}
 									onChange={(e) =>
 										updateEdgeSettings({ animated: e.target.checked })
 									}
-									className="checkbox-custom"
 								/>
 							</div>
 						</div>
 
 						<SqlPreviewModal />
 
-						<button
-							type="button"
+						<Button
+							variant="secondary"
 							onClick={downloadImage}
-							className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
+							className="w-full justify-start text-sm font-medium text-foreground py-2"
 							title="Download Diagram as Image"
 							disabled={isDownloading}
 						>
@@ -289,7 +283,7 @@ function Flow({ projectId }: { projectId: string }) {
 								<Download className="w-4 h-4 mr-2" />
 							)}
 							Download PNG
-						</button>
+						</Button>
 
 						<div className="h-px bg-border my-2 w-full" />
 
@@ -297,10 +291,10 @@ function Flow({ projectId }: { projectId: string }) {
 							<span className="text-sm font-medium text-muted-foreground">
 								Read Only
 							</span>
-							<button
-								type="button"
+							<Button
+								variant="secondary"
+								size="icon"
 								onClick={toggleReadOnly}
-								className="btn btn-secondary h-8 w-8 px-0 flex items-center justify-center"
 								title={
 									isReadOnly
 										? "Switch to Edit Mode"
@@ -308,7 +302,7 @@ function Flow({ projectId }: { projectId: string }) {
 								}
 							>
 								<Eye className="w-4 h-4" />
-							</button>
+							</Button>
 						</div>
 
 						<div className="flex items-center justify-between gap-2">

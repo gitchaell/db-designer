@@ -5,6 +5,7 @@ import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { Button } from "./components/Button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { deleteProject, getAllProjects, saveProject } from "./lib/db";
 import { templates } from "./lib/templates";
@@ -93,14 +94,10 @@ export default function Dashboard() {
 				<div className="flex items-center gap-4">
 					<ThemeToggle />
 
-					<button
-						type="button"
-						onClick={createProject}
-						className="btn btn-primary"
-					>
+					<Button onClick={createProject}>
 						<Plus className="w-4 h-4 mr-2" />
 						New Project
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -111,14 +108,10 @@ export default function Dashboard() {
 						No projects found
 					</p>
 					<div className="flex gap-4">
-						<button
-							type="button"
-							onClick={createProject}
-							className="btn btn-primary"
-						>
+						<Button onClick={createProject}>
 							<Plus className="w-4 h-4 mr-2" />
 							Create Empty Diagram
-						</button>
+						</Button>
 					</div>
 				</div>
 			) : (
@@ -180,13 +173,13 @@ export default function Dashboard() {
 							<p className="text-sm text-muted-foreground flex-grow mb-6">
 								{template.description}
 							</p>
-							<button
-								type="button"
+							<Button
+								variant="secondary"
 								onClick={() => createProjectFromTemplate(template.id)}
-								className="btn btn-secondary w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+								className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
 							>
 								Use Template
-							</button>
+							</Button>
 						</div>
 					))}
 				</div>

@@ -211,23 +211,67 @@ function Flow({ projectId }: { projectId: string }) {
 							Auto Layout
 						</button>
 
-						<div className="flex items-center justify-between gap-2 p-1 border border-border bg-card rounded-md">
-							<Waypoints className="w-4 h-4 ml-2 text-muted-foreground" />
-							<Select
-								value={edgeSettings.type}
-								onChange={(val) =>
-									updateEdgeSettings({
-										type: val as "step" | "smoothstep" | "straight" | "bezier",
-									})
-								}
-								className="w-full flex-1 border-none shadow-none ring-0 bg-transparent"
-								options={[
-									{ label: "Smooth Step", value: "smoothstep" },
-									{ label: "Step", value: "step" },
-									{ label: "Straight", value: "straight" },
-									{ label: "Bezier", value: "bezier" },
-								]}
-							/>
+						<div className="flex flex-col gap-2">
+							<div className="flex items-center justify-between gap-2 p-1 border border-border bg-card rounded-md">
+								<Waypoints className="w-4 h-4 ml-2 text-muted-foreground" />
+								<Select
+									value={edgeSettings.type}
+									onChange={(val) =>
+										updateEdgeSettings({
+											type: val as
+												| "step"
+												| "smoothstep"
+												| "straight"
+												| "bezier",
+										})
+									}
+									className="w-full flex-1 border-none shadow-none ring-0 bg-transparent"
+									options={[
+										{ label: "Smooth Step", value: "smoothstep" },
+										{ label: "Step", value: "step" },
+										{ label: "Straight", value: "straight" },
+										{ label: "Bezier", value: "bezier" },
+									]}
+								/>
+							</div>
+
+							<div className="flex items-center justify-between px-2 py-1">
+								<label
+									className="text-sm text-muted-foreground font-medium cursor-pointer"
+									htmlFor="relation-markers-toggle"
+								>
+									Show Relation Markers
+								</label>
+								<input
+									id="relation-markers-toggle"
+									type="checkbox"
+									checked={edgeSettings.showRelationMarkers || false}
+									onChange={(e) =>
+										updateEdgeSettings({
+											showRelationMarkers: e.target.checked,
+										})
+									}
+									className="checkbox-custom"
+								/>
+							</div>
+
+							<div className="flex items-center justify-between px-2 py-1">
+								<label
+									className="text-sm text-muted-foreground font-medium cursor-pointer"
+									htmlFor="animated-toggle"
+								>
+									Animated Edges
+								</label>
+								<input
+									id="animated-toggle"
+									type="checkbox"
+									checked={edgeSettings.animated}
+									onChange={(e) =>
+										updateEdgeSettings({ animated: e.target.checked })
+									}
+									className="checkbox-custom"
+								/>
+							</div>
 						</div>
 
 						<SqlPreviewModal />
@@ -256,7 +300,7 @@ function Flow({ projectId }: { projectId: string }) {
 							<button
 								type="button"
 								onClick={toggleReadOnly}
-								className="btn btn-secondary h-8 w-11 flex items-center justify-center"
+								className="btn btn-secondary h-8 w-8 px-0 flex items-center justify-center"
 								title={
 									isReadOnly
 										? "Switch to Edit Mode"

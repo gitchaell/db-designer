@@ -75,9 +75,9 @@ export default function SqlPreviewModal() {
 			<button
 				type="button"
 				onClick={() => setIsOpen(true)}
-				className="btn btn-secondary btn-sm font-space"
+				className="btn btn-secondary w-full justify-start text-sm font-medium text-foreground py-2"
 			>
-				<FileCode2 className="w-3.5 h-3.5 mr-1.5" />
+				<FileCode2 className="w-4 h-4 mr-2" />
 				Export SQL
 			</button>
 

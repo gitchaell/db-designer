@@ -1,4 +1,4 @@
-import type { AppEdge, AppNode } from "../types";
+import type { AppNode } from "../types";
 
 export const extractColumnId = (
 	handleId: string | undefined | null,

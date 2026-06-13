@@ -108,7 +108,12 @@ export function Select({
 								<button
 									type="button"
 									key={option.value}
-									onClick={() => {
+									onPointerDown={(e) => {
+										// Stop propagation so it doesn't immediately close via other handlers
+										e.stopPropagation();
+									}}
+									onClick={(e) => {
+										e.stopPropagation();
 										onChange(option.value);
 										setIsOpen(false);
 									}}

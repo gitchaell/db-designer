@@ -5,10 +5,13 @@ import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { Button } from "./components/Button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { deleteProject, getAllProjects, saveProject } from "./lib/db";
-import { createSaaSTemplate } from "./lib/templates";
+import { templates } from "./lib/templates";
 import type { Project } from "./types";
+
+const getTimestamp = () => Date.now();
 
 export default function Dashboard() {
 	const [projects, setProjects] = useState<Project[]>([]);
@@ -45,8 +48,8 @@ export default function Dashboard() {
 		const newProject: Project = {
 			id: uuidv4(),
 			name: "Untitled Project",
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
+			createdAt: getTimestamp(),
+			updatedAt: getTimestamp(),
 			nodes: [],
 			edges: [],
 		};
@@ -54,13 +57,16 @@ export default function Dashboard() {
 		navigateTo(`/project/${newProject.id}`);
 	};
 
-	const createProjectFromTemplate = async () => {
-		const { nodes, edges } = createSaaSTemplate();
+	const createProjectFromTemplate = async (templateId: string) => {
+		const template = templates.find((t) => t.id === templateId);
+		if (!template) return;
+		const { nodes, edges } = template.create();
+		const now = getTimestamp();
 		const newProject: Project = {
 			id: uuidv4(),
-			name: "SaaS Starter Kit",
-			createdAt: Date.now(),
-			updatedAt: Date.now(),
+			name: template.name,
+			createdAt: now,
+			updatedAt: now,
 			nodes,
 			edges,
 		};
@@ -87,22 +93,11 @@ export default function Dashboard() {
 				</div>
 				<div className="flex items-center gap-4">
 					<ThemeToggle />
-					<button
-						type="button"
-						onClick={createProjectFromTemplate}
-						className="btn btn-secondary"
-					>
-						<FileText className="w-4 h-4 mr-2" />
-						SaaS Template
-					</button>
-					<button
-						type="button"
-						onClick={createProject}
-						className="btn btn-primary"
-					>
+
+					<Button onClick={createProject}>
 						<Plus className="w-4 h-4 mr-2" />
 						New Project
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -113,22 +108,10 @@ export default function Dashboard() {
 						No projects found
 					</p>
 					<div className="flex gap-4">
-						<button
-							type="button"
-							onClick={createProjectFromTemplate}
-							className="btn btn-secondary"
-						>
-							<FileText className="w-4 h-4 mr-2" />
-							Use SaaS Template
-						</button>
-						<button
-							type="button"
-							onClick={createProject}
-							className="btn btn-primary"
-						>
+						<Button onClick={createProject}>
 							<Plus className="w-4 h-4 mr-2" />
 							Create Empty Diagram
-						</button>
+						</Button>
 					</div>
 				</div>
 			) : (
@@ -165,6 +148,56 @@ export default function Dashboard() {
 					))}
 				</div>
 			)}
+
+			<div className="mt-24">
+				<div className="flex items-center gap-3 mb-8">
+					<div className="p-2 bg-secondary rounded-lg border border-border">
+						<FileText className="w-6 h-6 text-foreground" />
+					</div>
+					<h2 className="text-2xl font-bold tracking-tight">Templates</h2>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+					{templates.map((template) => (
+						<div
+							key={template.id}
+							className="group relative flex flex-col p-6 rounded-xl bg-card border border-border hover:border-ring/50 transition-all hover:shadow-lg"
+						>
+							<div className="flex items-start justify-between mb-4">
+								<div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+									<FileText className="w-5 h-5 text-primary" />
+								</div>
+							</div>
+							<h3 className="text-lg font-semibold mb-2 group-hover:text-primary tracking-tight">
+								{template.name}
+							</h3>
+							<p className="text-sm text-muted-foreground flex-grow mb-6">
+								{template.description}
+							</p>
+							<Button
+								variant="secondary"
+								onClick={() => createProjectFromTemplate(template.id)}
+								className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+							>
+								Use Template
+							</Button>
+						</div>
+					))}
+				</div>
+			</div>
+
+			<footer className="mt-24 pb-8 text-center text-sm text-muted-foreground border-t border-border pt-8">
+				<p>
+					Built by{" "}
+					<a
+						href="https://michaellalavedra.com"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-primary hover:underline font-medium"
+					>
+						Michaell Alavedra
+					</a>
+				</p>
+			</footer>
 		</main>
 	);
 }

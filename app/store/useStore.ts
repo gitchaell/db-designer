@@ -20,6 +20,11 @@ import type {
 	TableNodeData,
 } from "../types";
 
+export type HistoryState = {
+	nodes: AppNode[];
+	edges: Edge[];
+};
+
 type AppState = {
 	project: Project | null;
 	nodes: AppNode[];
@@ -32,6 +37,12 @@ type AppState = {
 	toggleReadOnly: () => void;
 	loadProject: (id: string) => Promise<void>;
 	setProjectName: (name: string) => void;
+	// History
+	history: HistoryState[];
+	historyIndex: number;
+	undo: () => void;
+	redo: () => void;
+	pushHistory: (newNodes: AppNode[], newEdges: Edge[]) => void;
 
 	onNodesChange: OnNodesChange<AppNode>;
 	onEdgesChange: OnEdgesChange;
@@ -166,7 +177,61 @@ export const useStore = create<AppState>((set, get) => ({
 		animated: true,
 		showRelationMarkers: false,
 	},
+	history: [],
+	historyIndex: -1,
 
+	pushHistory: (newNodes: AppNode[], newEdges: Edge[]) => {
+		const { history, historyIndex } = get();
+		const currentState = { nodes: newNodes, edges: newEdges };
+		// truncate history if we are in the middle of it
+		const newHistory = history.slice(0, historyIndex + 1);
+		newHistory.push(currentState);
+		// keep max 50 states
+		if (newHistory.length > 50) {
+			newHistory.shift();
+		}
+		set({ history: newHistory, historyIndex: newHistory.length - 1 });
+	},
+
+	undo: () => {
+		const { history, historyIndex, project } = get();
+		if (historyIndex > 0) {
+			const newIndex = historyIndex - 1;
+			const previousState = history[newIndex];
+			set({
+				nodes: previousState.nodes,
+				edges: previousState.edges,
+				historyIndex: newIndex,
+			});
+			if (project) {
+				debouncedSave({
+					...project,
+					nodes: previousState.nodes,
+					edges: previousState.edges,
+				});
+			}
+		}
+	},
+
+	redo: () => {
+		const { history, historyIndex, project } = get();
+		if (historyIndex < history.length - 1) {
+			const newIndex = historyIndex + 1;
+			const nextState = history[newIndex];
+			set({
+				nodes: nextState.nodes,
+				edges: nextState.edges,
+				historyIndex: newIndex,
+			});
+			if (project) {
+				debouncedSave({
+					...project,
+					nodes: nextState.nodes,
+					edges: nextState.edges,
+				});
+			}
+		}
+	},
 	toggleReadOnly: () => set((state) => ({ isReadOnly: !state.isReadOnly })),
 	loadProject: async (id: string) => {
 		set({ isLoading: true });
@@ -180,6 +245,8 @@ export const useStore = create<AppState>((set, get) => ({
 					nodes: project.nodes,
 					edges: smartEdges,
 					isLoading: false,
+					history: [{ nodes: project.nodes, edges: smartEdges }],
+					historyIndex: 0,
 					edgeSettings: project.edgeSettings || {
 						type: "smoothstep",
 						animated: true,
@@ -217,16 +284,12 @@ export const useStore = create<AppState>((set, get) => ({
 
 		let newEdges = edges;
 		if (movedNodeIds.length > 0) {
-			// Find edges connected to moved nodes
 			const relevantEdges = edges.filter(
 				(e) =>
 					movedNodeIds.includes(e.source) || movedNodeIds.includes(e.target),
 			);
-			// Calculate new handles for them
-			// We need to pass ALL nodes to getSmartHandleIds, so use newNodes
 			const updatedRelevantEdges = recalculateEdges(relevantEdges, newNodes);
 
-			// Merge back
 			newEdges = edges.map(
 				(e) => updatedRelevantEdges.find((ue) => ue.id === e.id) || e,
 			);
@@ -235,6 +298,17 @@ export const useStore = create<AppState>((set, get) => ({
 		set({ nodes: newNodes, edges: newEdges });
 		if (project)
 			debouncedSave({ ...project, nodes: newNodes, edges: newEdges });
+
+		// Check if drag ended or node removed/added to push history
+		const shouldPushHistory = changes.some(
+			(c) =>
+				(c.type === "position" && c.dragging === false) ||
+				c.type === "remove" ||
+				c.type === "add",
+		);
+		if (shouldPushHistory) {
+			get().pushHistory(newNodes, newEdges);
+		}
 	},
 
 	onEdgesChange: (changes) => {
@@ -243,6 +317,13 @@ export const useStore = create<AppState>((set, get) => ({
 		set({ edges: newEdges });
 		if (project)
 			debouncedSave({ ...project, nodes: get().nodes, edges: newEdges });
+
+		const shouldPushHistory = changes.some(
+			(c) => c.type === "remove" || c.type === "add",
+		);
+		if (shouldPushHistory) {
+			get().pushHistory(get().nodes, newEdges);
+		}
 	},
 
 	onConnect: (connection) => {
@@ -277,42 +358,43 @@ export const useStore = create<AppState>((set, get) => ({
 
 		const newEdges = addEdge(smartConnection, edges);
 		set({ edges: newEdges });
+		get().pushHistory(nodes, newEdges);
 		if (project) debouncedSave({ ...project, nodes: nodes, edges: newEdges });
 	},
 
 	addNode: (node) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = [...nodes, node];
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	setNodes: (newNodes) => {
-		const { project } = get();
+		const { project, edges } = get();
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	updateNode: (id, data) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) =>
 			node.id === id ? { ...node, ...data } : node,
 		);
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	updateNodeData: (id, data) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) =>
 			node.id === id ? { ...node, data: { ...node.data, ...data } } : node,
 		);
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	deleteNode: (id) => {
@@ -321,12 +403,13 @@ export const useStore = create<AppState>((set, get) => ({
 		// Remove connected edges
 		const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
 		set({ nodes: newNodes, edges: newEdges });
+		get().pushHistory(newNodes, newEdges);
 		if (project)
 			debouncedSave({ ...project, nodes: newNodes, edges: newEdges });
 	},
 
 	addColumn: (nodeId, column) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
 			if (node.id === nodeId) {
 				return {
@@ -340,12 +423,12 @@ export const useStore = create<AppState>((set, get) => ({
 			return node;
 		});
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	updateColumn: (nodeId, columnId, data) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
 			if (node.id === nodeId) {
 				return {
@@ -361,12 +444,12 @@ export const useStore = create<AppState>((set, get) => ({
 			return node;
 		});
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	deleteColumn: (nodeId, columnId) => {
-		const { nodes, project } = get();
+		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
 			if (node.id === nodeId) {
 				return {
@@ -380,8 +463,8 @@ export const useStore = create<AppState>((set, get) => ({
 			return node;
 		});
 		set({ nodes: newNodes });
-		if (project)
-			debouncedSave({ ...project, nodes: newNodes, edges: get().edges });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
 	},
 
 	updateEdgeSettings: (settings) => {

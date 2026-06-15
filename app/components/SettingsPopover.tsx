@@ -62,10 +62,10 @@ export default function SettingsPopover({
 				createPortal(
 					<div
 						ref={popoverRef}
-						className="fixed z-[9999] w-64 bg-popover text-popover-foreground rounded-lg border border-border shadow-xl p-3 flex flex-col gap-3 animate-in fade-in zoom-in duration-200"
+						className="fixed z-[9999] w-64 bg-popover text-popover-foreground rounded-md border border-border shadow-md p-2 flex flex-col gap-2 animate-in fade-in zoom-in duration-200"
 						style={{ top: position.top, left: position.left }}
 					>
-						<h3 className="text-sm font-semibold border-b border-border pb-2 mb-1">
+						<h3 className="text-sm font-semibold border-b border-border pb-2">
 							Configuration
 						</h3>
 						{children}

@@ -22,8 +22,8 @@ import { v4 as uuidv4 } from "uuid";
 import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
-import SettingsPopover from "./SettingsPopover";
 import { Select } from "./Select";
+import SettingsPopover from "./SettingsPopover";
 import SqlPreviewModal from "./SqlPreviewModal";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
@@ -200,9 +200,10 @@ function Flow({ projectId }: { projectId: string }) {
 
 					<SettingsPopover>
 						<Button
-							variant="secondary"
+							variant="ghost"
+							size="sm"
 							onClick={onLayout}
-							className="w-full justify-start text-sm font-medium text-foreground py-2"
+							className="w-full justify-start"
 							title="Auto Layout"
 						>
 							<LayoutGrid className="w-4 h-4 mr-2" />
@@ -210,7 +211,7 @@ function Flow({ projectId }: { projectId: string }) {
 						</Button>
 
 						<div className="flex flex-col gap-2">
-							<div className="flex items-center justify-between gap-2 p-1 border border-border bg-card rounded-md">
+							<div className="flex items-center gap-2">
 								<Waypoints className="w-4 h-4 ml-2 text-muted-foreground" />
 								<Select
 									value={edgeSettings.type}
@@ -223,7 +224,7 @@ function Flow({ projectId }: { projectId: string }) {
 												| "bezier",
 										})
 									}
-									className="w-full flex-1 border-none shadow-none ring-0 bg-transparent"
+									className="w-full flex-1"
 									options={[
 										{ label: "Smooth Step", value: "smoothstep" },
 										{ label: "Step", value: "step" },
@@ -233,7 +234,7 @@ function Flow({ projectId }: { projectId: string }) {
 								/>
 							</div>
 
-							<div className="flex items-center justify-between px-2 py-1">
+							<div className="flex items-center justify-between py-1">
 								<label
 									className="text-sm text-muted-foreground font-medium cursor-pointer"
 									htmlFor="relation-markers-toggle"

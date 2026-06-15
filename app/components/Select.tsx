@@ -82,8 +82,6 @@ export function Select({
 				className={twMerge(
 					clsx(
 						"select w-full flex items-center justify-between gap-2",
-						className?.includes("select-sm") &&
-							"!h-6 !px-1 !text-xs !py-0.5 !border-transparent !bg-transparent hover:!bg-muted focus:!bg-muted focus:!ring-1 focus:!ring-ring",
 						!selectedOption && "text-muted-foreground",
 						disabled && "opacity-50 cursor-not-allowed",
 					),

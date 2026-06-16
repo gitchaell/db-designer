@@ -199,20 +199,19 @@ function Flow({ projectId }: { projectId: string }) {
 					</Button>
 
 					<SettingsPopover>
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={onLayout}
-							className="w-full justify-start"
-							title="Auto Layout"
-						>
-							<LayoutGrid className="w-4 h-4 mr-2" />
-							Auto Layout
-						</Button>
+						<div className="flex flex-col gap-1 w-full">
+							<Button
+								variant="ghost"
+								onClick={onLayout}
+								className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+								title="Auto Layout"
+							>
+								<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
+								Auto Layout
+							</Button>
 
-						<div className="flex flex-col gap-2">
-							<div className="flex items-center gap-2">
-								<Waypoints className="w-4 h-4 ml-2 text-muted-foreground" />
+							<div className="flex items-center gap-2 px-2 py-1.5">
+								<Waypoints className="w-4 h-4 text-muted-foreground" />
 								<Select
 									value={edgeSettings.type}
 									onChange={(val) =>
@@ -234,9 +233,9 @@ function Flow({ projectId }: { projectId: string }) {
 								/>
 							</div>
 
-							<div className="flex items-center justify-between py-1">
+							<div className="flex items-center justify-between px-2 py-1.5">
 								<label
-									className="text-sm text-muted-foreground font-medium cursor-pointer"
+									className="text-sm text-foreground font-medium cursor-pointer"
 									htmlFor="relation-markers-toggle"
 								>
 									Show Relation Markers
@@ -252,9 +251,9 @@ function Flow({ projectId }: { projectId: string }) {
 								/>
 							</div>
 
-							<div className="flex items-center justify-between px-2 py-1">
+							<div className="flex items-center justify-between px-2 py-1.5">
 								<label
-									className="text-sm text-muted-foreground font-medium cursor-pointer"
+									className="text-sm text-foreground font-medium cursor-pointer"
 									htmlFor="animated-toggle"
 								>
 									Animated Edges
@@ -267,51 +266,50 @@ function Flow({ projectId }: { projectId: string }) {
 									}
 								/>
 							</div>
-						</div>
 
-						<SqlPreviewModal />
+							<SqlPreviewModal />
 
-						<Button
-							variant="secondary"
-							onClick={downloadImage}
-							className="w-full justify-start text-sm font-medium text-foreground py-2"
-							title="Download Diagram as Image"
-							disabled={isDownloading}
-						>
-							{isDownloading ? (
-								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-							) : (
-								<Download className="w-4 h-4 mr-2" />
-							)}
-							Download PNG
-						</Button>
-
-						<div className="h-px bg-border my-2 w-full" />
-
-						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-muted-foreground">
-								Read Only
-							</span>
 							<Button
-								variant="secondary"
-								size="icon"
-								onClick={toggleReadOnly}
-								title={
-									isReadOnly
-										? "Switch to Edit Mode"
-										: "Switch to Read Only Mode"
-								}
+								variant="ghost"
+								onClick={downloadImage}
+								className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+								title="Download Diagram as Image"
+								disabled={isDownloading}
 							>
-								<Eye className="w-4 h-4" />
+								{isDownloading ? (
+									<Loader2 className="w-4 h-4 mr-2 text-muted-foreground animate-spin" />
+								) : (
+									<Download className="w-4 h-4 mr-2 text-muted-foreground" />
+								)}
+								Download PNG
 							</Button>
-						</div>
 
-						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-muted-foreground">
-								Theme
-							</span>
-							<div className="scale-90 origin-right">
-								<ThemeToggle />
+							<div className="h-px bg-border my-1 w-full" />
+
+							<div className="flex items-center justify-between px-2 py-1.5">
+								<span className="text-sm font-medium text-foreground">
+									Read Only
+								</span>
+								<Button
+									variant="secondary"
+									size="icon"
+									className="w-7 h-7"
+									onClick={toggleReadOnly}
+									title={
+										isReadOnly
+											? "Switch to Edit Mode"
+											: "Switch to Read Only Mode"
+									}
+								>
+									<Eye className="w-3.5 h-3.5" />
+								</Button>
+							</div>
+
+							<div className="flex items-center justify-between px-2 py-1.5">
+								<span className="text-sm font-medium text-foreground">
+									Theme
+								</span>
+								<ThemeToggle className="w-7 h-7 [&>svg]:w-3.5 [&>svg]:h-3.5" />
 							</div>
 						</div>
 					</SettingsPopover>

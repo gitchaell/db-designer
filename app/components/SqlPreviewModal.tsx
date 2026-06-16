@@ -74,11 +74,11 @@ export default function SqlPreviewModal() {
 	return (
 		<>
 			<Button
-				variant="secondary"
+				variant="ghost"
 				onClick={() => setIsOpen(true)}
-				className="w-full justify-start text-sm font-medium text-foreground py-2"
+				className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
 			>
-				<FileCode2 className="w-4 h-4 mr-2" />
+				<FileCode2 className="w-4 h-4 mr-2 text-muted-foreground" />
 				Export SQL
 			</Button>
 

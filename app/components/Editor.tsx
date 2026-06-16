@@ -336,7 +336,7 @@ function Flow({ projectId }: { projectId: string }) {
 										Read Only
 									</span>
 									<Button
-										variant="secondary"
+										variant="ghost"
 										size="icon"
 										className="w-7 h-7"
 										// Let the parent div handle the click, or handle it here with stopPropagation
@@ -351,8 +351,20 @@ function Flow({ projectId }: { projectId: string }) {
 									</Button>
 								</div>
 
-								<div className="flex items-center justify-between px-2 py-1.5">
-									<span className="text-sm font-medium text-foreground">
+								{/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by ThemeToggle internally */}
+								<div
+									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
+									onClick={() => {
+										const newTheme = resolvedTheme === "dark" ? "light" : "dark";
+										document.documentElement.classList.toggle("dark", newTheme === "dark");
+										document.documentElement.classList.toggle("light", newTheme === "light");
+										// Use next-themes setTheme internally via a button click hack if needed, or better, pass down state
+										// Since we are in the editor and don't have setTheme directly here, we use the button.
+										const themeBtn = document.querySelector('[title="Toggle theme"]') as HTMLButtonElement;
+										if (themeBtn) themeBtn.click();
+									}}
+								>
+									<span className="text-sm font-medium text-foreground flex-1 pointer-events-none">
 										Theme
 									</span>
 									<ThemeToggle className="w-7 h-7 [&>svg]:w-3.5 [&>svg]:h-3.5" />

@@ -34,6 +34,54 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		deleteNode,
 		isReadOnly,
 	} = useStore();
+
+	const handleAddColumnWithFocus = useRef(() => {
+		const newColId = uuidv4();
+		addColumn(id, {
+			id: newColId,
+			name: "new_column",
+			type: "varchar",
+			isPk: false,
+			isFk: false,
+		});
+
+		// Attempt to focus the new column input after a short delay
+		setTimeout(() => {
+			const inputs = nodeRef.current?.querySelectorAll(`input`);
+			if (inputs && inputs.length > 0) {
+				const lastInput = inputs[inputs.length - 1];
+				if (lastInput) {
+					lastInput.focus();
+					lastInput.select();
+				}
+			}
+		}, 50);
+	});
+
+	// Update the ref so the event listener doesn't need to depend on the function directly
+	useEffect(() => {
+		handleAddColumnWithFocus.current = () => {
+			const newColId = uuidv4();
+			addColumn(id, {
+				id: newColId,
+				name: "new_column",
+				type: "varchar",
+				isPk: false,
+				isFk: false,
+			});
+
+			setTimeout(() => {
+				const inputs = nodeRef.current?.querySelectorAll(`input`);
+				if (inputs && inputs.length > 0) {
+					const lastInput = inputs[inputs.length - 1];
+					if (lastInput) {
+						lastInput.focus();
+						lastInput.select();
+					}
+				}
+			}, 50);
+		};
+	}, [addColumn, id]);
 	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 	const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +96,21 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
+	// Listen to custom field-enter event
+	useEffect(() => {
+		const node = nodeRef.current;
+		if (!node) return;
+
+		const handleFieldEnter = () => {
+			handleAddColumnWithFocus.current();
+		};
+
+		node.addEventListener("field-enter", handleFieldEnter as EventListener);
+		return () => {
+			node.removeEventListener("field-enter", handleFieldEnter as EventListener);
+		};
+	}, []);
+
 	const handleAddColumn = () => {
 		addColumn(id, {
 			id: uuidv4(),
@@ -59,8 +122,12 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 	};
 
 	const handleAutofit = () => {
-		// Resetting width and height to undefined allows the node to auto-size based on content
-		updateNode(id, { style: { width: undefined, height: undefined } });
+		// Using 'auto' allows the element to shrink back to its content size
+		updateNode(id, { style: { width: "auto", height: "auto" } });
+		// Reset to undefined immediately after so it doesn't get stuck at auto if the user tries to resize
+		setTimeout(() => {
+			updateNode(id, { style: { width: undefined, height: undefined } });
+		}, 50);
 	};
 
 	// Determine header color. Default is transparent/zinc-900 styled via class.
@@ -153,7 +220,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				</div>
 
 				{/* Columns */}
-				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+				<div
+					className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar"
+				>
 					{data.columns.map((col) => (
 						<TableRow
 							key={col.id}
@@ -170,7 +239,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				{!isReadOnly && (
 					<button
 						type="button"
-						onClick={handleAddColumn}
+						onClick={() => handleAddColumnWithFocus.current()}
 						className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
 					>
 						<Plus className="w-3 h-3" /> Add Column

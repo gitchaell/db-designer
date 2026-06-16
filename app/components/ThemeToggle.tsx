@@ -19,9 +19,12 @@ export function ThemeToggle({ className }: { className?: string }) {
 
 	return (
 		<Button
-			variant="secondary"
+			variant="ghost"
 			size="icon"
-			onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+			onClick={(e) => {
+				e.stopPropagation();
+				setTheme(theme === "dark" ? "light" : "dark")
+			}}
 			title="Toggle theme"
 			className={className}
 		>

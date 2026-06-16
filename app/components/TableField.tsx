@@ -46,6 +46,15 @@ export function TableField({
 			type="text"
 			value={value}
 			onChange={(e) => onChange?.(e.target.value)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" && type === "text") {
+					// We dispatch a custom event that TableRow can listen to, or we could pass an onEnter prop
+					// Let's create and dispatch a custom event
+					e.currentTarget.dispatchEvent(
+						new CustomEvent("field-enter", { bubbles: true })
+					);
+				}
+			}}
 			className={clsx("bg-transparent focus:outline-none", className)}
 			placeholder={placeholder}
 		/>

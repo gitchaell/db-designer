@@ -210,6 +210,8 @@ function Flow({ projectId }: { projectId: string }) {
 								Auto Layout
 							</Button>
 
+							<div className="h-px bg-border my-1 w-full" />
+
 							<div className="flex items-center gap-2 px-2 py-1.5">
 								<Waypoints className="w-4 h-4 text-muted-foreground" />
 								<Select
@@ -266,6 +268,8 @@ function Flow({ projectId }: { projectId: string }) {
 									}
 								/>
 							</div>
+
+							<div className="h-px bg-border my-1 w-full" />
 
 							<SqlPreviewModal />
 

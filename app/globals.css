@@ -75,7 +75,7 @@ body {
 	background: var(--background);
 	color: var(--foreground);
 	font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-	font-feature-settings: "ss02" 1;
+	font-feature-settings: "ss01" 1, "ss02" 1, "cv11" 1, "cv02" 1;
 }
 
 h1,
@@ -144,7 +144,7 @@ h6,
 	}
 
 	.select {
-		@apply flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background transition-colors duration-200 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 hover:border-ring/50 cursor-pointer [&>span]:line-clamp-1;
+		@apply flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md bg-transparent px-3 py-2 text-sm ring-offset-background transition-colors duration-200 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 hover:bg-muted cursor-pointer [&>span]:line-clamp-1;
 	}
 
 	/* Custom Checkbox */

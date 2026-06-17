@@ -18,7 +18,9 @@ export default function TsExportModal() {
 			// Convert table name to PascalCase for interface name
 			const interfaceName = tableName
 				.split(/[_-\s]+/)
-				.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+				.map(
+					(word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+				)
 				.join("");
 
 			generated += `export interface ${interfaceName} {\n`;
@@ -27,7 +29,11 @@ export default function TsExportModal() {
 				let typeStr = "any";
 
 				// Map internal types to TypeScript types
-				if (col.type === "uuid" || col.type === "varchar" || col.type === "text") {
+				if (
+					col.type === "uuid" ||
+					col.type === "varchar" ||
+					col.type === "text"
+				) {
 					typeStr = "string";
 				} else if (col.type === "int") {
 					typeStr = "number";
@@ -121,7 +127,7 @@ export default function TsExportModal() {
 										stickyScroll: { enabled: false },
 										lineNumbers: "on",
 										fontSize: 14,
-										fontFamily: "var(--font-mono), monospace",
+										fontFamily: '"JetBrains Mono", var(--font-mono), monospace',
 										padding: { top: 16 },
 									}}
 								/>

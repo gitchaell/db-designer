@@ -8,7 +8,12 @@ function mapTsTypeToColumnType(tsType: string): ColumnType {
 	if (typeLower.includes("number")) return "int";
 	if (typeLower.includes("boolean")) return "boolean";
 	if (typeLower.includes("date")) return "timestamp";
-	if (typeLower.includes("record") || typeLower.includes("any") || typeLower.includes("unknown")) return "json";
+	if (
+		typeLower.includes("record") ||
+		typeLower.includes("any") ||
+		typeLower.includes("unknown")
+	)
+		return "json";
 
 	// Default to varchar for string or anything else we don't recognize
 	return "varchar";
@@ -22,7 +27,8 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 
 	// Regex to find interfaces and types
 	// Matches `interface Name { ... }` or `type Name = { ... }` or `export interface Name { ... }`
-	const interfaceRegex = /(?:export\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)(?:\s*=\s*)?\s*\{([^}]+)\}/g;
+	const interfaceRegex =
+		/(?:export\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)(?:\s*=\s*)?\s*\{([^}]+)\}/g;
 
 	let match;
 	let xPos = 50;
@@ -33,7 +39,10 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 		const interfaceName = name.trim();
 
 		// Split body into lines and parse properties
-		const propertyLines = body.split(/;|\n/).map(l => l.trim()).filter(l => l.length > 0);
+		const propertyLines = body
+			.split(/;|\n/)
+			.map((l) => l.trim())
+			.filter((l) => l.length > 0);
 
 		const columns: Column[] = [];
 		let isFirst = true;
@@ -46,7 +55,7 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 				const [, propName, propType] = propMatch;
 
 				// Make the first property the PK, or if name is 'id'
-				const isPk = isFirst || propName.toLowerCase() === 'id';
+				const isPk = isFirst || propName.toLowerCase() === "id";
 				if (isPk) isFirst = false;
 
 				columns.push({

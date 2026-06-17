@@ -69,8 +69,13 @@ export function Select({
 				setIsOpen(false);
 			}
 		};
-		document.addEventListener("pointerdown", handleClickOutside, { capture: true });
-		return () => document.removeEventListener("pointerdown", handleClickOutside, { capture: true });
+		document.addEventListener("pointerdown", handleClickOutside, {
+			capture: true,
+		});
+		return () =>
+			document.removeEventListener("pointerdown", handleClickOutside, {
+				capture: true,
+			});
 	}, []);
 
 	return (

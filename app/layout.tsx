@@ -1,22 +1,12 @@
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { SchemaMarkup } from "./components/SchemaMarkup";
 import { ThemeProvider } from "./components/ThemeProvider";
 
-const inter = Inter({
-	variable: "--font-inter",
-	subsets: ["latin"],
-	display: "swap",
-});
-
 const spaceGrotesk = Space_Grotesk({
 	variable: "--font-space-grotesk",
-	subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-	variable: "--font-jetbrains-mono",
 	subsets: ["latin"],
 });
 
@@ -50,7 +40,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body
-				className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground transition-colors duration-300`}
+				className={`${GeistSans.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground transition-colors duration-300`}
 			>
 				<ThemeProvider
 					attribute="class"

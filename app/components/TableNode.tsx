@@ -47,7 +47,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 		// Attempt to focus the new column input after a short delay
 		setTimeout(() => {
-			const inputs = nodeRef.current?.querySelectorAll(`input`);
+			const inputs = nodeRef.current?.querySelectorAll("input");
 			if (inputs && inputs.length > 0) {
 				const lastInput = inputs[inputs.length - 1];
 				if (lastInput) {
@@ -71,7 +71,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 			});
 
 			setTimeout(() => {
-				const inputs = nodeRef.current?.querySelectorAll(`input`);
+				const inputs = nodeRef.current?.querySelectorAll("input");
 				if (inputs && inputs.length > 0) {
 					const lastInput = inputs[inputs.length - 1];
 					if (lastInput) {
@@ -107,7 +107,10 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 		node.addEventListener("field-enter", handleFieldEnter as EventListener);
 		return () => {
-			node.removeEventListener("field-enter", handleFieldEnter as EventListener);
+			node.removeEventListener(
+				"field-enter",
+				handleFieldEnter as EventListener,
+			);
 		};
 	}, []);
 
@@ -118,8 +121,8 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 			height: undefined,
 			style: {
 				width: undefined,
-				height: undefined
-			}
+				height: undefined,
+			},
 		});
 	};
 
@@ -213,9 +216,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				</div>
 
 				{/* Columns */}
-				<div
-					className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar"
-				>
+				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
 					{data.columns.map((col) => (
 						<TableRow
 							key={col.id}

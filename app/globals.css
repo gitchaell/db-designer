@@ -46,6 +46,7 @@
 	--radius-radius: var(--radius);
 	--font-sans: var(--font-geist-sans);
 	--font-space: var(--font-space-grotesk);
+	--font-mono: var(--font-jetbrains-mono);
 }
 
 .dark {

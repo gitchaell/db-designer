@@ -51,7 +51,7 @@ export function TableField({
 					// We dispatch a custom event that TableRow can listen to, or we could pass an onEnter prop
 					// Let's create and dispatch a custom event
 					e.currentTarget.dispatchEvent(
-						new CustomEvent("field-enter", { bubbles: true })
+						new CustomEvent("field-enter", { bubbles: true }),
 					);
 				}
 			}}

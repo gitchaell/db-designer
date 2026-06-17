@@ -216,7 +216,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				</div>
 
 				{/* Columns */}
-				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
 					{data.columns.map((col) => (
 						<TableRow
 							key={col.id}

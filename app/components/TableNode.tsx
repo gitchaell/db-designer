@@ -112,12 +112,15 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 	}, []);
 
 	const handleAutofit = () => {
-		// Using 'auto' allows the element to shrink back to its content size
-		updateNode(id, { style: { width: "auto", height: "auto" } });
-		// Reset to undefined immediately after so it doesn't get stuck at auto if the user tries to resize
-		setTimeout(() => {
-			updateNode(id, { style: { width: undefined, height: undefined } });
-		}, 50);
+		// Fully clear the explicitly set width and height from the node to allow it to shrink
+		updateNode(id, {
+			width: undefined,
+			height: undefined,
+			style: {
+				width: undefined,
+				height: undefined
+			}
+		});
 	};
 
 	// Determine header color. Default is transparent/zinc-900 styled via class.
@@ -152,12 +155,12 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 						value={data.label}
 						isReadOnly={isReadOnly}
 						onChange={(val) => updateNodeData(id, { label: val })}
-						className="text-sm font-bold text-white flex-1 font-sans placeholder-white/40"
-						readOnlyClassName="bg-transparent text-sm font-bold text-white flex-1 font-sans truncate"
+						className="text-sm font-bold text-white flex-1 min-w-0 font-sans placeholder-white/40"
+						readOnlyClassName="bg-transparent text-sm font-bold text-white flex-1 min-w-0 font-sans truncate"
 						placeholder="Table Name"
 					/>
 
-					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none">
+					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none ml-auto shrink-0">
 						{/* Autofit Button */}
 						<button
 							type="button"

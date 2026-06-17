@@ -75,7 +75,8 @@ body {
 	background: var(--background);
 	color: var(--foreground);
 	font-family: var(--font-inter), Arial, Helvetica, sans-serif;
-	font-feature-settings: "cv11" 1, "ss01" 1, "ss02" 1;
+	font-feature-settings: "cv11", "ss01";
+	font-variant-alternates: "cv11", "ss01";
 }
 
 h1,

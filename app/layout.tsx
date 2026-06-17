@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 const inter = Inter({
 	variable: "--font-inter",
 	subsets: ["latin"],
+	display: "swap",
 });
 
 const spaceGrotesk = Space_Grotesk({

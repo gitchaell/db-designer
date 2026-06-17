@@ -173,7 +173,7 @@ export const useStore = create<AppState>((set, get) => ({
 	isLoading: false,
 	isReadOnly: false,
 	edgeSettings: {
-		type: "smoothstep",
+		type: "bezier",
 		animated: true,
 		showRelationMarkers: false,
 	},
@@ -248,7 +248,7 @@ export const useStore = create<AppState>((set, get) => ({
 					history: [{ nodes: project.nodes, edges: smartEdges }],
 					historyIndex: 0,
 					edgeSettings: project.edgeSettings || {
-						type: "smoothstep",
+						type: "bezier",
 						animated: true,
 						showRelationMarkers: false,
 					},

@@ -1,30 +1,12 @@
 import { useStore } from "@/app/store/useStore";
-import type { AppNode, ColumnType } from "@/app/types";
-import { Handle, type NodeProps, NodeResizer, Position } from "@xyflow/react";
+import type { AppNode } from "@/app/types";
+import { type NodeProps, NodeResizer } from "@xyflow/react";
 import { clsx } from "clsx";
-import {
-	GripVertical,
-	Key,
-	Lock,
-	Minimize,
-	Palette,
-	Plus,
-	Trash2,
-	X,
-} from "lucide-react";
+import { GripVertical, Minimize, Palette, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { Select } from "./Select";
-
-const COLUMN_TYPES: ColumnType[] = [
-	"uuid",
-	"varchar",
-	"int",
-	"boolean",
-	"timestamp",
-	"text",
-	"json",
-];
+import { TableField } from "./TableField";
+import { TableRow } from "./TableRow";
 
 // Expanded color palette
 const COLORS = [
@@ -52,6 +34,54 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		deleteNode,
 		isReadOnly,
 	} = useStore();
+
+	const handleAddColumnWithFocus = useRef(() => {
+		const newColId = uuidv4();
+		addColumn(id, {
+			id: newColId,
+			name: "new_column",
+			type: "varchar",
+			isPk: false,
+			isFk: false,
+		});
+
+		// Attempt to focus the new column input after a short delay
+		setTimeout(() => {
+			const inputs = nodeRef.current?.querySelectorAll(`input`);
+			if (inputs && inputs.length > 0) {
+				const lastInput = inputs[inputs.length - 1];
+				if (lastInput) {
+					lastInput.focus();
+					lastInput.select();
+				}
+			}
+		}, 50);
+	});
+
+	// Update the ref so the event listener doesn't need to depend on the function directly
+	useEffect(() => {
+		handleAddColumnWithFocus.current = () => {
+			const newColId = uuidv4();
+			addColumn(id, {
+				id: newColId,
+				name: "new_column",
+				type: "varchar",
+				isPk: false,
+				isFk: false,
+			});
+
+			setTimeout(() => {
+				const inputs = nodeRef.current?.querySelectorAll(`input`);
+				if (inputs && inputs.length > 0) {
+					const lastInput = inputs[inputs.length - 1];
+					if (lastInput) {
+						lastInput.focus();
+						lastInput.select();
+					}
+				}
+			}, 50);
+		};
+	}, [addColumn, id]);
 	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 	const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -66,19 +96,31 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
-	const handleAddColumn = () => {
-		addColumn(id, {
-			id: uuidv4(),
-			name: "new_column",
-			type: "varchar",
-			isPk: false,
-			isFk: false,
-		});
-	};
+	// Listen to custom field-enter event
+	useEffect(() => {
+		const node = nodeRef.current;
+		if (!node) return;
+
+		const handleFieldEnter = () => {
+			handleAddColumnWithFocus.current();
+		};
+
+		node.addEventListener("field-enter", handleFieldEnter as EventListener);
+		return () => {
+			node.removeEventListener("field-enter", handleFieldEnter as EventListener);
+		};
+	}, []);
 
 	const handleAutofit = () => {
-		// Resetting width and height to undefined allows the node to auto-size based on content
-		updateNode(id, { style: { width: undefined, height: undefined } });
+		// Fully clear the explicitly set width and height from the node to allow it to shrink
+		updateNode(id, {
+			width: undefined,
+			height: undefined,
+			style: {
+				width: undefined,
+				height: undefined
+			}
+		});
 	};
 
 	// Determine header color. Default is transparent/zinc-900 styled via class.
@@ -108,21 +150,17 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 					)}
 				>
 					<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing flex-none" />
-					{isReadOnly ? (
-						<span className="bg-transparent text-sm font-bold text-white flex-1 font-sans truncate">
-							{data.label}
-						</span>
-					) : (
-						<input
-							type="text"
-							value={data.label}
-							onChange={(e) => updateNodeData(id, { label: e.target.value })}
-							className="bg-transparent text-sm font-bold text-white focus:outline-none flex-1 font-sans placeholder-white/40"
-							placeholder="Table Name"
-						/>
-					)}
 
-					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none">
+					<TableField
+						value={data.label}
+						isReadOnly={isReadOnly}
+						onChange={(val) => updateNodeData(id, { label: val })}
+						className="text-sm font-bold text-white flex-1 min-w-0 font-sans placeholder-white/40"
+						readOnlyClassName="bg-transparent text-sm font-bold text-white flex-1 min-w-0 font-sans truncate"
+						placeholder="Table Name"
+					/>
+
+					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none ml-auto shrink-0">
 						{/* Autofit Button */}
 						<button
 							type="button"
@@ -175,140 +213,18 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				</div>
 
 				{/* Columns */}
-				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+				<div
+					className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto min-h-0 custom-scrollbar"
+				>
 					{data.columns.map((col) => (
-						<div
+						<TableRow
 							key={col.id}
-							className="relative flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors group/col"
-						>
-							{/* Handles */}
-							<Handle
-								type="source"
-								position={Position.Left}
-								id={`sl-${col.id}`}
-								className="!bg-muted-foreground !w-2.5 !h-2.5 !left-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
-								isConnectable={true}
-							/>
-							<Handle
-								type="target"
-								position={Position.Left}
-								id={`tl-${col.id}`}
-								className="!bg-muted-foreground !w-2.5 !h-2.5 !left-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
-								isConnectable={true}
-							/>
-
-							{/* PK/FK Toggles */}
-							<div className="flex items-center gap-0.5 min-w-[36px] flex-none">
-								{(!isReadOnly || col.isPk) && (
-									<button
-										type="button"
-										disabled={isReadOnly}
-										onClick={() =>
-											updateColumn(id, col.id, { isPk: !col.isPk })
-										}
-										className={clsx(
-											"p-0.5 rounded transition-colors",
-											col.isPk
-												? "text-amber-500 bg-amber-500/10"
-												: "text-muted-foreground hover:text-foreground",
-											isReadOnly && "cursor-not-allowed opacity-80",
-										)}
-										title="Primary Key"
-									>
-										<Key className="w-3 h-3" />
-									</button>
-								)}
-								{(!isReadOnly || col.isFk) && (
-									<button
-										type="button"
-										disabled={isReadOnly}
-										onClick={() =>
-											updateColumn(id, col.id, { isFk: !col.isFk })
-										}
-										className={clsx(
-											"p-0.5 rounded transition-colors",
-											col.isFk
-												? "text-blue-500 bg-blue-500/10"
-												: "text-muted-foreground hover:text-foreground",
-											isReadOnly && "cursor-not-allowed opacity-80",
-										)}
-										title="Foreign Key"
-									>
-										<Lock className="w-3 h-3" />
-									</button>
-								)}
-							</div>
-
-							{/* Column Name */}
-							{isReadOnly ? (
-								<span
-									className={clsx(
-										"bg-transparent flex-1 font-sans min-w-0 h-6 px-1 flex items-center",
-										col.isPk
-											? "text-foreground font-medium"
-											: "text-muted-foreground",
-									)}
-								>
-									{col.name}
-								</span>
-							) : (
-								<input
-									type="text"
-									value={col.name}
-									onChange={(e) =>
-										updateColumn(id, col.id, { name: e.target.value })
-									}
-									className={clsx(
-										"bg-transparent focus:outline-none flex-1 font-sans min-w-0 h-6 px-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-all",
-										col.isPk
-											? "text-foreground font-medium"
-											: "text-muted-foreground",
-									)}
-								/>
-							)}
-
-							{/* Column Type */}
-							{isReadOnly ? (
-								<span className="w-28 flex-none text-right font-mono text-muted-foreground px-1">
-									{col.type}
-								</span>
-							) : (
-								<Select
-									value={col.type}
-									onChange={(val) =>
-										updateColumn(id, col.id, { type: val as ColumnType })
-									}
-									className="select-sm w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0 !bg-transparent"
-									options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
-								/>
-							)}
-
-							{/* Delete Column */}
-							{!isReadOnly && (
-								<button
-									type="button"
-									onClick={() => deleteColumn(id, col.id)}
-									className="opacity-0 group-hover/col:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity flex-none"
-								>
-									<X className="w-3 h-3" />
-								</button>
-							)}
-
-							<Handle
-								type="source"
-								position={Position.Right}
-								id={`sr-${col.id}`}
-								className="!bg-muted-foreground !w-2.5 !h-2.5 !right-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
-								isConnectable={true}
-							/>
-							<Handle
-								type="target"
-								position={Position.Right}
-								id={`tr-${col.id}`}
-								className="!bg-muted-foreground !w-2.5 !h-2.5 !right-0 !border-2 !border-background opacity-0 group-hover/col:opacity-100 transition-opacity"
-								isConnectable={true}
-							/>
-						</div>
+							nodeId={id}
+							col={col}
+							isReadOnly={isReadOnly}
+							updateColumn={updateColumn}
+							deleteColumn={deleteColumn}
+						/>
 					))}
 				</div>
 
@@ -316,7 +232,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				{!isReadOnly && (
 					<button
 						type="button"
-						onClick={handleAddColumn}
+						onClick={() => handleAddColumnWithFocus.current()}
 						className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
 					>
 						<Plus className="w-3 h-3" /> Add Column

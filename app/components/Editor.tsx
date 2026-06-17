@@ -199,117 +199,131 @@ function Flow({ projectId }: { projectId: string }) {
 					</Button>
 
 					<SettingsPopover>
-						<div className="flex flex-col gap-1 w-full">
-							<Button
-								variant="ghost"
-								onClick={onLayout}
-								className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-								title="Auto Layout"
-							>
-								<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
-								Auto Layout
-							</Button>
-
-							<div className="flex items-center gap-2 px-2 py-1.5">
-								<Waypoints className="w-4 h-4 text-muted-foreground" />
-								<Select
-									value={edgeSettings.type}
-									onChange={(val) =>
-										updateEdgeSettings({
-											type: val as
-												| "step"
-												| "smoothstep"
-												| "straight"
-												| "bezier",
-										})
-									}
-									className="w-full flex-1"
-									options={[
-										{ label: "Smooth Step", value: "smoothstep" },
-										{ label: "Step", value: "step" },
-										{ label: "Straight", value: "straight" },
-										{ label: "Bezier", value: "bezier" },
-									]}
-								/>
-							</div>
-
-							<div className="flex items-center justify-between px-2 py-1.5">
-								<label
-									className="text-sm text-foreground font-medium cursor-pointer"
-									htmlFor="relation-markers-toggle"
-								>
-									Show Relation Markers
-								</label>
-								<Checkbox
-									id="relation-markers-toggle"
-									checked={edgeSettings.showRelationMarkers || false}
-									onChange={(e) =>
-										updateEdgeSettings({
-											showRelationMarkers: e.target.checked,
-										})
-									}
-								/>
-							</div>
-
-							<div className="flex items-center justify-between px-2 py-1.5">
-								<label
-									className="text-sm text-foreground font-medium cursor-pointer"
-									htmlFor="animated-toggle"
-								>
-									Animated Edges
-								</label>
-								<Checkbox
-									id="animated-toggle"
-									checked={edgeSettings.animated}
-									onChange={(e) =>
-										updateEdgeSettings({ animated: e.target.checked })
-									}
-								/>
-							</div>
-
-							<SqlPreviewModal />
-
-							<Button
-								variant="ghost"
-								onClick={downloadImage}
-								className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-								title="Download Diagram as Image"
-								disabled={isDownloading}
-							>
-								{isDownloading ? (
-									<Loader2 className="w-4 h-4 mr-2 text-muted-foreground animate-spin" />
-								) : (
-									<Download className="w-4 h-4 mr-2 text-muted-foreground" />
-								)}
-								Download PNG
-							</Button>
-
-							<div className="h-px bg-border my-1 w-full" />
-
-							<div className="flex items-center justify-between px-2 py-1.5">
-								<span className="text-sm font-medium text-foreground">
-									Read Only
-								</span>
+						<div className="flex flex-col gap-3 w-full">
+							{/* Layout Group */}
+							<div className="flex flex-col gap-1 w-full">
+								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+									Layout & Canvas
+								</h4>
 								<Button
-									variant="secondary"
-									size="icon"
-									className="w-7 h-7"
-									onClick={toggleReadOnly}
-									title={
-										isReadOnly
-											? "Switch to Edit Mode"
-											: "Switch to Read Only Mode"
-									}
+									variant="ghost"
+									onClick={onLayout}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title="Auto Layout"
 								>
-									<Eye className="w-3.5 h-3.5" />
+									<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
+									Auto Layout
 								</Button>
 							</div>
 
-							<div className="flex items-center justify-between px-2 py-1.5">
-								<span className="text-sm font-medium text-foreground">
-									Theme
-								</span>
-								<ThemeToggle className="w-7 h-7 [&>svg]:w-3.5 [&>svg]:h-3.5" />
+							<div className="h-px bg-border w-full" />
+
+							{/* Edges Group */}
+							<div className="flex flex-col gap-1 w-full">
+								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+									Edges
+								</h4>
+								<div className="flex items-center gap-2 px-2 py-1.5">
+									<Waypoints className="w-4 h-4 text-muted-foreground" />
+									<Select
+										value={edgeSettings.type}
+										onChange={(val) =>
+											updateEdgeSettings({
+												type: val as
+													| "step"
+													| "smoothstep"
+													| "straight"
+													| "bezier",
+											})
+										}
+										className="w-full flex-1"
+										options={[
+											{ label: "Smooth Step", value: "smoothstep" },
+											{ label: "Step", value: "step" },
+											{ label: "Straight", value: "straight" },
+											{ label: "Bezier", value: "bezier" },
+										]}
+									/>
+								</div>
+
+								<label
+									htmlFor="show-relation-markers"
+									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
+								>
+									<span className="text-sm text-foreground font-medium select-none">
+										Show Relation Markers
+									</span>
+									<Checkbox
+										id="show-relation-markers"
+										checked={edgeSettings.showRelationMarkers || false}
+										onChange={(e) =>
+											updateEdgeSettings({
+												showRelationMarkers: e.target.checked,
+											})
+										}
+									/>
+								</label>
+
+								<label
+									htmlFor="animated-edges"
+									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
+								>
+									<span className="text-sm text-foreground font-medium select-none">
+										Animated Edges
+									</span>
+									<Checkbox
+										id="animated-edges"
+										checked={edgeSettings.animated}
+										onChange={(e) =>
+											updateEdgeSettings({ animated: e.target.checked })
+										}
+									/>
+								</label>
+							</div>
+
+							<div className="h-px bg-border w-full" />
+
+							{/* Actions Group */}
+							<div className="flex flex-col gap-1 w-full">
+								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+									Actions
+								</h4>
+								<SqlPreviewModal />
+
+								<Button
+									variant="ghost"
+									onClick={downloadImage}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title="Download Diagram as Image"
+									disabled={isDownloading}
+								>
+									{isDownloading ? (
+										<Loader2 className="w-4 h-4 mr-2 text-muted-foreground animate-spin" />
+									) : (
+										<Download className="w-4 h-4 mr-2 text-muted-foreground" />
+									)}
+									Download PNG
+								</Button>
+							</div>
+
+							<div className="h-px bg-border w-full" />
+
+							{/* Preferences Group */}
+							<div className="flex flex-col gap-1 w-full">
+								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+									Preferences
+								</h4>
+								<Button
+									variant="ghost"
+									onClick={toggleReadOnly}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title={isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"}
+								>
+									<Eye className="w-4 h-4 mr-2 text-muted-foreground" />
+									{isReadOnly ? "Disable Read Only" : "Read Only"}
+								</Button>
+
+								<ThemeToggle className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground flex rounded-md [&>svg]:mr-2 [&>svg]:w-4 [&>svg]:h-4 !p-2 !h-8 bg-transparent border-none [&>span.sr-only]:not-sr-only [&>span.sr-only]:ml-0 [&>span]:ml-0" />
 							</div>
 						</div>
 					</SettingsPopover>

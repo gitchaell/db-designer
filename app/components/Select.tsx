@@ -60,17 +60,17 @@ export function Select({
 	}, [isOpen]);
 
 	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
+		const handleClickOutside = (event: Event) => {
 			if (
 				containerRef.current &&
 				!containerRef.current.contains(event.target as Node) &&
-				!(event.target as Element).closest(".select-portal-dropdown")
+				!(event.target as Element).closest?.(".select-portal-dropdown")
 			) {
 				setIsOpen(false);
 			}
 		};
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
+		document.addEventListener("pointerdown", handleClickOutside, { capture: true });
+		return () => document.removeEventListener("pointerdown", handleClickOutside, { capture: true });
 	}, []);
 
 	return (

@@ -246,21 +246,13 @@ function Flow({ projectId }: { projectId: string }) {
 									/>
 								</div>
 
-								{/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by Checkbox internally */}
-								<div
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
-									onClick={() =>
-										updateEdgeSettings({
-											showRelationMarkers: !edgeSettings.showRelationMarkers,
-										})
-									}
+								<label
+									htmlFor="show-relation-markers"
+									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
 								>
-									<label
-										htmlFor="show-relation-markers"
-										className="text-sm text-foreground font-medium cursor-pointer flex-1 pointer-events-none"
-									>
+									<span className="text-sm text-foreground font-medium select-none">
 										Show Relation Markers
-									</label>
+									</span>
 									<Checkbox
 										id="show-relation-markers"
 										checked={edgeSettings.showRelationMarkers || false}
@@ -270,21 +262,15 @@ function Flow({ projectId }: { projectId: string }) {
 											})
 										}
 									/>
-								</div>
+								</label>
 
-								{/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by Checkbox internally */}
-								<div
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
-									onClick={() =>
-										updateEdgeSettings({ animated: !edgeSettings.animated })
-									}
+								<label
+									htmlFor="animated-edges"
+									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
 								>
-									<label
-										htmlFor="animated-edges"
-										className="text-sm text-foreground font-medium cursor-pointer flex-1 pointer-events-none"
-									>
+									<span className="text-sm text-foreground font-medium select-none">
 										Animated Edges
-									</label>
+									</span>
 									<Checkbox
 										id="animated-edges"
 										checked={edgeSettings.animated}
@@ -292,7 +278,7 @@ function Flow({ projectId }: { projectId: string }) {
 											updateEdgeSettings({ animated: e.target.checked })
 										}
 									/>
-								</div>
+								</label>
 							</div>
 
 							<div className="h-px bg-border w-full" />
@@ -327,48 +313,17 @@ function Flow({ projectId }: { projectId: string }) {
 								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
 									Preferences
 								</h4>
-								{/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by Button internally */}
-								<div
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
+								<Button
+									variant="ghost"
 									onClick={toggleReadOnly}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title={isReadOnly ? "Switch to Edit Mode" : "Switch to Read Only Mode"}
 								>
-									<span className="text-sm font-medium text-foreground flex-1">
-										Read Only
-									</span>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="w-7 h-7"
-										// Let the parent div handle the click, or handle it here with stopPropagation
-										// but removing onClick to prevent double triggering since parent handles it
-										title={
-											isReadOnly
-												? "Switch to Edit Mode"
-												: "Switch to Read Only Mode"
-										}
-									>
-										<Eye className="w-3.5 h-3.5" />
-									</Button>
-								</div>
+									<Eye className="w-4 h-4 mr-2 text-muted-foreground" />
+									{isReadOnly ? "Disable Read Only" : "Read Only"}
+								</Button>
 
-								{/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by ThemeToggle internally */}
-								<div
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
-									onClick={() => {
-										const newTheme = resolvedTheme === "dark" ? "light" : "dark";
-										document.documentElement.classList.toggle("dark", newTheme === "dark");
-										document.documentElement.classList.toggle("light", newTheme === "light");
-										// Use next-themes setTheme internally via a button click hack if needed, or better, pass down state
-										// Since we are in the editor and don't have setTheme directly here, we use the button.
-										const themeBtn = document.querySelector('[title="Toggle theme"]') as HTMLButtonElement;
-										if (themeBtn) themeBtn.click();
-									}}
-								>
-									<span className="text-sm font-medium text-foreground flex-1 pointer-events-none">
-										Theme
-									</span>
-									<ThemeToggle className="w-7 h-7 [&>svg]:w-3.5 [&>svg]:h-3.5" />
-								</div>
+								<ThemeToggle className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground flex rounded-md [&>svg]:mr-2 [&>svg]:w-4 [&>svg]:h-4 !p-2 !h-8 bg-transparent border-none [&>span.sr-only]:not-sr-only [&>span.sr-only]:ml-0 [&>span]:ml-0" />
 							</div>
 						</div>
 					</SettingsPopover>

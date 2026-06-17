@@ -111,16 +111,6 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		};
 	}, []);
 
-	const handleAddColumn = () => {
-		addColumn(id, {
-			id: uuidv4(),
-			name: "new_column",
-			type: "varchar",
-			isPk: false,
-			isFk: false,
-		});
-	};
-
 	const handleAutofit = () => {
 		// Using 'auto' allows the element to shrink back to its content size
 		updateNode(id, { style: { width: "auto", height: "auto" } });

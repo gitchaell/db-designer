@@ -4,67 +4,65 @@ import { Download, FileCode2, Loader2, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
-import { Select } from "./Select";
 
-type Dialect = "postgresql" | "mysql" | "sqlite";
-
-export default function SqlPreviewModal() {
+export default function TsExportModal() {
 	const { nodes } = useStore();
 	const [isOpen, setIsOpen] = useState(false);
-	const [dialect, setDialect] = useState<Dialect>("postgresql");
 
-	const generateSql = useCallback(() => {
+	const generateTs = useCallback(() => {
 		let generated = "";
 
 		for (const node of nodes) {
-			const tableName = node.data.label || "untitled_table";
-			generated += `CREATE TABLE ${tableName} (\n`;
+			const tableName = node.data.label || "UntitledTable";
+
+			// Convert table name to PascalCase for interface name
+			const interfaceName = tableName
+				.split(/[_-\s]+/)
+				.map(
+					(word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+				)
+				.join("");
+
+			generated += `export interface ${interfaceName} {\n`;
 
 			const cols = node.data.columns.map((col) => {
-				let typeStr = col.type.toUpperCase();
-				let extras = "";
+				let typeStr = "any";
 
-				// Basic Dialect differences
-				if (dialect === "postgresql") {
-					if (col.type === "uuid") typeStr = "UUID";
-					if (col.type === "int") typeStr = "INTEGER";
-					if (col.type === "varchar") typeStr = "VARCHAR(255)";
-				} else if (dialect === "mysql") {
-					if (col.type === "uuid") typeStr = "CHAR(36)";
-					if (col.type === "int") typeStr = "INT";
-					if (col.type === "varchar") typeStr = "VARCHAR(255)";
-				} else if (dialect === "sqlite") {
-					if (col.type === "uuid") typeStr = "TEXT"; // SQLite doesn't have native UUID
-					if (col.type === "int") typeStr = "INTEGER";
-					if (col.type === "varchar") typeStr = "TEXT"; // SQLite typically uses TEXT
+				// Map internal types to TypeScript types
+				if (
+					col.type === "uuid" ||
+					col.type === "varchar" ||
+					col.type === "text"
+				) {
+					typeStr = "string";
+				} else if (col.type === "int") {
+					typeStr = "number";
+				} else if (col.type === "boolean") {
+					typeStr = "boolean";
+				} else if (col.type === "timestamp") {
+					typeStr = "Date";
+				} else if (col.type === "json") {
+					typeStr = "Record<string, any>";
 				}
 
-				if (col.isPk) {
-					extras += " PRIMARY KEY";
-				}
-
-				return `  ${col.name} ${typeStr}${extras}`;
+				return `  ${col.name}: ${typeStr};`;
 			});
 
-			generated += cols.join(",\n");
-
-			// Foreign keys (simple implementation, assuming naming convention or we can trace edges)
-			// For a complete implementation, tracing edges in useStore is better, but this handles PKs well.
-
-			generated += "\n);\n\n";
+			generated += cols.join("\n");
+			generated += "\n}\n\n";
 		}
 
 		return generated;
-	}, [nodes, dialect]);
+	}, [nodes]);
 
-	const sql = isOpen ? generateSql() : "";
+	const tsCode = isOpen ? generateTs() : "";
 
-	const downloadSql = () => {
-		const blob = new Blob([sql], { type: "text/plain" });
+	const downloadTs = () => {
+		const blob = new Blob([tsCode], { type: "text/plain" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = `schema_${dialect}.sql`;
+		a.download = `types.ts`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -79,7 +77,7 @@ export default function SqlPreviewModal() {
 				className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
 			>
 				<FileCode2 className="w-4 h-4 mr-2 text-muted-foreground" />
-				Export SQL
+				Export TS
 			</Button>
 
 			{isOpen &&
@@ -91,21 +89,11 @@ export default function SqlPreviewModal() {
 							<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
 								<div className="flex items-center gap-4">
 									<h2 className="text-lg font-bold font-space text-foreground">
-										SQL Preview
+										TypeScript Preview
 									</h2>
-									<Select
-										value={dialect}
-										onChange={(val) => setDialect(val as Dialect)}
-										className="w-40"
-										options={[
-											{ label: "PostgreSQL", value: "postgresql" },
-											{ label: "MySQL", value: "mysql" },
-											{ label: "SQLite", value: "sqlite" },
-										]}
-									/>
 								</div>
 								<div className="flex items-center gap-2">
-									<Button size="sm" onClick={downloadSql}>
+									<Button size="sm" onClick={downloadTs}>
 										<Download className="w-3.5 h-3.5 mr-1.5" />
 										Download
 									</Button>
@@ -123,9 +111,9 @@ export default function SqlPreviewModal() {
 							<div className="flex-1 w-full bg-[#1e1e1e]">
 								<Editor
 									height="100%"
-									language="sql"
+									language="typescript"
 									theme="vs-dark"
-									value={sql}
+									value={tsCode}
 									loading={
 										<div className="flex justify-center items-center h-full text-muted-foreground">
 											<Loader2 className="w-6 h-6 animate-spin mr-2" />

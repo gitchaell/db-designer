@@ -25,6 +25,7 @@ import { Checkbox } from "./Checkbox";
 import { Select } from "./Select";
 import SettingsPopover from "./SettingsPopover";
 import SqlPreviewModal from "./SqlPreviewModal";
+import TsExportModal from "./TsExportModal";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -289,6 +290,7 @@ function Flow({ projectId }: { projectId: string }) {
 									Actions
 								</h4>
 								<SqlPreviewModal />
+								<TsExportModal />
 
 								<Button
 									variant="ghost"

@@ -117,7 +117,7 @@ interface Post {
 										stickyScroll: { enabled: false },
 										lineNumbers: "on",
 										fontSize: 14,
-										fontFamily: '"JetBrains Mono", var(--font-mono), monospace',
+										fontFamily: "var(--font-jetbrains-mono), monospace",
 										padding: { top: 16 },
 									}}
 								/>

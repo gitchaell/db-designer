@@ -153,6 +153,14 @@ h6,
 	}
 }
 
+/* Monaco Editor Font Fix */
+.monaco-editor,
+.monaco-editor .margin,
+.monaco-editor .view-lines,
+.monaco-editor .mtk1 {
+	font-family: var(--font-jetbrains-mono), monospace !important;
+}
+
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
 	width: 6px;

@@ -1,5 +1,6 @@
 import type { AppNode, Column, ColumnType } from "../types";
 import { v4 as uuidv4 } from "uuid";
+import * as ts from "typescript";
 
 // Simple mapping from TS types to our internal column types
 function mapTsTypeToColumnType(tsType: string): ColumnType {
@@ -11,9 +12,11 @@ function mapTsTypeToColumnType(tsType: string): ColumnType {
 	if (
 		typeLower.includes("record") ||
 		typeLower.includes("any") ||
-		typeLower.includes("unknown")
-	)
+		typeLower.includes("unknown") ||
+		typeLower.includes("{")
+	) {
 		return "json";
+	}
 
 	// Default to varchar for string or anything else we don't recognize
 	return "varchar";
@@ -21,72 +24,117 @@ function mapTsTypeToColumnType(tsType: string): ColumnType {
 
 export function parseTypeScriptToNodes(code: string): AppNode[] {
 	const nodes: AppNode[] = [];
-
-	// Strip comments
-	const noComments = code.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, "");
-
-	// Regex to find interfaces and types
-	// Matches `interface Name { ... }` or `type Name = { ... }` or `export interface Name { ... }`
-	const interfaceRegex =
-		/(?:export\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)(?:\s*=\s*)?\s*\{([^}]+)\}/g;
-
-	let match;
 	let xPos = 50;
 	let yPos = 50;
 
-	while ((match = interfaceRegex.exec(noComments)) !== null) {
-		const [, name, body] = match;
-		const interfaceName = name.trim();
+	// Parse code into AST
+	const sourceFile = ts.createSourceFile(
+		"temp.ts",
+		code,
+		ts.ScriptTarget.Latest,
+		true,
+	);
 
-		// Split body into lines and parse properties
-		const propertyLines = body
-			.split(/;|\n/)
-			.map((l) => l.trim())
-			.filter((l) => l.length > 0);
+	function visit(node: ts.Node) {
+		// Look for Interface or Type Alias declarations
+		if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
+			const interfaceName = node.name.text;
+			const columns: Column[] = [];
+			let isFirst = true;
 
-		const columns: Column[] = [];
-		let isFirst = true;
+			// Handle properties for Interface
+			if (ts.isInterfaceDeclaration(node)) {
+				for (const member of node.members) {
+					if (ts.isPropertySignature(member) && member.name) {
+						let propName = "";
+						if (
+							ts.isIdentifier(member.name) ||
+							ts.isStringLiteral(member.name)
+						) {
+							propName = member.name.text;
+						} else {
+							continue;
+						}
 
-		for (const line of propertyLines) {
-			// Expected format: `propertyName?: type` or `propertyName: type`
-			const propMatch = line.match(/^([A-Za-z0-9_]+)\s*\??\s*:\s*(.+)$/);
+						const propType = member.type
+							? member.type.getText(sourceFile)
+							: "any";
 
-			if (propMatch) {
-				const [, propName, propType] = propMatch;
+						const isPk = isFirst || propName.toLowerCase() === "id";
+						if (isPk) isFirst = false;
 
-				// Make the first property the PK, or if name is 'id'
-				const isPk = isFirst || propName.toLowerCase() === "id";
-				if (isPk) isFirst = false;
+						columns.push({
+							id: uuidv4(),
+							name: propName,
+							type: mapTsTypeToColumnType(propType),
+							isPk,
+							isFk: false,
+						});
+					}
+				}
+			}
+			// Handle properties for Type Alias
+			else if (
+				ts.isTypeAliasDeclaration(node) &&
+				ts.isTypeLiteralNode(node.type)
+			) {
+				for (const member of node.type.members) {
+					if (ts.isPropertySignature(member) && member.name) {
+						let propName = "";
+						if (
+							ts.isIdentifier(member.name) ||
+							ts.isStringLiteral(member.name)
+						) {
+							propName = member.name.text;
+						} else {
+							continue;
+						}
 
-				columns.push({
+						const propType = member.type
+							? member.type.getText(sourceFile)
+							: "any";
+
+						const isPk = isFirst || propName.toLowerCase() === "id";
+						if (isPk) isFirst = false;
+
+						columns.push({
+							id: uuidv4(),
+							name: propName,
+							type: mapTsTypeToColumnType(propType),
+							isPk,
+							isFk: false,
+						});
+					}
+				}
+			}
+
+			if (columns.length > 0) {
+				nodes.push({
 					id: uuidv4(),
-					name: propName,
-					type: mapTsTypeToColumnType(propType),
-					isPk,
-					isFk: false,
+					type: "table",
+					position: { x: xPos, y: yPos },
+					data: {
+						label: interfaceName,
+						columns,
+					},
 				});
+
+				// Layout next node
+				xPos += 300;
+				if (xPos > 900) {
+					xPos = 50;
+					yPos += 300;
+				}
 			}
 		}
-
-		if (columns.length > 0) {
-			nodes.push({
-				id: uuidv4(),
-				type: "table",
-				position: { x: xPos, y: yPos },
-				data: {
-					label: interfaceName,
-					columns,
-				},
-			});
-
-			// Layout next node
-			xPos += 300;
-			if (xPos > 900) {
-				xPos = 50;
-				yPos += 300;
-			}
+		// If it's a module/namespace, visit its children
+		else if (ts.isModuleDeclaration(node)) {
+			ts.forEachChild(node, visit);
 		}
 	}
+
+	// Start traversing from the root
+	ts.forEachChild(sourceFile, visit);
 
 	return nodes;
 }

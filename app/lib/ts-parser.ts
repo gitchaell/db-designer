@@ -36,9 +36,13 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 	);
 
 	function visit(node: ts.Node) {
-		// Look for Interface or Type Alias declarations
-		if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
-			const interfaceName = node.name.text;
+		// Look for Interface, Type Alias, or Class declarations
+		if (
+			ts.isInterfaceDeclaration(node) ||
+			ts.isTypeAliasDeclaration(node) ||
+			ts.isClassDeclaration(node)
+		) {
+			const interfaceName = node.name?.text || "Unnamed";
 			const columns: Column[] = [];
 			let isFirst = true;
 
@@ -46,6 +50,37 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 			if (ts.isInterfaceDeclaration(node)) {
 				for (const member of node.members) {
 					if (ts.isPropertySignature(member) && member.name) {
+						let propName = "";
+						if (
+							ts.isIdentifier(member.name) ||
+							ts.isStringLiteral(member.name)
+						) {
+							propName = member.name.text;
+						} else {
+							continue;
+						}
+
+						const propType = member.type
+							? member.type.getText(sourceFile)
+							: "any";
+
+						const isPk = isFirst || propName.toLowerCase() === "id";
+						if (isPk) isFirst = false;
+
+						columns.push({
+							id: uuidv4(),
+							name: propName,
+							type: mapTsTypeToColumnType(propType),
+							isPk,
+							isFk: false,
+						});
+					}
+				}
+			}
+			// Handle properties for Class
+			else if (ts.isClassDeclaration(node)) {
+				for (const member of node.members) {
+					if (ts.isPropertyDeclaration(member) && member.name) {
 						let propName = "";
 						if (
 							ts.isIdentifier(member.name) ||
@@ -129,7 +164,11 @@ export function parseTypeScriptToNodes(code: string): AppNode[] {
 		}
 		// If it's a module/namespace, visit its children
 		else if (ts.isModuleDeclaration(node)) {
-			ts.forEachChild(node, visit);
+			if (node.body) {
+				ts.forEachChild(node.body, visit);
+			} else {
+				ts.forEachChild(node, visit);
+			}
 		}
 	}
 

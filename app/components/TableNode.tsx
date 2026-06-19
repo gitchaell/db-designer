@@ -73,8 +73,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				let targetInput = inputs[inputs.length - 1];
 
 				const rowWithNewCol = nodeRef.current
-					?.querySelector(`[id="sl-${newColId}"]`)
-					?.closest(".group\\/col") as HTMLElement;
+					?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
 				if (rowWithNewCol) {
 					const inputInRow = rowWithNewCol.querySelector("input");
 					if (inputInRow) {
@@ -114,8 +113,7 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 					let targetInput = inputs[inputs.length - 1];
 
 					const rowWithNewCol = nodeRef.current
-						?.querySelector(`[id="sl-${newColId}"]`)
-						?.closest(".group\\/col") as HTMLElement;
+						?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
 					if (rowWithNewCol) {
 						const inputInRow = rowWithNewCol.querySelector("input");
 						if (inputInRow) {
@@ -180,13 +178,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 			let afterColId: string | undefined;
 			if (sourceInput) {
-				const row = sourceInput.closest(".group\\/col");
+				const row = sourceInput.closest(".group\\/col") as HTMLElement;
 				if (row) {
-					// Extract col id from one of the handles, e.g., id="sl-<colId>"
-					const handle = row.querySelector('[id^="sl-"]');
-					if (handle) {
-						afterColId = handle.id.replace("sl-", "");
-					}
+					afterColId = row.dataset.colid;
 				}
 			}
 

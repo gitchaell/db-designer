@@ -61,6 +61,7 @@ export function TableRow({
 		<div
 			ref={setNodeRef}
 			style={style}
+			data-colid={col.id}
 			className={clsx(
 				"relative flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors group/col bg-background",
 				isDragging && "shadow-lg border border-primary/50 rounded-md",
@@ -69,7 +70,7 @@ export function TableRow({
 			{!isReadOnly && (
 				<button
 					type="button"
-					className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground/80 opacity-0 group-hover/col:opacity-100 transition-opacity"
+					className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground/80 opacity-0 group-hover/col:opacity-100 transition-opacity nodrag"
 					{...attributes}
 					{...listeners}
 				>

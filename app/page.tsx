@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import TsImportModal from "./components/TsImportModal";
+import PrismaImportModal from "./components/PrismaImportModal";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "./components/Button";
@@ -95,6 +96,7 @@ export default function Dashboard() {
 				<div className="flex items-center gap-4">
 					<ThemeToggle />
 					<TsImportModal />
+					<PrismaImportModal />
 					<Button onClick={createProject}>
 						<Plus className="w-4 h-4 mr-2" />
 						New Project

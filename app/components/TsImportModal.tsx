@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { FileCode2, Loader2, X, Import } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { Button } from "./Button";
-import { parseTypeScriptToNodes } from "../lib/ts-parser";
+import { parseTypeScriptToNodesAndEdges } from "../lib/ts-parser";
 import type { Project } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { saveProject } from "../lib/db";
@@ -33,7 +33,7 @@ interface Post {
 	const handleImport = async () => {
 		try {
 			setIsProcessing(true);
-			const nodes = parseTypeScriptToNodes(code);
+			const { nodes, edges } = parseTypeScriptToNodesAndEdges(code);
 
 			if (nodes.length === 0) {
 				alert("No valid interfaces or types found in the code.");
@@ -48,7 +48,7 @@ interface Post {
 				createdAt: now,
 				updatedAt: now,
 				nodes,
-				edges: [],
+				edges,
 			};
 
 			await saveProject(newProject);

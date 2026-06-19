@@ -161,6 +161,26 @@ h6,
 	font-family: var(--font-jetbrains-mono), monospace !important;
 }
 
+/* Edge Interactions */
+.react-flow__edge-path {
+	transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+	stroke: var(--destructive) !important;
+	stroke-width: 3 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+	stroke: var(--destructive) !important;
+	stroke-width: 4 !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-interaction,
+.react-flow__edge.selected .react-flow__edge-interaction {
+	cursor: pointer;
+}
+
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
 	width: 6px;

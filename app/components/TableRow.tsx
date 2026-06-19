@@ -1,8 +1,10 @@
 import type { ColumnType } from "@/app/types";
 import { Handle, Position } from "@xyflow/react";
 import { clsx } from "clsx";
-import { Key, Link, Trash2 } from "lucide-react";
+import { GripVertical, Key, Link, Trash2 } from "lucide-react";
 import { TableField } from "./TableField";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TableRowProps {
 	nodeId: string;
@@ -39,8 +41,42 @@ export function TableRow({
 	updateColumn,
 	deleteColumn,
 }: TableRowProps) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: col.id });
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		zIndex: isDragging ? 10 : 1,
+		opacity: isDragging ? 0.5 : 1,
+	};
+
 	return (
-		<div className="relative flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors group/col">
+		<div
+			ref={setNodeRef}
+			style={style}
+			data-colid={col.id}
+			className={clsx(
+				"relative flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors group/col bg-background",
+				isDragging && "shadow-lg border border-primary/50 rounded-md",
+			)}
+		>
+			{!isReadOnly && (
+				<button
+					type="button"
+					className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground/80 opacity-0 group-hover/col:opacity-100 transition-opacity nodrag"
+					{...attributes}
+					{...listeners}
+				>
+					<GripVertical className="w-3.5 h-3.5" />
+				</button>
+			)}
 			{/* Handles Left */}
 			<Handle
 				type="source"

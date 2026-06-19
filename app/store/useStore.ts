@@ -54,7 +54,8 @@ type AppState = {
 	updateNodeData: (id: string, data: Partial<TableNodeData>) => void;
 	deleteNode: (id: string) => void;
 
-	addColumn: (nodeId: string, column: Column) => void;
+	addColumn: (nodeId: string, column: Column, afterColId?: string) => void;
+	reorderColumn: (nodeId: string, oldIndex: number, newIndex: number) => void;
 	updateColumn: (
 		nodeId: string,
 		columnId: string,
@@ -408,15 +409,51 @@ export const useStore = create<AppState>((set, get) => ({
 			debouncedSave({ ...project, nodes: newNodes, edges: newEdges });
 	},
 
-	addColumn: (nodeId, column) => {
+	addColumn: (nodeId, column, afterColId) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
 			if (node.id === nodeId) {
+				const currentColumns = [...node.data.columns];
+
+				if (afterColId) {
+					const index = currentColumns.findIndex((c) => c.id === afterColId);
+					if (index !== -1) {
+						currentColumns.splice(index + 1, 0, column);
+					} else {
+						currentColumns.push(column);
+					}
+				} else {
+					currentColumns.push(column);
+				}
+
 				return {
 					...node,
 					data: {
 						...node.data,
-						columns: [...node.data.columns, column],
+						columns: currentColumns,
+					},
+				};
+			}
+			return node;
+		});
+		set({ nodes: newNodes });
+		get().pushHistory(newNodes, edges);
+		if (project) debouncedSave({ ...project, nodes: newNodes, edges: edges });
+	},
+
+	reorderColumn: (nodeId, oldIndex, newIndex) => {
+		const { nodes, project, edges } = get();
+		const newNodes = nodes.map((node) => {
+			if (node.id === nodeId) {
+				const currentColumns = [...node.data.columns];
+				const [movedColumn] = currentColumns.splice(oldIndex, 1);
+				currentColumns.splice(newIndex, 0, movedColumn);
+
+				return {
+					...node,
+					data: {
+						...node.data,
+						columns: currentColumns,
 					},
 				};
 			}

@@ -7,6 +7,20 @@ import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TableField } from "./TableField";
 import { TableRow } from "./TableRow";
+import {
+	DndContext,
+	closestCenter,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	DragEndEvent,
+} from "@dnd-kit/core";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 // Expanded color palette
 const COLORS = [
@@ -31,28 +45,45 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		addColumn,
 		updateColumn,
 		deleteColumn,
+		reorderColumn,
 		deleteNode,
 		isReadOnly,
 	} = useStore();
 
-	const handleAddColumnWithFocus = useRef(() => {
+	const handleAddColumnWithFocus = useRef((afterColId?: string) => {
 		const newColId = uuidv4();
-		addColumn(id, {
-			id: newColId,
-			name: "new_column",
-			type: "varchar",
-			isPk: false,
-			isFk: false,
-		});
+		addColumn(
+			id,
+			{
+				id: newColId,
+				name: "new_column",
+				type: "varchar",
+				isPk: false,
+				isFk: false,
+			},
+			afterColId,
+		);
 
 		// Attempt to focus the new column input after a short delay
 		setTimeout(() => {
-			const inputs = nodeRef.current?.querySelectorAll("input");
-			if (inputs && inputs.length > 0) {
-				const lastInput = inputs[inputs.length - 1];
-				if (lastInput) {
-					lastInput.focus();
-					lastInput.select();
+			const inputs = Array.from(
+				nodeRef.current?.querySelectorAll("input") || [],
+			);
+			if (inputs.length > 0) {
+				let targetInput = inputs[inputs.length - 1];
+
+				const rowWithNewCol = nodeRef.current
+					?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
+				if (rowWithNewCol) {
+					const inputInRow = rowWithNewCol.querySelector("input");
+					if (inputInRow) {
+						targetInput = inputInRow;
+					}
+				}
+
+				if (targetInput) {
+					targetInput.focus();
+					targetInput.select();
 				}
 			}
 		}, 50);
@@ -60,28 +91,66 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 	// Update the ref so the event listener doesn't need to depend on the function directly
 	useEffect(() => {
-		handleAddColumnWithFocus.current = () => {
+		handleAddColumnWithFocus.current = (afterColId?: string) => {
 			const newColId = uuidv4();
-			addColumn(id, {
-				id: newColId,
-				name: "new_column",
-				type: "varchar",
-				isPk: false,
-				isFk: false,
-			});
+			addColumn(
+				id,
+				{
+					id: newColId,
+					name: "new_column",
+					type: "varchar",
+					isPk: false,
+					isFk: false,
+				},
+				afterColId,
+			);
 
 			setTimeout(() => {
-				const inputs = nodeRef.current?.querySelectorAll("input");
-				if (inputs && inputs.length > 0) {
-					const lastInput = inputs[inputs.length - 1];
-					if (lastInput) {
-						lastInput.focus();
-						lastInput.select();
+				const inputs = Array.from(
+					nodeRef.current?.querySelectorAll("input") || [],
+				);
+				if (inputs.length > 0) {
+					let targetInput = inputs[inputs.length - 1];
+
+					const rowWithNewCol = nodeRef.current
+						?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
+					if (rowWithNewCol) {
+						const inputInRow = rowWithNewCol.querySelector("input");
+						if (inputInRow) {
+							targetInput = inputInRow;
+						}
+					}
+
+					if (targetInput) {
+						targetInput.focus();
+						targetInput.select();
 					}
 				}
 			}, 50);
 		};
 	}, [addColumn, id]);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				distance: 8,
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			const oldIndex = data.columns.findIndex((col) => col.id === active.id);
+			const newIndex = data.columns.findIndex((col) => col.id === over.id);
+
+			reorderColumn(id, oldIndex, newIndex);
+		}
+	};
 	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 	const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -101,8 +170,21 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 		const node = nodeRef.current;
 		if (!node) return;
 
-		const handleFieldEnter = () => {
-			handleAddColumnWithFocus.current();
+		const handleFieldEnter = (e: Event) => {
+			const customEvent = e as CustomEvent;
+			const sourceInput = customEvent.detail?.sourceInput as
+				| HTMLElement
+				| undefined;
+
+			let afterColId: string | undefined;
+			if (sourceInput) {
+				const row = sourceInput.closest(".group\\/col") as HTMLElement;
+				if (row) {
+					afterColId = row.dataset.colid;
+				}
+			}
+
+			handleAddColumnWithFocus.current(afterColId);
 		};
 
 		node.addEventListener("field-enter", handleFieldEnter as EventListener);
@@ -217,16 +299,27 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 
 				{/* Columns */}
 				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-					{data.columns.map((col) => (
-						<TableRow
-							key={col.id}
-							nodeId={id}
-							col={col}
-							isReadOnly={isReadOnly}
-							updateColumn={updateColumn}
-							deleteColumn={deleteColumn}
-						/>
-					))}
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCenter}
+						onDragEnd={handleDragEnd}
+					>
+						<SortableContext
+							items={data.columns.map((col) => col.id)}
+							strategy={verticalListSortingStrategy}
+						>
+							{data.columns.map((col) => (
+								<TableRow
+									key={col.id}
+									nodeId={id}
+									col={col}
+									isReadOnly={isReadOnly}
+									updateColumn={updateColumn}
+									deleteColumn={deleteColumn}
+								/>
+							))}
+						</SortableContext>
+					</DndContext>
 				</div>
 
 				{/* Footer Action */}

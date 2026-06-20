@@ -1,10 +1,14 @@
-# Caso de Estudio: Arquitectura y Diseño de DB Designer
+<p align="center">
+  <img src="public/favicon.svg" width="120px" />
+</p>
 
-<!-- Placeholder para Logo -->
-![Logo Placeholder](https://via.placeholder.com/150x150?text=DB+Designer+Logo)
+---
 
-<!-- Placeholder para Captura de Pantalla -->
-![App Screenshot Placeholder](https://via.placeholder.com/800x400?text=Screenshot+de+la+Aplicaci%C3%B3n)
+# DB Designer
+
+![dashboard-1](public/dashboard-1.png)
+
+![dashboard-2](public/dashboard-2.png)
 
 En este documento detallo mi análisis arquitectónico, los patrones de diseño y las decisiones técnicas que implementé en DB Designer, una herramienta del lado del cliente orientada a la creación, visualización y gestión de Diagramas de Entidad-Relación (ERD).
 
@@ -13,6 +17,7 @@ En este documento detallo mi análisis arquitectónico, los patrones de diseño 
 El propósito principal con el que construí DB Designer es resolver la necesidad de modelar esquemas de bases de datos de forma rápida, visual y sin dependencia de infraestructura en la nube. A menudo, observo que las herramientas de diseño de bases de datos requieren configuraciones complejas, cuentas de usuario o conexiones a bases de datos reales. Decidí mitigar esta barrera diseñando el sistema para operar de manera completamente offline y persistir la información de forma local mediante IndexedDB.
 
 El flujo de trabajo principal que estructuré es directo:
+
 1. **Inicialización**: El usuario accede al panel principal (Dashboard), donde puede visualizar proyectos anteriores o inicializar uno nuevo (ya sea desde cero o utilizando plantillas predefinidas).
 2. **Modelado Visual**: En el editor que programé, el usuario agrega nodos que representan tablas. Implementé en cada tabla la adición dinámica de campos, permitiendo especificar su nombre, tipo de dato, y si actúa como Llave Primaria (PK) o Llave Foránea (FK).
 3. **Relaciones Interactivas**: Al conectar nodos, mi sistema genera automáticamente representaciones visuales de relaciones (ej. 1:N) infiriendo la semántica a partir de la conexión gráfica. Desarrollé un sistema de enrutamiento inteligente (Smart Edges) para optimizar visualmente la ubicación de los puntos de conexión.

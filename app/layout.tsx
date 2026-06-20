@@ -15,6 +15,12 @@ const jetbrainsMono = JetBrains_Mono({
 	subsets: ["latin"],
 });
 
+import type { Viewport } from "next";
+
+export const viewport: Viewport = {
+	themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
 	title: "DB Designer - Database Schema Designer",
 	description:
@@ -34,6 +40,12 @@ export const metadata: Metadata = {
 		description:
 			"A powerful, web-based tool for designing database schemas with an intuitive, drag-and-drop interface.",
 		type: "website",
+	},
+	manifest: "/manifest.webmanifest",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "DB Designer",
 	},
 };
 

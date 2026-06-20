@@ -1,35 +1,39 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { FileCode2, Loader2, X, Import } from "lucide-react";
+import { Database, Loader2, X, Import } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { Button } from "./Button";
-import { parseTypeScriptToNodesAndEdges } from "../lib/ts-parser";
+import { parseSqlToNodesAndEdges } from "../lib/sql-parser";
 import type { Project } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { saveProject } from "../lib/db";
 import { useRouter } from "next/navigation";
 
-interface TsImportModalProps {
+interface SqlImportModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 }
 
-export default function TsImportModal({ isOpen, onClose }: TsImportModalProps) {
-	const [code, setCode] = useState(`// Paste your TypeScript interfaces here
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  createdAt: Date;
-}
+export default function SqlImportModal({
+	isOpen,
+	onClose,
+}: SqlImportModalProps) {
+	const [code, setCode] =
+		useState(`-- Paste your SQL CREATE TABLE statements here
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP
+);
 
-interface Post {
-  id: number;
-  title: string;
-  content: string;
-  published: boolean;
-  authorId: string;
-}
+CREATE TABLE posts (
+  id INT PRIMARY KEY,
+  user_id INT,
+  title VARCHAR(255) NOT NULL,
+  body TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 `);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const router = useRouter();
@@ -37,10 +41,10 @@ interface Post {
 	const handleImport = async () => {
 		try {
 			setIsProcessing(true);
-			const { nodes, edges } = parseTypeScriptToNodesAndEdges(code);
+			const { nodes, edges } = parseSqlToNodesAndEdges(code);
 
 			if (nodes.length === 0) {
-				alert("No valid interfaces or types found in the code.");
+				alert("No valid CREATE TABLE statements found in the code.");
 				setIsProcessing(false);
 				return;
 			}
@@ -48,7 +52,7 @@ interface Post {
 			const now = Date.now();
 			const newProject: Project = {
 				id: uuidv4(),
-				name: "Imported TS Project",
+				name: "Imported SQL Project",
 				createdAt: now,
 				updatedAt: now,
 				nodes,
@@ -67,8 +71,8 @@ interface Post {
 
 			onClose();
 		} catch (error) {
-			console.error("Error importing TS:", error);
-			alert("Failed to parse TypeScript code.");
+			console.error("Error importing SQL:", error);
+			alert("Failed to parse SQL code.");
 		} finally {
 			setIsProcessing(false);
 		}
@@ -82,8 +86,8 @@ interface Post {
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
 					<h2 className="text-lg font-bold font-space text-foreground flex items-center">
-						<FileCode2 className="w-5 h-5 mr-2" />
-						Import TypeScript Interfaces
+						<Database className="w-5 h-5 mr-2" />
+						Import SQL Schema
 					</h2>
 					<button
 						type="button"
@@ -98,7 +102,7 @@ interface Post {
 				<div className="flex-1 w-full bg-[#1e1e1e]">
 					<Editor
 						height="100%"
-						language="typescript"
+						language="sql"
 						theme="vs-dark"
 						value={code}
 						onChange={(val) => setCode(val || "")}

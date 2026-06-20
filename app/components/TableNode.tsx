@@ -72,8 +72,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 			if (inputs.length > 0) {
 				let targetInput = inputs[inputs.length - 1];
 
-				const rowWithNewCol = nodeRef.current
-					?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
+				const rowWithNewCol = nodeRef.current?.querySelector(
+					`[data-colid="${newColId}"]`,
+				) as HTMLElement;
 				if (rowWithNewCol) {
 					const inputInRow = rowWithNewCol.querySelector("input");
 					if (inputInRow) {
@@ -112,8 +113,9 @@ export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
 				if (inputs.length > 0) {
 					let targetInput = inputs[inputs.length - 1];
 
-					const rowWithNewCol = nodeRef.current
-						?.querySelector(`[data-colid="${newColId}"]`) as HTMLElement;
+					const rowWithNewCol = nodeRef.current?.querySelector(
+						`[data-colid="${newColId}"]`,
+					) as HTMLElement;
 					if (rowWithNewCol) {
 						const inputInRow = rowWithNewCol.querySelector("input");
 						if (inputInRow) {

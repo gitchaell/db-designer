@@ -23,6 +23,7 @@ import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Select } from "./Select";
+import PrismaExportModal from "./PrismaExportModal";
 import SettingsPopover from "./SettingsPopover";
 import SqlPreviewModal from "./SqlPreviewModal";
 import TsExportModal from "./TsExportModal";
@@ -291,6 +292,7 @@ function Flow({ projectId }: { projectId: string }) {
 								</h4>
 								<SqlPreviewModal />
 								<TsExportModal />
+								<PrismaExportModal />
 
 								<Button
 									variant="ghost"

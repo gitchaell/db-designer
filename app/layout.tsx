@@ -34,12 +34,25 @@ export const metadata: Metadata = {
 		"SQL",
 		"web application",
 	],
+	icons: {
+		icon: "/favicon.svg",
+		apple: "apple-icon-png",
+	},
 	authors: [{ name: "Michaell Alavedra", url: "https://michaellalavedra.com" }],
 	openGraph: {
 		title: "DB Designer - Database Schema Designer",
 		description:
 			"A powerful, web-based tool for designing database schemas with an intuitive, drag-and-drop interface.",
 		type: "website",
+		images: [
+			{
+				url: "https://db.michaellalavedra.com/og-image.jpg",
+				width: 1200,
+				height: 630,
+				alt: "DB Designer - Database Schema Designer",
+			},
+		],
+		url: "https://db.michaellalavedra.com",
 	},
 	manifest: "/manifest.webmanifest",
 	appleWebApp: {

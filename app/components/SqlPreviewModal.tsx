@@ -1,6 +1,6 @@
 import { useStore } from "@/app/store/useStore";
 import Editor from "@monaco-editor/react";
-import { Download, FileCode2, Loader2, X } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
@@ -8,9 +8,16 @@ import { Select } from "./Select";
 
 type Dialect = "postgresql" | "mysql" | "sqlite";
 
-export default function SqlPreviewModal() {
+interface SqlPreviewModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+}
+
+export default function SqlPreviewModal({
+	isOpen,
+	onClose,
+}: SqlPreviewModalProps) {
 	const { nodes } = useStore();
-	const [isOpen, setIsOpen] = useState(false);
 	const [dialect, setDialect] = useState<Dialect>("postgresql");
 
 	const generateSql = useCallback(() => {
@@ -71,83 +78,70 @@ export default function SqlPreviewModal() {
 		URL.revokeObjectURL(url);
 	};
 
-	return (
-		<>
-			<Button
-				variant="ghost"
-				onClick={() => setIsOpen(true)}
-				className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-			>
-				<FileCode2 className="w-4 h-4 mr-2 text-muted-foreground" />
-				Export SQL
-			</Button>
+	if (!isOpen || typeof document === "undefined") return null;
 
-			{isOpen &&
-				typeof document !== "undefined" &&
-				createPortal(
-					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-						<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
-							{/* Header */}
-							<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-								<div className="flex items-center gap-4">
-									<h2 className="text-lg font-bold font-space text-foreground">
-										SQL Preview
-									</h2>
-									<Select
-										value={dialect}
-										onChange={(val) => setDialect(val as Dialect)}
-										className="w-40"
-										options={[
-											{ label: "PostgreSQL", value: "postgresql" },
-											{ label: "MySQL", value: "mysql" },
-											{ label: "SQLite", value: "sqlite" },
-										]}
-									/>
-								</div>
-								<div className="flex items-center gap-2">
-									<Button size="sm" onClick={downloadSql}>
-										<Download className="w-3.5 h-3.5 mr-1.5" />
-										Download
-									</Button>
-									<button
-										type="button"
-										onClick={() => setIsOpen(false)}
-										className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
-									>
-										<X className="w-5 h-5" />
-									</button>
-								</div>
-							</div>
+	return createPortal(
+		<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+			<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
+				{/* Header */}
+				<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+					<div className="flex items-center gap-4">
+						<h2 className="text-lg font-bold font-space text-foreground">
+							SQL Preview
+						</h2>
+						<Select
+							value={dialect}
+							onChange={(val) => setDialect(val as Dialect)}
+							className="w-40"
+							options={[
+								{ label: "PostgreSQL", value: "postgresql" },
+								{ label: "MySQL", value: "mysql" },
+								{ label: "SQLite", value: "sqlite" },
+							]}
+						/>
+					</div>
+					<div className="flex items-center gap-2">
+						<Button size="sm" onClick={downloadSql}>
+							<Download className="w-3.5 h-3.5 mr-1.5" />
+							Download
+						</Button>
+						<button
+							type="button"
+							onClick={onClose}
+							className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
+						>
+							<X className="w-5 h-5" />
+						</button>
+					</div>
+				</div>
 
-							{/* Editor container */}
-							<div className="flex-1 w-full bg-[#1e1e1e]">
-								<Editor
-									height="100%"
-									language="sql"
-									theme="vs-dark"
-									value={sql}
-									loading={
-										<div className="flex justify-center items-center h-full text-muted-foreground">
-											<Loader2 className="w-6 h-6 animate-spin mr-2" />
-											Loading editor...
-										</div>
-									}
-									options={{
-										readOnly: true,
-										minimap: { enabled: true },
-										renderWhitespace: "all",
-										stickyScroll: { enabled: false },
-										lineNumbers: "on",
-										fontSize: 14,
-										fontFamily: "var(--font-jetbrains-mono), monospace",
-										padding: { top: 16 },
-									}}
-								/>
+				{/* Editor container */}
+				<div className="flex-1 w-full bg-[#1e1e1e]">
+					<Editor
+						height="100%"
+						language="sql"
+						theme="vs-dark"
+						value={sql}
+						loading={
+							<div className="flex justify-center items-center h-full text-muted-foreground">
+								<Loader2 className="w-6 h-6 animate-spin mr-2" />
+								Loading editor...
 							</div>
-						</div>
-					</div>,
-					document.body,
-				)}
-		</>
+						}
+						options={{
+							readOnly: true,
+							minimap: { enabled: true },
+							renderWhitespace: "all",
+							stickyScroll: { enabled: false },
+							lineNumbers: "on",
+							fontSize: 14,
+							fontFamily: "var(--font-jetbrains-mono), monospace",
+							padding: { top: 16 },
+						}}
+					/>
+				</div>
+			</div>
+		</div>,
+		document.body,
 	);
 }

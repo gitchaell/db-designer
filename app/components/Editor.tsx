@@ -23,10 +23,8 @@ import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Select } from "./Select";
-import PrismaExportModal from "./PrismaExportModal";
+import ExportDropdown from "./ExportDropdown";
 import SettingsPopover from "./SettingsPopover";
-import SqlPreviewModal from "./SqlPreviewModal";
-import TsExportModal from "./TsExportModal";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -290,9 +288,7 @@ function Flow({ projectId }: { projectId: string }) {
 								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
 									Actions
 								</h4>
-								<SqlPreviewModal />
-								<TsExportModal />
-								<PrismaExportModal />
+								<ExportDropdown />
 
 								<Button
 									variant="ghost"

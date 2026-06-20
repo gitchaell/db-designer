@@ -27,6 +27,9 @@ import ExportDropdown from "./ExportDropdown";
 import SettingsPopover from "./SettingsPopover";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
+import SqlPreviewModal from "./SqlPreviewModal";
+import TsExportModal from "./TsExportModal";
+import PrismaExportModal from "./PrismaExportModal";
 
 const nodeTypes = {
 	table: TableNode,
@@ -60,6 +63,9 @@ function Flow({ projectId }: { projectId: string }) {
 
 	const { resolvedTheme } = useTheme();
 	const router = useRouter();
+	const [exportType, setExportType] = useState<"sql" | "ts" | "prisma" | null>(
+		null,
+	);
 	const navigateTo = (url: string) => {
 		if (document.startViewTransition) {
 			document.startViewTransition(() => {
@@ -288,7 +294,7 @@ function Flow({ projectId }: { projectId: string }) {
 								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
 									Actions
 								</h4>
-								<ExportDropdown />
+								<ExportDropdown onExport={setExportType} />
 
 								<Button
 									variant="ghost"
@@ -373,6 +379,19 @@ function Flow({ projectId }: { projectId: string }) {
 				/>
 				<Controls className="!bg-background !border-border !fill-foreground [&>button]:!border-border [&>button]:!hover:bg-muted" />
 			</ReactFlow>
+
+			<SqlPreviewModal
+				isOpen={exportType === "sql"}
+				onClose={() => setExportType(null)}
+			/>
+			<TsExportModal
+				isOpen={exportType === "ts"}
+				onClose={() => setExportType(null)}
+			/>
+			<PrismaExportModal
+				isOpen={exportType === "prisma"}
+				onClose={() => setExportType(null)}
+			/>
 		</div>
 	);
 }

@@ -27,7 +27,10 @@ export default function SettingsPopover({
 	useEffect(() => {
 		const handleClickOutside = (event: Event) => {
 			// Don't close if clicking inside the portal dropdown of the Select component
-			if ((event.target as Element).closest?.(".select-portal-dropdown")) {
+			if (
+				(event.target as Element).closest?.(".select-portal-dropdown") ||
+				(event.target as Element).closest?.(".export-portal-dropdown")
+			) {
 				return;
 			}
 

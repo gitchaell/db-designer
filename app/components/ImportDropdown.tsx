@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Import } from "lucide-react";
-import { Prisma, TypeScript } from "@react-symbols/icons";
+import { Prisma, TypeScript, Database } from "@react-symbols/icons";
 import { Button } from "./Button";
 import TsImportModal from "./TsImportModal";
 import PrismaImportModal from "./PrismaImportModal";
+import SqlImportModal from "./SqlImportModal";
 
 export default function ImportDropdown() {
 	const [isOpen, setIsOpen] = useState(false);
-	const [importType, setImportType] = useState<"ts" | "prisma" | null>(null);
+	const [importType, setImportType] = useState<"sql" | "ts" | "prisma" | null>(
+		null,
+	);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -73,6 +76,17 @@ export default function ImportDropdown() {
 							type="button"
 							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
+								setImportType("sql");
+								setIsOpen(false);
+							}}
+						>
+							<Database className="w-4 h-4 mr-2 flex-none" />
+							SQL
+						</button>
+						<button
+							type="button"
+							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
+							onClick={() => {
 								setImportType("ts");
 								setIsOpen(false);
 							}}
@@ -95,6 +109,10 @@ export default function ImportDropdown() {
 					document.body,
 				)}
 
+			<SqlImportModal
+				isOpen={importType === "sql"}
+				onClose={() => setImportType(null)}
+			/>
 			<TsImportModal
 				isOpen={importType === "ts"}
 				onClose={() => setImportType(null)}

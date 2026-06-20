@@ -2,15 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, FileCode2 } from "lucide-react";
 import { Prisma, TypeScript, Database } from "@react-symbols/icons";
-import SqlPreviewModal from "./SqlPreviewModal";
-import TsExportModal from "./TsExportModal";
-import PrismaExportModal from "./PrismaExportModal";
 
-export default function ExportDropdown() {
+interface ExportDropdownProps {
+	onExport: (type: "sql" | "ts" | "prisma") => void;
+}
+
+export default function ExportDropdown({ onExport }: ExportDropdownProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const [exportType, setExportType] = useState<"sql" | "ts" | "prisma" | null>(
-		null,
-	);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -68,7 +66,7 @@ export default function ExportDropdown() {
 				createPortal(
 					<div
 						ref={dropdownRef}
-						className="fixed z-[10000] w-44 bg-popover text-popover-foreground rounded-md border border-border shadow-md p-1 flex flex-col gap-0.5 animate-in fade-in zoom-in duration-200"
+						className="export-portal-dropdown fixed z-[10000] w-44 bg-popover text-popover-foreground rounded-md border border-border shadow-md p-1 flex flex-col gap-0.5 animate-in fade-in zoom-in duration-200"
 						style={{ top: position.top, left: position.left }}
 						onPointerDown={(e) => e.stopPropagation()} // Keep popover open
 					>
@@ -76,7 +74,7 @@ export default function ExportDropdown() {
 							type="button"
 							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
-								setExportType("sql");
+								onExport("sql");
 								setIsOpen(false);
 							}}
 						>
@@ -87,7 +85,7 @@ export default function ExportDropdown() {
 							type="button"
 							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
-								setExportType("ts");
+								onExport("ts");
 								setIsOpen(false);
 							}}
 						>
@@ -98,7 +96,7 @@ export default function ExportDropdown() {
 							type="button"
 							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
-								setExportType("prisma");
+								onExport("prisma");
 								setIsOpen(false);
 							}}
 						>
@@ -108,19 +106,6 @@ export default function ExportDropdown() {
 					</div>,
 					document.body,
 				)}
-
-			<SqlPreviewModal
-				isOpen={exportType === "sql"}
-				onClose={() => setExportType(null)}
-			/>
-			<TsExportModal
-				isOpen={exportType === "ts"}
-				onClose={() => setExportType(null)}
-			/>
-			<PrismaExportModal
-				isOpen={exportType === "prisma"}
-				onClose={() => setExportType(null)}
-			/>
 		</>
 	);
 }

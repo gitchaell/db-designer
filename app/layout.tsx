@@ -44,6 +44,13 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<script
+					async
+					src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6658566277779286"
+					crossOrigin="anonymous"
+				/>
+			</head>
 			<body
 				className={`${GeistSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground transition-colors duration-300`}
 			>

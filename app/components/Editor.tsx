@@ -27,9 +27,11 @@ import ExportDropdown from "./ExportDropdown";
 import SettingsPopover from "./SettingsPopover";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
-import SqlPreviewModal from "./SqlPreviewModal";
-import TsExportModal from "./TsExportModal";
-import PrismaExportModal from "./PrismaExportModal";
+import dynamic from "next/dynamic";
+
+const SqlPreviewModal = dynamic(() => import("./SqlPreviewModal"));
+const TsExportModal = dynamic(() => import("./TsExportModal"));
+const PrismaExportModal = dynamic(() => import("./PrismaExportModal"));
 
 const nodeTypes = {
 	table: TableNode,

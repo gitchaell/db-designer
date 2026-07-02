@@ -3,9 +3,11 @@ import { createPortal } from "react-dom";
 import { ChevronDown, Import } from "lucide-react";
 import { Prisma, TypeScript, Database } from "@react-symbols/icons";
 import { Button } from "./Button";
-import TsImportModal from "./TsImportModal";
-import PrismaImportModal from "./PrismaImportModal";
-import SqlImportModal from "./SqlImportModal";
+import dynamic from "next/dynamic";
+
+const TsImportModal = dynamic(() => import("./TsImportModal"));
+const PrismaImportModal = dynamic(() => import("./PrismaImportModal"));
+const SqlImportModal = dynamic(() => import("./SqlImportModal"));
 
 export default function ImportDropdown() {
 	const [isOpen, setIsOpen] = useState(false);

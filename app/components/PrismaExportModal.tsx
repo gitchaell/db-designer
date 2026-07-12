@@ -172,7 +172,7 @@ export default function PrismaExportModal({
 			<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
 				<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
 					<div className="flex items-center gap-4">
-						<h2 className="text-lg font-bold font-space text-foreground">
+						<h2 className="text-lg font-bold font-display text-foreground">
 							Prisma Schema Preview
 						</h2>
 					</div>

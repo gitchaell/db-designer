@@ -1,0 +1,9 @@
+/* Declaración (@font-face) */
+@font-face {
+	font-family: "Geist Sans";
+	src: url("/fonts/geist-sans/GeistSansVariable.woff2")
+		format("woff2-variations");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}

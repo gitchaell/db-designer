@@ -39,7 +39,8 @@ export function parseSqlToNodesAndEdges(code: string) {
 
 		const nodeId = uuidv4();
 		const columns: Column[] = [];
-		const tableFks: { localCol: string, refTable: string, refCol: string }[] = [];
+		const tableFks: { localCol: string; refTable: string; refCol: string }[] =
+			[];
 
 		// Split body into statements (columns or constraints), considering commas inside parenthesis
 		// A simple split by comma won't work perfectly if there are functions like DECIMAL(10,2),

@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "./styles/fonts/geist-sans.css";
+@import "./styles/fonts/geist-mono.css";
+@import "./styles/fonts/space-grotesk.css";
 
 :root {
 	--background: #f9fafb; /* gray-50 */
@@ -44,9 +47,9 @@
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 	--radius-radius: var(--radius);
-	--font-sans: var(--font-geist-sans);
-	--font-space: var(--font-space-grotesk);
-	--font-mono: var(--font-jetbrains-mono);
+	--font-sans: "Geist Sans", sans-serif;
+	--font-display: "Space Grotesk", sans-serif;
+	--font-mono: "Geist Mono", monospace;
 }
 
 .dark {
@@ -71,21 +74,28 @@
 	--ring: #d4d4d8;
 }
 
-body {
-	background: var(--background);
-	color: var(--foreground);
-	font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-	font-feature-settings: "ss02" 1;
-}
+@layer base {
+	body {
+		background: var(--background);
+		color: var(--foreground);
+		font-family: var(--font-sans);
+		font-variation-settings: "wght" 400;
+		font-feature-settings: "liga" 1, "dlig" 1, "tnum" 1, "ss02" 1, "ss05" 1,
+			"ss09" 1;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.font-space {
-	font-family: var(--font-space-grotesk), sans-serif;
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-display);
+		font-variation-settings: "wght" 600;
+		font-feature-settings: "liga" 1, "tnum" 1, "zero" 1, "salt" 1, "ss05" 1;
+	}
 }
 
 /* Noise Effect - Adaptive opacity */
@@ -158,7 +168,9 @@ h6,
 .monaco-editor .margin,
 .monaco-editor .view-lines,
 .monaco-editor .mtk1 {
-	font-family: var(--font-jetbrains-mono), monospace !important;
+	font-family: var(--font-mono) !important;
+	font-variation-settings: "wght" 400 !important;
+	font-feature-settings: "liga" 1, "ss02" 1, "ss03" 1 !important;
 }
 
 /* Edge Interactions */

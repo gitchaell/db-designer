@@ -1,0 +1,9 @@
+/* Declaración (@font-face) */
+@font-face {
+	font-family: "Space Grotesk";
+	src: url("/fonts/space-grotesk/SpaceGroteskVariable.woff2")
+		format("woff2-variations");
+	font-weight: 300 700;
+	font-style: normal;
+	font-display: swap;
+}

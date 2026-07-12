@@ -81,7 +81,7 @@ interface Post {
 			<div className="bg-card w-full max-w-4xl h-[80vh] rounded-xl border border-border shadow-2xl flex flex-col overflow-hidden">
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-					<h2 className="text-lg font-bold font-space text-foreground flex items-center">
+					<h2 className="text-lg font-bold font-display text-foreground flex items-center">
 						<FileCode2 className="w-5 h-5 mr-2" />
 						Import TypeScript Interfaces
 					</h2>

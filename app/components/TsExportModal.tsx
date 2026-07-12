@@ -81,7 +81,7 @@ export default function TsExportModal({ isOpen, onClose }: TsExportModalProps) {
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
 					<div className="flex items-center gap-4">
-						<h2 className="text-lg font-bold font-space text-foreground">
+						<h2 className="text-lg font-bold font-display text-foreground">
 							TypeScript Preview
 						</h2>
 					</div>

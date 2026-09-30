@@ -17,14 +17,218 @@ import { createPortal } from "react-dom";
 
 const CARDINALITY_OPTIONS: { label: string; value: RelationCardinality }[] = [
 	{ label: "None", value: "none" },
-	{ label: "1 (One)", value: "1" },
-	{ label: "0..1 (Zero or One)", value: "0..1" },
-	{ label: "1..1 (Exactly One)", value: "1..1" },
-	{ label: "0..* (Zero or Many)", value: "0..*" },
-	{ label: "1..* (One or Many)", value: "1..*" },
-	{ label: "N (Many)", value: "N" },
-	{ label: "* (Many)", value: "*" },
+	{ label: "1 (Exactly One ||)", value: "1" },
+	{ label: "0..1 (Zero or One o|)", value: "0..1" },
+	{ label: "1..1 (Exactly One ||)", value: "1..1" },
+	{ label: "0..* (Zero or Many o<)", value: "0..*" },
+	{ label: "1..* (One or Many |>|)", value: "1..*" },
+	{ label: "N (Many o<)", value: "N" },
+	{ label: "* (Many o<)", value: "*" },
 ];
+
+function getMarkerUrl(
+	card: RelationCardinality | undefined,
+	edgeId: string,
+	isStart: boolean,
+) {
+	if (!card || card === "none") return undefined;
+	const prefix = isStart ? "start" : "end";
+	if (card === "1" || card === "1..1")
+		return `url(#card-one-${prefix}-${edgeId})`;
+	if (card === "0..1") return `url(#card-zero-one-${prefix}-${edgeId})`;
+	if (card === "1..*") return `url(#card-one-many-${prefix}-${edgeId})`;
+	if (card === "0..*" || card === "N" || card === "*")
+		return `url(#card-zero-many-${prefix}-${edgeId})`;
+	return undefined;
+}
+
+function CardinalityMarkersDefs({
+	id,
+	strokeColor,
+}: { id: string; strokeColor: string }) {
+	return (
+		<svg
+			style={{
+				position: "absolute",
+				width: 0,
+				height: 0,
+				pointerEvents: "none",
+			}}
+		>
+			<defs>
+				{/* Start Markers */}
+				<marker
+					id={`card-one-start-${id}`}
+					viewBox="-16 -12 20 24"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -4 -8 L -4 8 M -10 -8 L -10 8"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-one-start-${id}`}
+					viewBox="-20 -12 24 24"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-12"
+						cy="0"
+						r="4"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -4 -8 L -4 8"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-one-many-start-${id}`}
+					viewBox="-18 -12 22 24"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -12 -8 L -12 8 M -12 -8 L 0 0 M -12 0 L 0 0 M -12 8 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-many-start-${id}`}
+					viewBox="-22 -12 26 24"
+					refX="0"
+					refY="0"
+					markerWidth="20"
+					markerHeight="20"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-15"
+						cy="0"
+						r="4"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -8 -8 L 0 0 M -8 0 L 0 0 M -8 8 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				{/* End Markers */}
+				<marker
+					id={`card-one-end-${id}`}
+					viewBox="-16 -12 20 24"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -4 -8 L -4 8 M -10 -8 L -10 8"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-one-end-${id}`}
+					viewBox="-20 -12 24 24"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-12"
+						cy="0"
+						r="4"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -4 -8 L -4 8"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-one-many-end-${id}`}
+					viewBox="-18 -12 22 24"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -12 -8 L -12 8 M -12 -8 L 0 0 M -12 0 L 0 0 M -12 8 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-many-end-${id}`}
+					viewBox="-22 -12 26 24"
+					refX="0"
+					refY="0"
+					markerWidth="20"
+					markerHeight="20"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-15"
+						cy="0"
+						r="4"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -8 -8 L 0 0 M -8 0 L 0 0 M -8 8 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="2"
+						fill="none"
+					/>
+				</marker>
+			</defs>
+		</svg>
+	);
+}
 
 export default function CustomRelationEdge({
 	id,
@@ -47,7 +251,7 @@ export default function CustomRelationEdge({
 		data?.startCardinality || "1",
 	);
 	const [endCard, setEndCard] = useState<RelationCardinality>(
-		data?.endCardinality || "N",
+		data?.endCardinality || "0..*",
 	);
 
 	// Determine path based on edge settings
@@ -100,62 +304,29 @@ export default function CustomRelationEdge({
 		setIsOpen(false);
 	};
 
-	const displayStartCard =
-		data?.startCardinality && data.startCardinality !== "none"
-			? data.startCardinality
-			: null;
-	const displayEndCard =
-		data?.endCardinality && data.endCardinality !== "none"
-			? data.endCardinality
-			: null;
+	const strokeColor = selected
+		? "var(--color-primary, #3b82f6)"
+		: (style.stroke as string) || "#71717a";
+
+	const startMarkerUrl = getMarkerUrl(startCard, id, true);
+	const endMarkerUrl = getMarkerUrl(endCard, id, false);
 
 	return (
 		<>
+			<CardinalityMarkersDefs id={id} strokeColor={strokeColor} />
+
 			<BaseEdge
 				path={edgePath}
-				markerEnd={markerEnd}
+				markerStart={startMarkerUrl}
+				markerEnd={endMarkerUrl || markerEnd}
 				style={{
 					strokeWidth: selected ? 2.5 : 2,
-					stroke: selected
-						? "var(--color-primary, #3b82f6)"
-						: style.stroke || "#71717a",
+					stroke: strokeColor,
 					...style,
 				}}
 			/>
 
 			<EdgeLabelRenderer>
-				{/* Start Cardinality Badge near source handle */}
-				{displayStartCard && (
-					<div
-						style={{
-							position: "absolute",
-							transform: `translate(-50%, -50%) translate(${sourceX + (labelX - sourceX) * 0.2}px, ${sourceY + (labelY - sourceY) * 0.2}px)`,
-							pointerEvents: "all",
-						}}
-						className="nodrag nopan"
-					>
-						<span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-background text-foreground border border-border rounded shadow-xs select-none">
-							{displayStartCard}
-						</span>
-					</div>
-				)}
-
-				{/* End Cardinality Badge near target handle */}
-				{displayEndCard && (
-					<div
-						style={{
-							position: "absolute",
-							transform: `translate(-50%, -50%) translate(${targetX + (labelX - targetX) * 0.2}px, ${targetY + (labelY - targetY) * 0.2}px)`,
-							pointerEvents: "all",
-						}}
-						className="nodrag nopan"
-					>
-						<span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-background text-foreground border border-border rounded shadow-xs select-none">
-							{displayEndCard}
-						</span>
-					</div>
-				)}
-
 				{/* Center Edge Label */}
 				<div
 					style={{

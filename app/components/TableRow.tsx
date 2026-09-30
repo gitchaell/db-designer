@@ -8,21 +8,13 @@ import { clsx } from "clsx";
 import { Clock, GripVertical, Key, Link, Trash2 } from "lucide-react";
 import { TableField } from "./TableField";
 
+import type { Column } from "@/app/types";
+
 interface TableRowProps {
 	nodeId: string;
-	col: {
-		id: string;
-		name: string;
-		type: ColumnType;
-		isPk: boolean;
-		isFk: boolean;
-	};
+	col: Column;
 	isReadOnly: boolean;
-	updateColumn: (
-		nodeId: string,
-		colId: string,
-		data: Partial<TableRowProps["col"]>,
-	) => void;
+	updateColumn: (nodeId: string, colId: string, data: Partial<Column>) => void;
 	deleteColumn: (nodeId: string, colId: string) => void;
 }
 
@@ -44,7 +36,7 @@ export function TableRow({
 	deleteColumn,
 }: TableRowProps) {
 	const { columnStyleSettings } = useStore();
-	const isAudit = isAuditField(col.name);
+	const isAudit = isAuditField(col);
 
 	const {
 		attributes,
@@ -113,7 +105,7 @@ export function TableRow({
 			/>
 
 			{/* PK/FK/Audit Indicators */}
-			<div className="flex items-center gap-1 min-w-[36px] flex-none">
+			<div className="flex items-center gap-1 min-w-[54px] flex-none">
 				{(!isReadOnly || col.isPk) && (
 					<button
 						type="button"
@@ -148,13 +140,24 @@ export function TableRow({
 						<Link className="w-3 h-3" />
 					</button>
 				)}
-				{!col.isPk && !col.isFk && isAudit && (
-					<div
-						className="p-0.5 rounded text-purple-500 bg-purple-500/10 flex items-center justify-center"
+				{(!isReadOnly || col.isAudit) && (
+					<button
+						type="button"
+						disabled={isReadOnly}
+						onClick={() =>
+							updateColumn(nodeId, col.id, { isAudit: !col.isAudit })
+						}
+						className={clsx(
+							"p-0.5 rounded transition-colors",
+							col.isAudit
+								? "text-purple-500 bg-purple-500/10"
+								: "text-muted-foreground hover:text-foreground",
+							isReadOnly && "cursor-not-allowed opacity-80",
+						)}
 						title="Audit Field"
 					>
 						<Clock className="w-3 h-3" />
-					</div>
+					</button>
 				)}
 			</div>
 

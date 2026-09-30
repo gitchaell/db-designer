@@ -45,6 +45,10 @@ const nodeTypes = {
 const edgeTypes = {
 	relation: CustomRelationEdge,
 	default: CustomRelationEdge,
+	bezier: CustomRelationEdge,
+	smoothstep: CustomRelationEdge,
+	step: CustomRelationEdge,
+	straight: CustomRelationEdge,
 };
 
 // Default connection styling
@@ -116,7 +120,8 @@ function Flow({ projectId }: { projectId: string }) {
 			id,
 			type: "container",
 			position: { x: Math.random() * 300, y: Math.random() * 300 },
-			style: { width: 400, height: 300 },
+			style: { width: 400, height: 300, zIndex: -1 },
+			zIndex: -1,
 			data: {
 				label: "New Module",
 				color: "text-blue-500",
@@ -168,14 +173,23 @@ function Flow({ projectId }: { projectId: string }) {
 		const wasEditing = !isReadOnly;
 		if (wasEditing) toggleReadOnly();
 		setTimeout(async () => {
-			const viewport = document.querySelector(
-				".react-flow__viewport",
-			) as HTMLElement;
-			if (viewport) {
+			const element = (document.querySelector(".react-flow__renderer") ||
+				document.querySelector(".react-flow")) as HTMLElement;
+			if (element) {
 				try {
-					const dataUrl = await toPng(viewport, {
+					const dataUrl = await toPng(element, {
 						backgroundColor: resolvedTheme === "dark" ? "#09090b" : "#f9fafb",
 						pixelRatio: 2,
+						filter: (node) => {
+							const el = node as HTMLElement;
+							if (
+								el.classList?.contains("react-flow__controls") ||
+								el.classList?.contains("react-flow__panel")
+							) {
+								return false;
+							}
+							return true;
+						},
 					});
 					const a = document.createElement("a");
 					a.setAttribute("download", `${project?.name || "diagram"}.png`);

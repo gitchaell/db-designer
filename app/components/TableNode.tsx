@@ -38,7 +38,11 @@ const COLORS = [
 	"bg-lime-600",
 ];
 
-export default function TableNode({ id, data, selected }: NodeProps<Extract<AppNode, { type: "table" }>>) {
+export default function TableNode({
+	id,
+	data,
+	selected,
+}: NodeProps<Extract<AppNode, { type: "table" }>>) {
 	const {
 		updateNodeData,
 		updateNode,

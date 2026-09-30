@@ -37,7 +37,7 @@ export default function PrintExportModal({
 	isOpen,
 	onClose,
 }: PrintExportModalProps) {
-	const { project, isReadOnly, toggleReadOnly } = useStore();
+	const { project, isReadOnly, toggleReadOnly, nodes } = useStore();
 	const { resolvedTheme } = useTheme();
 
 	const [activeTab, setActiveTab] = useState<"pdf" | "image">("pdf");
@@ -60,36 +60,111 @@ export default function PrintExportModal({
 	if (!isOpen) return null;
 
 	const captureCanvas = async (includeBg: boolean, scaleMultiplier = 3) => {
-		const element = (document.querySelector(".react-flow__renderer") ||
-			document.querySelector(".react-flow")) as HTMLElement;
-		if (!element) throw new Error("Flow element not found");
+		const viewportElement = document.querySelector(
+			".react-flow__viewport",
+		) as HTMLElement;
+		if (!viewportElement) throw new Error("Flow element not found");
 
-		const bgColor = includeBg
-			? resolvedTheme === "dark"
-				? "#09090b"
-				: "#f9fafb"
-			: "transparent";
+		// Compute bounding box covering ALL nodes in the diagram
+		let minX = Number.POSITIVE_INFINITY;
+		let minY = Number.POSITIVE_INFINITY;
+		let maxX = Number.NEGATIVE_INFINITY;
+		let maxY = Number.NEGATIVE_INFINITY;
+
+		if (nodes.length === 0) {
+			minX = 0;
+			minY = 0;
+			maxX = 800;
+			maxY = 600;
+		} else {
+			for (const node of nodes) {
+				const w =
+					(node.style?.width as number) ||
+					(node.measured?.width as number) ||
+					320;
+				const h =
+					(node.style?.height as number) ||
+					(node.measured?.height as number) ||
+					200;
+
+				minX = Math.min(minX, node.position.x);
+				minY = Math.min(minY, node.position.y);
+				maxX = Math.max(maxX, node.position.x + w);
+				maxY = Math.max(maxY, node.position.y + h);
+			}
+		}
+
+		const padding = 80;
+		const width = Math.max(600, Math.ceil(maxX - minX + padding * 2));
+		const height = Math.max(400, Math.ceil(maxY - minY + padding * 2));
+		const translateX = -minX + padding;
+		const translateY = -minY + padding;
 
 		const exportFn = imageFormat === "jpeg" ? toJpeg : toPng;
-		const dataUrl = await exportFn(element, {
-			backgroundColor: bgColor,
+
+		// Render viewport element transformed to fit bounds
+		const rawDataUrl = await exportFn(viewportElement, {
+			width,
+			height,
 			pixelRatio: scaleMultiplier,
+			style: {
+				transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
+				width: `${width}px`,
+				height: `${height}px`,
+			},
 			filter: (node) => {
 				const el = node as HTMLElement;
 				if (
 					el.classList?.contains("react-flow__controls") ||
-					el.classList?.contains("react-flow__panel")
+					el.classList?.contains("react-flow__panel") ||
+					el.classList?.contains("react-flow__background")
 				) {
-					return false;
-				}
-				if (!includeBg && el.classList?.contains("react-flow__background")) {
 					return false;
 				}
 				return true;
 			},
 		});
 
-		return dataUrl;
+		// Create composite canvas with reliable dot grid background
+		const img = new Image();
+		img.src = rawDataUrl;
+		await new Promise((resolve, reject) => {
+			img.onload = resolve;
+			img.onerror = reject;
+		});
+
+		const finalCanvas = document.createElement("canvas");
+		finalCanvas.width = width * scaleMultiplier;
+		finalCanvas.height = height * scaleMultiplier;
+		const ctx = finalCanvas.getContext("2d");
+
+		if (ctx) {
+			const isDark = resolvedTheme === "dark";
+			const bgColor = isDark ? "#09090b" : "#f9fafb";
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+			if (includeBg) {
+				const dotColor = isDark ? "#27272a" : "#e4e4e7";
+				const dotRadius = 1.5 * scaleMultiplier;
+				const gap = 20 * scaleMultiplier;
+
+				ctx.fillStyle = dotColor;
+				for (let x = gap / 2; x < finalCanvas.width; x += gap) {
+					for (let y = gap / 2; y < finalCanvas.height; y += gap) {
+						ctx.beginPath();
+						ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+						ctx.fill();
+					}
+				}
+			}
+
+			ctx.drawImage(img, 0, 0);
+		}
+
+		return finalCanvas.toDataURL(
+			imageFormat === "jpeg" ? "image/jpeg" : "image/png",
+		);
 	};
 
 	const handleExportPdf = async () => {
@@ -100,7 +175,7 @@ export default function PrintExportModal({
 		try {
 			await new Promise((r) => setTimeout(r, 200));
 
-			// Capture high resolution image (3x scale)
+			// Capture high resolution image (3x scale) with complete bounds
 			const dataUrl = await captureCanvas(includeBackgroundPdf, 3);
 
 			const img = new Image();
@@ -155,10 +230,10 @@ export default function PrintExportModal({
 			const fullCtx = fullCanvas.getContext("2d");
 
 			if (fullCtx) {
-				if (includeBackgroundPdf) {
-					fullCtx.fillStyle = resolvedTheme === "dark" ? "#09090b" : "#f9fafb";
-					fullCtx.fillRect(0, 0, totalGridWidthPx, totalGridHeightPx);
-				}
+				const isDark = resolvedTheme === "dark";
+				fullCtx.fillStyle = isDark ? "#09090b" : "#f9fafb";
+				fullCtx.fillRect(0, 0, totalGridWidthPx, totalGridHeightPx);
+
 				fullCtx.drawImage(img, offsetX, offsetY, drawW, drawH);
 
 				// Slice page tiles
@@ -315,14 +390,16 @@ export default function PrintExportModal({
 										maxHeight: "130px",
 									}}
 								>
-									{Array.from({ length: gridCols * gridRows }).map((_, idx) => (
-										<div
-											key={idx}
-											className="border border-dashed border-primary/40 bg-primary/5 rounded flex items-center justify-center text-[10px] font-mono text-primary/80 font-bold p-2 min-w-[32px] min-h-[24px]"
-										>
-											P{idx + 1}
-										</div>
-									))}
+									{Array.from({ length: gridCols * gridRows }).map(
+										(_, pageIdx) => (
+											<div
+												key={`page-grid-${pageIdx + 1}`}
+												className="border border-dashed border-primary/40 bg-primary/5 rounded flex items-center justify-center text-[10px] font-mono text-primary/80 font-bold p-2 min-w-[32px] min-h-[24px]"
+											>
+												P{pageIdx + 1}
+											</div>
+										),
+									)}
 								</div>
 								<span className="text-[10px] text-muted-foreground mt-2 font-mono">
 									Proportional aspect ratio preserved across all pages

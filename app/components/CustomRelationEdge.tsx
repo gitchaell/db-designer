@@ -26,6 +26,16 @@ const CARDINALITY_OPTIONS: { label: string; value: RelationCardinality }[] = [
 	{ label: "Many (*)", value: "*" },
 ];
 
+const COLOR_PRESETS = [
+	"#71717a", // Default Zinc
+	"#3b82f6", // Blue
+	"#10b981", // Emerald
+	"#f59e0b", // Amber
+	"#ef4444", // Red
+	"#8b5cf6", // Purple
+	"#ec4899", // Pink
+];
+
 function getMarkerUrl(
 	card: RelationCardinality | undefined,
 	edgeId: string,
@@ -274,6 +284,9 @@ export default function CustomRelationEdge({
 	const [endCard, setEndCard] = useState<RelationCardinality>(
 		data?.endCardinality || "0..*",
 	);
+	const [customColor, setCustomColor] = useState<string>(
+		data?.color || "#71717a",
+	);
 
 	// Determine path based on edge settings
 	let edgePath = "";
@@ -316,6 +329,7 @@ export default function CustomRelationEdge({
 			label: labelInput,
 			startCardinality: startCard,
 			endCardinality: endCard,
+			color: customColor,
 		});
 		setIsOpen(false);
 	};
@@ -327,10 +341,15 @@ export default function CustomRelationEdge({
 
 	const strokeColor = selected
 		? "var(--color-primary, #3b82f6)"
-		: (style.stroke as string) || "#71717a";
+		: data?.color || (style.stroke as string) || "#71717a";
 
-	const startMarkerUrl = getMarkerUrl(startCard, id, true);
-	const endMarkerUrl = getMarkerUrl(endCard, id, false);
+	const showMarkers = edgeSettings.showRelationMarkers !== false;
+	const startMarkerUrl = showMarkers
+		? getMarkerUrl(startCard, id, true)
+		: undefined;
+	const endMarkerUrl = showMarkers
+		? getMarkerUrl(endCard, id, false) || markerEnd
+		: undefined;
 
 	return (
 		<>
@@ -339,7 +358,7 @@ export default function CustomRelationEdge({
 			<BaseEdge
 				path={edgePath}
 				markerStart={startMarkerUrl}
-				markerEnd={endMarkerUrl || markerEnd}
+				markerEnd={endMarkerUrl}
 				style={{
 					strokeWidth: selected ? 2.5 : 2,
 					stroke: strokeColor,
@@ -364,6 +383,7 @@ export default function CustomRelationEdge({
 								setLabelInput(data?.label || "");
 								setStartCard(data?.startCardinality || "1");
 								setEndCard(data?.endCardinality || "N");
+								setCustomColor(data?.color || "#71717a");
 								setIsOpen(true);
 							}
 						}}
@@ -413,6 +433,44 @@ export default function CustomRelationEdge({
 											placeholder="e.g. belongs_to, contains"
 											className="w-full px-2.5 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
 										/>
+									</div>
+
+									{/* Custom Color Selector */}
+									<div className="flex flex-col gap-1">
+										<label
+											htmlFor={`edge-color-input-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
+											Edge Line Color
+										</label>
+										<div className="flex items-center gap-1.5 pt-1">
+											{COLOR_PRESETS.map((color) => (
+												<button
+													key={color}
+													type="button"
+													onClick={() => setCustomColor(color)}
+													style={{ backgroundColor: color }}
+													className={clsx(
+														"w-6 h-6 rounded-full border transition-transform hover:scale-110 flex items-center justify-center",
+														customColor === color
+															? "border-foreground scale-110 shadow-sm"
+															: "border-transparent opacity-80",
+													)}
+												>
+													{customColor === color && (
+														<Check className="w-3 h-3 text-white drop-shadow-xs" />
+													)}
+												</button>
+											))}
+											<input
+												id={`edge-color-input-${id}`}
+												type="color"
+												value={customColor}
+												onChange={(e) => setCustomColor(e.target.value)}
+												className="w-6 h-6 p-0 border-0 rounded-full cursor-pointer bg-transparent overflow-hidden"
+												title="Choose custom color"
+											/>
+										</div>
 									</div>
 
 									{/* Start Cardinality */}

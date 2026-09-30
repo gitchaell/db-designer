@@ -47,6 +47,7 @@ export type RelationEdgeData = {
 	label?: string;
 	startCardinality?: RelationCardinality;
 	endCardinality?: RelationCardinality;
+	color?: string;
 };
 
 export type AppEdge = Edge<RelationEdgeData>;

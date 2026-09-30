@@ -17,13 +17,13 @@ import { createPortal } from "react-dom";
 
 const CARDINALITY_OPTIONS: { label: string; value: RelationCardinality }[] = [
 	{ label: "None", value: "none" },
-	{ label: "1 (Exactly One ||)", value: "1" },
-	{ label: "0..1 (Zero or One o|)", value: "0..1" },
-	{ label: "1..1 (Exactly One ||)", value: "1..1" },
-	{ label: "0..* (Zero or Many o<)", value: "0..*" },
-	{ label: "1..* (One or Many |>|)", value: "1..*" },
-	{ label: "N (Many o<)", value: "N" },
-	{ label: "* (Many o<)", value: "*" },
+	{ label: "Exactly One (1)", value: "1" },
+	{ label: "Zero or One (0..1)", value: "0..1" },
+	{ label: "Exactly One (1..1)", value: "1..1" },
+	{ label: "Zero or Many (0..*)", value: "0..*" },
+	{ label: "One or Many (1..*)", value: "1..*" },
+	{ label: "Many (N)", value: "N" },
+	{ label: "Many (*)", value: "*" },
 ];
 
 function getMarkerUrl(
@@ -55,88 +55,99 @@ function CardinalityMarkersDefs({
 				pointerEvents: "none",
 			}}
 		>
+			<title>Cardinality Markers</title>
 			<defs>
 				{/* Start Markers */}
 				<marker
 					id={`card-one-start-${id}`}
-					viewBox="-16 -12 20 24"
+					viewBox="-16 -10 20 20"
 					refX="0"
 					refY="0"
-					markerWidth="16"
-					markerHeight="16"
+					markerWidth="14"
+					markerHeight="14"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<path
-						d="M -4 -8 L -4 8 M -10 -8 L -10 8"
+						d="M -3 -6 L -3 6 M -8 -6 L -8 6"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-zero-one-start-${id}`}
-					viewBox="-20 -12 24 24"
+					viewBox="-18 -10 22 20"
 					refX="0"
 					refY="0"
-					markerWidth="18"
-					markerHeight="18"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<circle
-						cx="-12"
+						cx="-10"
 						cy="0"
-						r="4"
+						r="3"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.5"
+						strokeDasharray="none"
 						fill="var(--color-bg, #09090b)"
 					/>
 					<path
-						d="M -4 -8 L -4 8"
+						d="M -3 -6 L -3 6"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-one-many-start-${id}`}
-					viewBox="-18 -12 22 24"
+					viewBox="-16 -10 20 20"
 					refX="0"
 					refY="0"
-					markerWidth="18"
-					markerHeight="18"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<path
-						d="M -12 -8 L -12 8 M -12 -8 L 0 0 M -12 0 L 0 0 M -12 8 L 0 0"
+						d="M -10 -6 L -10 6 M -10 -6 L 0 0 M -10 0 L 0 0 M -10 6 L 0 0"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-zero-many-start-${id}`}
-					viewBox="-22 -12 26 24"
+					viewBox="-20 -10 24 20"
 					refX="0"
 					refY="0"
-					markerWidth="20"
-					markerHeight="20"
+					markerWidth="18"
+					markerHeight="18"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<circle
-						cx="-15"
+						cx="-13"
 						cy="0"
-						r="4"
+						r="3"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.5"
+						strokeDasharray="none"
 						fill="var(--color-bg, #09090b)"
 					/>
 					<path
-						d="M -8 -8 L 0 0 M -8 0 L 0 0 M -8 8 L 0 0"
+						d="M -7 -6 L 0 0 M -7 0 L 0 0 M -7 6 L 0 0"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
@@ -144,84 +155,94 @@ function CardinalityMarkersDefs({
 				{/* End Markers */}
 				<marker
 					id={`card-one-end-${id}`}
-					viewBox="-16 -12 20 24"
+					viewBox="-16 -10 20 20"
 					refX="0"
 					refY="0"
-					markerWidth="16"
-					markerHeight="16"
+					markerWidth="14"
+					markerHeight="14"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<path
-						d="M -4 -8 L -4 8 M -10 -8 L -10 8"
+						d="M -3 -6 L -3 6 M -8 -6 L -8 6"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-zero-one-end-${id}`}
-					viewBox="-20 -12 24 24"
+					viewBox="-18 -10 22 20"
 					refX="0"
 					refY="0"
-					markerWidth="18"
-					markerHeight="18"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<circle
-						cx="-12"
+						cx="-10"
 						cy="0"
-						r="4"
+						r="3"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.5"
+						strokeDasharray="none"
 						fill="var(--color-bg, #09090b)"
 					/>
 					<path
-						d="M -4 -8 L -4 8"
+						d="M -3 -6 L -3 6"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-one-many-end-${id}`}
-					viewBox="-18 -12 22 24"
+					viewBox="-16 -10 20 20"
 					refX="0"
 					refY="0"
-					markerWidth="18"
-					markerHeight="18"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<path
-						d="M -12 -8 L -12 8 M -12 -8 L 0 0 M -12 0 L 0 0 M -12 8 L 0 0"
+						d="M -10 -6 L -10 6 M -10 -6 L 0 0 M -10 0 L 0 0 M -10 6 L 0 0"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
 
 				<marker
 					id={`card-zero-many-end-${id}`}
-					viewBox="-22 -12 26 24"
+					viewBox="-20 -10 24 20"
 					refX="0"
 					refY="0"
-					markerWidth="20"
-					markerHeight="20"
+					markerWidth="18"
+					markerHeight="18"
+					markerUnits="userSpaceOnUse"
 					orient="auto-start-reverse"
 				>
 					<circle
-						cx="-15"
+						cx="-13"
 						cy="0"
-						r="4"
+						r="3"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.5"
+						strokeDasharray="none"
 						fill="var(--color-bg, #09090b)"
 					/>
 					<path
-						d="M -8 -8 L 0 0 M -8 0 L 0 0 M -8 8 L 0 0"
+						d="M -7 -6 L 0 0 M -7 0 L 0 0 M -7 6 L 0 0"
 						stroke={strokeColor}
-						strokeWidth="2"
+						strokeWidth="1.75"
+						strokeDasharray="none"
 						fill="none"
 					/>
 				</marker>
@@ -378,10 +399,14 @@ export default function CustomRelationEdge({
 
 									{/* Label Input */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`edge-label-input-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											Relation Label / Name
 										</label>
 										<input
+											id={`edge-label-input-${id}`}
 											type="text"
 											value={labelInput}
 											onChange={(e) => setLabelInput(e.target.value)}
@@ -392,10 +417,14 @@ export default function CustomRelationEdge({
 
 									{/* Start Cardinality */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`start-card-select-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											Start Symbol / Cardinality
 										</label>
 										<select
+											id={`start-card-select-${id}`}
 											value={startCard}
 											onChange={(e) =>
 												setStartCard(e.target.value as RelationCardinality)
@@ -412,10 +441,14 @@ export default function CustomRelationEdge({
 
 									{/* End Cardinality */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`end-card-select-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											End Symbol / Cardinality
 										</label>
 										<select
+											id={`end-card-select-${id}`}
 											value={endCard}
 											onChange={(e) =>
 												setEndCard(e.target.value as RelationCardinality)

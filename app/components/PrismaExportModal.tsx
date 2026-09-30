@@ -21,6 +21,7 @@ export default function PrismaExportModal({
 			'generator client {\n  provider = "prisma-client-js"\n}\n\ndatasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}\n\n';
 
 		for (const node of nodes) {
+			if (node.type !== "table") continue;
 			const tableName = node.data.label || "UntitledModel";
 
 			const modelName = tableName
@@ -78,7 +79,7 @@ export default function PrismaExportModal({
 				const fkCol = node.data.columns.find((c) => c.id === fkColId);
 
 				const targetNode = nodes.find((n) => n.id === edge.target);
-				if (targetNode && fkCol) {
+				if (targetNode && targetNode.type === "table" && fkCol) {
 					const targetModelNameRaw = targetNode.data.label || "UntitledModel";
 					const targetModelName = targetModelNameRaw
 						.split(/[_-\s]+/)
@@ -113,7 +114,7 @@ export default function PrismaExportModal({
 			const incomingEdges = edges.filter((e) => e.target === node.id);
 			for (const edge of incomingEdges) {
 				const sourceNode = nodes.find((n) => n.id === edge.source);
-				if (sourceNode) {
+				if (sourceNode && sourceNode.type === "table") {
 					const sourceModelNameRaw = sourceNode.data.label || "UntitledModel";
 					const sourceModelName = sourceModelNameRaw
 						.split(/[_-\s]+/)

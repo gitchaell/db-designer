@@ -10,6 +10,7 @@ interface TableFieldProps {
 	className?: string;
 	readOnlyClassName?: string;
 	placeholder?: string;
+	style?: React.CSSProperties;
 }
 
 export function TableField({
@@ -21,10 +22,11 @@ export function TableField({
 	className,
 	readOnlyClassName,
 	placeholder,
+	style,
 }: TableFieldProps) {
 	if (isReadOnly) {
 		return (
-			<span className={clsx("truncate", className, readOnlyClassName)}>
+			<span style={style} className={clsx("truncate", className, readOnlyClassName)}>
 				{value}
 			</span>
 		);
@@ -48,8 +50,6 @@ export function TableField({
 			onChange={(e) => onChange?.(e.target.value)}
 			onKeyDown={(e) => {
 				if (e.key === "Enter" && type === "text") {
-					// We dispatch a custom event that TableRow can listen to, or we could pass an onEnter prop
-					// Let's create and dispatch a custom event
 					e.currentTarget.dispatchEvent(
 						new CustomEvent("field-enter", {
 							bubbles: true,
@@ -58,6 +58,7 @@ export function TableField({
 					);
 				}
 			}}
+			style={style}
 			className={clsx("bg-transparent focus:outline-none", className)}
 			placeholder={placeholder}
 		/>

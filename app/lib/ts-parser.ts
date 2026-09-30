@@ -1,6 +1,6 @@
-import type { AppEdge, AppNode, Column, ColumnType } from "../types";
-import { v4 as uuidv4 } from "uuid";
 import * as ts from "typescript";
+import { v4 as uuidv4 } from "uuid";
+import type { AppEdge, AppNode, Column, ColumnType } from "../types";
 
 // Simple mapping from TS types to our internal column types
 function mapTsTypeToColumnType(tsType: string): ColumnType {
@@ -173,12 +173,18 @@ export function parseTypeScriptToNodesAndEdges(code: string): {
 
 		if (sourceNodeId && targetNodeId) {
 			// Find the target node and its primary key
-			const targetNode = nodes.find((n) => n.id === targetNodeId);
+			const targetNode = nodes.find(
+				(n): n is Extract<AppNode, { type: "table" }> =>
+					n.type === "table" && n.id === targetNodeId,
+			);
 			const targetPkCol = targetNode?.data.columns.find((c: Column) => c.isPk);
 
 			if (targetPkCol) {
 				// Update the source column to be a foreign key
-				const sourceNode = nodes.find((n) => n.id === sourceNodeId);
+				const sourceNode = nodes.find(
+					(n): n is Extract<AppNode, { type: "table" }> =>
+						n.type === "table" && n.id === sourceNodeId,
+				);
 				const sourceCol = sourceNode?.data.columns.find(
 					(c: Column) => c.id === candidate.sourceColumnId,
 				);

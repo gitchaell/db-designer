@@ -50,7 +50,15 @@ export function parseMermaidToNodesAndEdges(code: string): {
 
 	const nodes: AppNode[] = [];
 	const edges: AppEdge[] = [];
-	const entityMap = new Map<string, { nodeId: string; columns: Column[] }>();
+	const entityMap = new Map<
+		string,
+		{
+			nodeId: string;
+			columns: Column[];
+			colMap: Map<string, Column>;
+			nodeRef: AppNode;
+		}
+	>();
 
 	let xPos = 50;
 	let yPos = 50;
@@ -60,13 +68,16 @@ export function parseMermaidToNodesAndEdges(code: string): {
 		const key = cleanName.toLowerCase();
 		if (!entityMap.has(key)) {
 			const nodeId = uuidv4();
-			entityMap.set(key, { nodeId, columns: [] });
-			nodes.push({
+			const columns: Column[] = [];
+			const colMap = new Map<string, Column>();
+			const nodeRef: AppNode = {
 				id: nodeId,
 				type: "table",
 				position: { x: xPos, y: yPos },
-				data: { label: cleanName, columns: [] },
-			});
+				data: { label: cleanName, columns },
+			};
+			nodes.push(nodeRef);
+			entityMap.set(key, { nodeId, columns, colMap, nodeRef });
 
 			xPos += 300;
 			if (xPos > 900) {
@@ -92,7 +103,7 @@ export function parseMermaidToNodesAndEdges(code: string): {
 			continue;
 		}
 
-		// Check for entity block start: `CUSTOMER {` or `"DELIVERY-ADDRESS" {`
+		// Entity block start: CUSTOMER {
 		const entityBlockStartMatch = /^([A-Za-z0-9_'"\s-]+)\s*\{$/.exec(line);
 		if (entityBlockStartMatch) {
 			const entityName = entityBlockStartMatch[1];
@@ -101,7 +112,7 @@ export function parseMermaidToNodesAndEdges(code: string): {
 			continue;
 		}
 
-		// Handle field inside entity block ONLY if we are inside a block
+		// Field inside entity block
 		if (currentEntityKey) {
 			const commentIdx = line.indexOf('"');
 			let lineWithoutComment = line;
@@ -120,32 +131,28 @@ export function parseMermaidToNodesAndEdges(code: string): {
 
 				const entityData = entityMap.get(currentEntityKey);
 				if (entityData) {
-					const node = nodes.find((n) => n.id === entityData.nodeId);
-					if (node) {
-						let col = entityData.columns.find(
-							(c) => c.name.toLowerCase() === colName.toLowerCase(),
-						);
-						if (!col) {
-							col = {
-								id: uuidv4(),
-								name: colName,
-								type: mapMermaidType(colTypeRaw),
-								isPk,
-								isFk,
-							};
-							entityData.columns.push(col);
-							node.data.columns.push(col);
-						} else {
-							if (isPk) col.isPk = true;
-							if (isFk) col.isFk = true;
-						}
+					const colKey = colName.toLowerCase();
+					let col = entityData.colMap.get(colKey);
+					if (!col) {
+						col = {
+							id: uuidv4(),
+							name: colName,
+							type: mapMermaidType(colTypeRaw),
+							isPk,
+							isFk,
+						};
+						entityData.columns.push(col);
+						entityData.colMap.set(colKey, col);
+					} else {
+						if (isPk) col.isPk = true;
+						if (isFk) col.isFk = true;
 					}
 				}
 			}
 			continue;
 		}
 
-		// Check for relationship line outside block: `CUSTOMER ||--o{ ORDER : places`
+		// Relationship line
 		const relRegex =
 			/^([A-Za-z0-9_'"\s-]+?)\s+([|{}o<>.~-]{4,12})\s+([A-Za-z0-9_'"\s-]+?)(?:\s*:\s*(.*))?$/;
 		const relMatch = relRegex.exec(line);
@@ -166,20 +173,15 @@ export function parseMermaidToNodesAndEdges(code: string): {
 		}
 	}
 
-	// Create edges from rawRelationships
+	// Create edges
 	for (const rel of rawRelationships) {
 		const entity1 = getOrCreateEntity(rel.entity1Name);
 		const entity2 = getOrCreateEntity(rel.entity2Name);
 
-		const node1 = nodes.find((n) => n.id === entity1.nodeId);
-		const node2 = nodes.find((n) => n.id === entity2.nodeId);
-
 		const col1 =
-			node1?.data.columns.find((c) => c.isPk || c.isFk) ||
-			node1?.data.columns[0];
+			entity1.columns.find((c) => c.isPk || c.isFk) || entity1.columns[0];
 		const col2 =
-			node2?.data.columns.find((c) => c.isFk || c.isPk) ||
-			node2?.data.columns[0];
+			entity2.columns.find((c) => c.isFk || c.isPk) || entity2.columns[0];
 
 		const sourceColId = col1?.id || uuidv4();
 		const targetColId = col2?.id || uuidv4();
@@ -192,6 +194,9 @@ export function parseMermaidToNodesAndEdges(code: string): {
 			targetHandle: `tl-${targetColId}`,
 			type: "bezier",
 			animated: true,
+			data: {
+				label: rel.label,
+			},
 		});
 	}
 

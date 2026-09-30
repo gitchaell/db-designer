@@ -117,13 +117,19 @@ export function parsePrismaSchemaToNodesAndEdges(code: string) {
 
 					const targetNodeId = models.get(baseType).nodeId;
 
-					const sourceNode = nodes.find((n) => n.id === nodeId);
+					const sourceNode = nodes.find(
+						(n): n is Extract<AppNode, { type: "table" }> =>
+							n.type === "table" && n.id === nodeId,
+					);
 					const fkCol = sourceNode?.data.columns.find(
 						(c) => c.name === fkField,
 					);
 					if (fkCol) fkCol.isFk = true;
 
-					const targetNode = nodes.find((n) => n.id === targetNodeId);
+					const targetNode = nodes.find(
+						(n): n is Extract<AppNode, { type: "table" }> =>
+							n.type === "table" && n.id === targetNodeId,
+					);
 					const targetCol = targetNode?.data.columns.find(
 						(c) => c.name === pkField,
 					);

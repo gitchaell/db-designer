@@ -17,6 +17,7 @@ export default function TsExportModal({ isOpen, onClose }: TsExportModalProps) {
 		let generated = "";
 
 		for (const node of nodes) {
+			if (node.type !== "table") continue;
 			const tableName = node.data.label || "UntitledTable";
 
 			// Convert table name to PascalCase for interface name

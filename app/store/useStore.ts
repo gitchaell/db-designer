@@ -12,26 +12,36 @@ import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
 import type {
+	AppEdge,
 	AppNode,
 	Column,
+	ColumnStyleSettings,
 	EdgeMarkerType,
 	EdgeSettings,
 	Project,
+	RelationEdgeData,
 	TableNodeData,
 } from "../types";
 
 export type HistoryState = {
 	nodes: AppNode[];
-	edges: Edge[];
+	edges: AppEdge[];
+};
+
+export const defaultColumnStyleSettings: ColumnStyleSettings = {
+	pk: { textColor: "#f59e0b", bold: true, badge: true },
+	fk: { textColor: "#3b82f6", bold: false, badge: true },
+	audit: { textColor: "#a855f7", italic: true, badge: false },
 };
 
 type AppState = {
 	project: Project | null;
 	nodes: AppNode[];
-	edges: Edge[];
+	edges: AppEdge[];
 	isLoading: boolean;
 	isReadOnly: boolean;
 	edgeSettings: EdgeSettings;
+	columnStyleSettings: ColumnStyleSettings;
 
 	// Actions
 	toggleReadOnly: () => void;
@@ -42,10 +52,10 @@ type AppState = {
 	historyIndex: number;
 	undo: () => void;
 	redo: () => void;
-	pushHistory: (newNodes: AppNode[], newEdges: Edge[]) => void;
+	pushHistory: (newNodes: AppNode[], newEdges: AppEdge[]) => void;
 
 	onNodesChange: OnNodesChange<AppNode>;
-	onEdgesChange: OnEdgesChange;
+	onEdgesChange: OnEdgesChange<AppEdge>;
 	onConnect: OnConnect;
 
 	addNode: (node: AppNode) => void;
@@ -63,7 +73,9 @@ type AppState = {
 	) => void;
 	deleteColumn: (nodeId: string, columnId: string) => void;
 
+	updateEdgeData: (edgeId: string, data: Partial<RelationEdgeData>) => void;
 	updateEdgeSettings: (settings: Partial<EdgeSettings>) => void;
+	updateColumnStyleSettings: (settings: Partial<ColumnStyleSettings>) => void;
 };
 
 // Helper to debounce save
@@ -80,14 +92,22 @@ const getRelationMarkerProps = (
 	targetColId: string,
 	nodes: AppNode[],
 ) => {
-	const sourceNode = nodes.find((n) =>
-		n.data.columns.some((c) => c.id === sourceColId),
+	const sourceNode = nodes.find(
+		(n) =>
+			n.type === "table" && n.data.columns.some((c) => c.id === sourceColId),
 	);
-	const targetNode = nodes.find((n) =>
-		n.data.columns.some((c) => c.id === targetColId),
+	const targetNode = nodes.find(
+		(n) =>
+			n.type === "table" && n.data.columns.some((c) => c.id === targetColId),
 	);
 
-	if (!sourceNode || !targetNode) return undefined;
+	if (
+		!sourceNode ||
+		!targetNode ||
+		sourceNode.type !== "table" ||
+		targetNode.type !== "table"
+	)
+		return undefined;
 
 	const sourceCol = sourceNode.data.columns.find((c) => c.id === sourceColId);
 	const targetCol = targetNode.data.columns.find((c) => c.id === targetColId);
@@ -178,6 +198,7 @@ export const useStore = create<AppState>((set, get) => ({
 		animated: true,
 		showRelationMarkers: false,
 	},
+	columnStyleSettings: defaultColumnStyleSettings,
 	history: [],
 	historyIndex: -1,
 
@@ -381,7 +402,7 @@ export const useStore = create<AppState>((set, get) => ({
 	updateNode: (id, data) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) =>
-			node.id === id ? { ...node, ...data } : node,
+			node.id === id ? ({ ...node, ...data } as AppNode) : node,
 		);
 		set({ nodes: newNodes });
 		get().pushHistory(newNodes, edges);
@@ -391,7 +412,9 @@ export const useStore = create<AppState>((set, get) => ({
 	updateNodeData: (id, data) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) =>
-			node.id === id ? { ...node, data: { ...node.data, ...data } } : node,
+			node.id === id
+				? ({ ...node, data: { ...node.data, ...data } } as AppNode)
+				: node,
 		);
 		set({ nodes: newNodes });
 		get().pushHistory(newNodes, edges);
@@ -412,7 +435,7 @@ export const useStore = create<AppState>((set, get) => ({
 	addColumn: (nodeId, column, afterColId) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
-			if (node.id === nodeId) {
+			if (node.id === nodeId && node.type === "table") {
 				const currentColumns = [...node.data.columns];
 
 				if (afterColId) {
@@ -444,7 +467,7 @@ export const useStore = create<AppState>((set, get) => ({
 	reorderColumn: (nodeId, oldIndex, newIndex) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
-			if (node.id === nodeId) {
+			if (node.id === nodeId && node.type === "table") {
 				const currentColumns = [...node.data.columns];
 				const [movedColumn] = currentColumns.splice(oldIndex, 1);
 				currentColumns.splice(newIndex, 0, movedColumn);
@@ -467,7 +490,7 @@ export const useStore = create<AppState>((set, get) => ({
 	updateColumn: (nodeId, columnId, data) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
-			if (node.id === nodeId) {
+			if (node.id === nodeId && node.type === "table") {
 				return {
 					...node,
 					data: {
@@ -488,7 +511,7 @@ export const useStore = create<AppState>((set, get) => ({
 	deleteColumn: (nodeId, columnId) => {
 		const { nodes, project, edges } = get();
 		const newNodes = nodes.map((node) => {
-			if (node.id === nodeId) {
+			if (node.id === nodeId && node.type === "table") {
 				return {
 					...node,
 					data: {
@@ -537,5 +560,27 @@ export const useStore = create<AppState>((set, get) => ({
 		set({ edgeSettings: newSettings, edges: newEdges });
 		if (project)
 			debouncedSave({ ...project, edgeSettings: newSettings, edges: newEdges });
+	},
+
+	updateEdgeData: (edgeId, data) => {
+		const { edges, project, nodes } = get();
+		const newEdges = edges.map((e) =>
+			e.id === edgeId ? { ...e, data: { ...e.data, ...data } } : e,
+		);
+		set({ edges: newEdges });
+		get().pushHistory(nodes, newEdges);
+		if (project) debouncedSave({ ...project, nodes, edges: newEdges });
+	},
+
+	updateColumnStyleSettings: (settings) => {
+		const { columnStyleSettings, project } = get();
+		const newSettings = {
+			pk: { ...columnStyleSettings.pk, ...settings.pk },
+			fk: { ...columnStyleSettings.fk, ...settings.fk },
+			audit: { ...columnStyleSettings.audit, ...settings.audit },
+		};
+		set({ columnStyleSettings: newSettings });
+		if (project)
+			debouncedSave({ ...project, columnStyleSettings: newSettings });
 	},
 }));

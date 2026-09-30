@@ -1,13 +1,13 @@
+import Editor from "@monaco-editor/react";
+import { Import, Loader2, Workflow, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Workflow, Loader2, X, Import } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import { Button } from "./Button";
-import { parseMermaidToNodesAndEdges } from "../lib/mermaid-parser";
-import type { Project } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { saveProject } from "../lib/db";
-import { useRouter } from "next/navigation";
+import { parseMermaidToNodesAndEdges } from "../lib/mermaid-parser";
+import type { Project } from "../types";
+import { Button } from "./Button";
 
 interface MermaidImportModalProps {
 	isOpen: boolean;

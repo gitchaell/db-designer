@@ -16,25 +16,35 @@ import "@xyflow/react/dist/style.css";
 import { useStore } from "@/app/store/useStore";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Plus, Waypoints } from "lucide-react";
-import { Download, Eye, LayoutGrid, Loader2 } from "lucide-react";
+import { Download, Eye, LayoutGrid, Loader2, Printer } from "lucide-react";
+import { Folder } from "lucide-react";
 import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
 import { v4 as uuidv4 } from "uuid";
 import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
-import { Select } from "./Select";
+import ContainerNode from "./ContainerNode";
+import CustomRelationEdge from "./CustomRelationEdge";
 import ExportDropdown from "./ExportDropdown";
+import { Select } from "./Select";
 import SettingsPopover from "./SettingsPopover";
 import TableNode from "./TableNode";
 import { ThemeToggle } from "./ThemeToggle";
-import dynamic from "next/dynamic";
 
 const SqlPreviewModal = dynamic(() => import("./SqlPreviewModal"));
 const TsExportModal = dynamic(() => import("./TsExportModal"));
 const PrismaExportModal = dynamic(() => import("./PrismaExportModal"));
+const PrintExportModal = dynamic(() => import("./PrintExportModal"));
 
 const nodeTypes = {
 	table: TableNode,
+	container: ContainerNode,
+};
+
+const edgeTypes = {
+	relation: CustomRelationEdge,
+	default: CustomRelationEdge,
 };
 
 // Default connection styling
@@ -54,6 +64,8 @@ function Flow({ projectId }: { projectId: string }) {
 		isLoading,
 		edgeSettings,
 		updateEdgeSettings,
+		columnStyleSettings,
+		updateColumnStyleSettings,
 		setNodes: setStoreNodes,
 		isReadOnly,
 		toggleReadOnly,
@@ -68,6 +80,7 @@ function Flow({ projectId }: { projectId: string }) {
 	const [exportType, setExportType] = useState<"sql" | "ts" | "prisma" | null>(
 		null,
 	);
+	const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 	const navigateTo = (url: string) => {
 		if (document.startViewTransition) {
 			document.startViewTransition(() => {
@@ -93,6 +106,20 @@ function Flow({ projectId }: { projectId: string }) {
 				columns: [
 					{ id: uuidv4(), name: "id", type: "uuid", isPk: true, isFk: false },
 				],
+			},
+		});
+	}, [addNode]);
+
+	const handleAddContainer = useCallback(() => {
+		const id = uuidv4();
+		addNode({
+			id,
+			type: "container",
+			position: { x: Math.random() * 300, y: Math.random() * 300 },
+			style: { width: 400, height: 300 },
+			data: {
+				label: "New Module",
+				color: "text-blue-500",
 			},
 		});
 	}, [addNode]);
@@ -199,11 +226,16 @@ function Flow({ projectId }: { projectId: string }) {
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				{/* Group 2: Add Table and Settings */}
+				{/* Group 2: Add Table, Add Container and Settings */}
 				<div className="flex items-center gap-2">
 					<Button size="sm" onClick={handleAddTable}>
 						<Plus className="w-3.5 h-3.5 mr-1.5" />
 						Add Table
+					</Button>
+
+					<Button size="sm" variant="secondary" onClick={handleAddContainer}>
+						<Folder className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+						Add Container
 					</Button>
 
 					<SettingsPopover>
@@ -222,6 +254,77 @@ function Flow({ projectId }: { projectId: string }) {
 									<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
 									Auto Layout
 								</Button>
+							</div>
+
+							<div className="h-px bg-border w-full" />
+
+							{/* Field Styles Group */}
+							<div className="flex flex-col gap-1 w-full">
+								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
+									Field Highlighting
+								</h4>
+								<div className="flex flex-col gap-2 px-2 py-1">
+									{/* PK Color */}
+									<div className="flex items-center justify-between text-xs font-medium">
+										<span className="flex items-center gap-1.5 text-foreground">
+											<span className="w-2.5 h-2.5 rounded-full bg-amber-500" />{" "}
+											PK Color
+										</span>
+										<input
+											type="color"
+											value={columnStyleSettings?.pk?.textColor || "#f59e0b"}
+											onChange={(e) =>
+												updateColumnStyleSettings({
+													pk: {
+														...columnStyleSettings?.pk,
+														textColor: e.target.value,
+													},
+												})
+											}
+											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+										/>
+									</div>
+									{/* FK Color */}
+									<div className="flex items-center justify-between text-xs font-medium">
+										<span className="flex items-center gap-1.5 text-foreground">
+											<span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{" "}
+											FK Color
+										</span>
+										<input
+											type="color"
+											value={columnStyleSettings?.fk?.textColor || "#3b82f6"}
+											onChange={(e) =>
+												updateColumnStyleSettings({
+													fk: {
+														...columnStyleSettings?.fk,
+														textColor: e.target.value,
+													},
+												})
+											}
+											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+										/>
+									</div>
+									{/* Audit Color */}
+									<div className="flex items-center justify-between text-xs font-medium">
+										<span className="flex items-center gap-1.5 text-foreground">
+											<span className="w-2.5 h-2.5 rounded-full bg-purple-500" />{" "}
+											Audit Fields Color
+										</span>
+										<input
+											type="color"
+											value={columnStyleSettings?.audit?.textColor || "#a855f7"}
+											onChange={(e) =>
+												updateColumnStyleSettings({
+													audit: {
+														...columnStyleSettings?.audit,
+														textColor: e.target.value,
+													},
+												})
+											}
+											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+										/>
+									</div>
+								</div>
 							</div>
 
 							<div className="h-px bg-border w-full" />
@@ -300,9 +403,19 @@ function Flow({ projectId }: { projectId: string }) {
 
 								<Button
 									variant="ghost"
+									onClick={() => setIsPrintModalOpen(true)}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title="Advanced Print & HD Image Export"
+								>
+									<Printer className="w-4 h-4 mr-2 text-muted-foreground" />
+									Print & HD Export
+								</Button>
+
+								<Button
+									variant="ghost"
 									onClick={downloadImage}
 									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title="Download Diagram as Image"
+									title="Download Diagram as Quick PNG"
 									disabled={isDownloading}
 								>
 									{isDownloading ? (
@@ -349,6 +462,7 @@ function Flow({ projectId }: { projectId: string }) {
 				onEdgesChange={onEdgesChange}
 				onConnect={onConnect}
 				nodeTypes={nodeTypes}
+				edgeTypes={edgeTypes}
 				colorMode={resolvedTheme === "dark" ? "dark" : "light"}
 				connectionLineType={
 					edgeSettings.type === "step"
@@ -393,6 +507,10 @@ function Flow({ projectId }: { projectId: string }) {
 			<PrismaExportModal
 				isOpen={exportType === "prisma"}
 				onClose={() => setExportType(null)}
+			/>
+			<PrintExportModal
+				isOpen={isPrintModalOpen}
+				onClose={() => setIsPrintModalOpen(false)}
 			/>
 		</div>
 	);

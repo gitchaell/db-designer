@@ -3,10 +3,10 @@ import { useRouter } from "next/navigation";
 
 import { Database, FileText, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import ImportDropdown from "./components/ImportDropdown";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "./components/Button";
+import ImportDropdown from "./components/ImportDropdown";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { deleteProject, getAllProjects, saveProject } from "./lib/db";
 import { templates } from "./lib/templates";

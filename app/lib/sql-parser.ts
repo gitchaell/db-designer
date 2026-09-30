@@ -30,7 +30,15 @@ export function parseSqlToNodesAndEdges(code: string) {
 	let yPos = 50;
 
 	// To keep track of tables and their primary keys for foreign key resolution
-	const tables = new Map();
+	const tables = new Map<
+		string,
+		{
+			nodeId: string;
+			fks: { localCol: string; refTable: string; refCol: string }[];
+			columns: Column[];
+			colMap: Map<string, Column>;
+		}
+	>();
 
 	// First pass: create nodes (tables) and parse columns
 	while ((tableMatch = tableRegex.exec(noComments)) !== null) {
@@ -39,12 +47,10 @@ export function parseSqlToNodesAndEdges(code: string) {
 
 		const nodeId = uuidv4();
 		const columns: Column[] = [];
+		const colMap = new Map<string, Column>();
 		const tableFks: { localCol: string; refTable: string; refCol: string }[] =
 			[];
 
-		// Split body into statements (columns or constraints), considering commas inside parenthesis
-		// A simple split by comma won't work perfectly if there are functions like DECIMAL(10,2),
-		// but we'll try a regex that splits by comma not inside parens
 		const statements = body
 			.split(/,\s*(?![^()]*\))/g)
 			.map((s) => s.trim())
@@ -61,9 +67,7 @@ export function parseSqlToNodesAndEdges(code: string) {
 						.split(",")
 						.map((c) => c.trim().replace(/["'`]/g, ""));
 					for (const pkCol of pkCols) {
-						const col = columns.find(
-							(c) => c.name.toLowerCase() === pkCol.toLowerCase(),
-						);
+						const col = colMap.get(pkCol.toLowerCase());
 						if (col) {
 							col.isPk = true;
 						}
@@ -82,7 +86,6 @@ export function parseSqlToNodesAndEdges(code: string) {
 						statement,
 					);
 				if (fkMatch) {
-					// If it starts with CONSTRAINT, we need to extract the local column
 					let localCol = fkMatch[1];
 					if (!localCol) {
 						const constraintFkMatch = /FOREIGN\s+KEY\s*\(([^)]+)\)/i.exec(
@@ -102,7 +105,6 @@ export function parseSqlToNodesAndEdges(code: string) {
 			}
 
 			// Column definition
-			// E.g., `id INT PRIMARY KEY`, `name VARCHAR(255) NOT NULL`
 			const colRegex = /^["'`]?(\w+)["'`]?\s+(\w+(?:\([^)]+\))?)(.*)/i;
 			const colMatch = colRegex.exec(statement);
 
@@ -114,13 +116,15 @@ export function parseSqlToNodesAndEdges(code: string) {
 				const isPk = extras.toUpperCase().includes("PRIMARY KEY");
 
 				const colId = uuidv4();
-				columns.push({
+				const colObj: Column = {
 					id: colId,
 					name: colName,
 					type: mapSqlType(colType),
 					isPk,
 					isFk: false,
-				});
+				};
+				columns.push(colObj);
+				colMap.set(colName.toLowerCase(), colObj);
 
 				// Inline foreign key: `author_id INT REFERENCES User(id)`
 				const inlineFkMatch =
@@ -140,7 +144,12 @@ export function parseSqlToNodesAndEdges(code: string) {
 			data: { label: tableName, columns },
 		});
 
-		tables.set(tableName.toLowerCase(), { nodeId, fks: tableFks, columns });
+		tables.set(tableName.toLowerCase(), {
+			nodeId,
+			fks: tableFks,
+			columns,
+			colMap,
+		});
 
 		xPos += 300;
 		if (xPos > 900) {
@@ -149,7 +158,7 @@ export function parseSqlToNodesAndEdges(code: string) {
 		}
 	}
 
-	// Second pass: process ALTER TABLE statements for foreign keys
+	// Second pass: ALTER TABLE statements
 	const alterRegex =
 		/ALTER\s+TABLE\s+["'`]?(\w+)["'`]?\s+ADD\s+(?:CONSTRAINT\s+\w+\s+)?FOREIGN\s+KEY\s*\(([^)]+)\)\s*REFERENCES\s+["'`]?(\w+)["'`]?\s*\(([^)]+)\)/gi;
 	let alterMatch;
@@ -167,18 +176,14 @@ export function parseSqlToNodesAndEdges(code: string) {
 	}
 
 	// Third pass: create edges from collected foreign keys
-	for (const [, { nodeId, fks, columns }] of tables.entries()) {
+	for (const [, { nodeId, fks, colMap }] of tables.entries()) {
 		for (const fk of fks) {
 			const { localCol, refTable, refCol } = fk;
 
 			const targetTableInfo = tables.get(refTable.toLowerCase());
 			if (targetTableInfo) {
-				const sourceCol = columns.find(
-					(c: Column) => c.name.toLowerCase() === localCol.toLowerCase(),
-				);
-				const targetCol = targetTableInfo.columns.find(
-					(c: Column) => c.name.toLowerCase() === refCol.toLowerCase(),
-				);
+				const sourceCol = colMap.get(localCol.toLowerCase());
+				const targetCol = targetTableInfo.colMap.get(refCol.toLowerCase());
 
 				if (sourceCol && targetCol) {
 					sourceCol.isFk = true;

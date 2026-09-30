@@ -88,7 +88,7 @@ export default function ContainerNode({
 					currentColor.bg,
 					selected ? "ring-2 ring-primary/50 shadow-lg" : "shadow-xs",
 				)}
-				style={{ minWidth: 300, minHeight: 200 }}
+				style={{ minWidth: 300, minHeight: 200, zIndex: -1 }}
 			>
 				{/* Container Header */}
 				<div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 mb-2 group/header">

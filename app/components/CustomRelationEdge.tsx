@@ -17,14 +17,249 @@ import { createPortal } from "react-dom";
 
 const CARDINALITY_OPTIONS: { label: string; value: RelationCardinality }[] = [
 	{ label: "None", value: "none" },
-	{ label: "1 (One)", value: "1" },
-	{ label: "0..1 (Zero or One)", value: "0..1" },
-	{ label: "1..1 (Exactly One)", value: "1..1" },
-	{ label: "0..* (Zero or Many)", value: "0..*" },
-	{ label: "1..* (One or Many)", value: "1..*" },
-	{ label: "N (Many)", value: "N" },
-	{ label: "* (Many)", value: "*" },
+	{ label: "Exactly One (1)", value: "1" },
+	{ label: "Zero or One (0..1)", value: "0..1" },
+	{ label: "Exactly One (1..1)", value: "1..1" },
+	{ label: "Zero or Many (0..*)", value: "0..*" },
+	{ label: "One or Many (1..*)", value: "1..*" },
+	{ label: "Many (N)", value: "N" },
+	{ label: "Many (*)", value: "*" },
 ];
+
+const COLOR_PRESETS = [
+	"#71717a", // Default Zinc
+	"#3b82f6", // Blue
+	"#10b981", // Emerald
+	"#f59e0b", // Amber
+	"#ef4444", // Red
+	"#8b5cf6", // Purple
+	"#ec4899", // Pink
+];
+
+function getMarkerUrl(
+	card: RelationCardinality | undefined,
+	edgeId: string,
+	isStart: boolean,
+) {
+	if (!card || card === "none") return undefined;
+	const prefix = isStart ? "start" : "end";
+	if (card === "1" || card === "1..1")
+		return `url(#card-one-${prefix}-${edgeId})`;
+	if (card === "0..1") return `url(#card-zero-one-${prefix}-${edgeId})`;
+	if (card === "1..*") return `url(#card-one-many-${prefix}-${edgeId})`;
+	if (card === "0..*" || card === "N" || card === "*")
+		return `url(#card-zero-many-${prefix}-${edgeId})`;
+	return undefined;
+}
+
+function CardinalityMarkersDefs({
+	id,
+	strokeColor,
+}: { id: string; strokeColor: string }) {
+	return (
+		<svg
+			style={{
+				position: "absolute",
+				width: 0,
+				height: 0,
+				pointerEvents: "none",
+			}}
+		>
+			<title>Cardinality Markers</title>
+			<defs>
+				{/* Start Markers */}
+				<marker
+					id={`card-one-start-${id}`}
+					viewBox="-16 -10 20 20"
+					refX="0"
+					refY="0"
+					markerWidth="14"
+					markerHeight="14"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -3 -6 L -3 6 M -8 -6 L -8 6"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-one-start-${id}`}
+					viewBox="-18 -10 22 20"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-10"
+						cy="0"
+						r="3"
+						stroke={strokeColor}
+						strokeWidth="1.5"
+						strokeDasharray="none"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -3 -6 L -3 6"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-one-many-start-${id}`}
+					viewBox="-16 -10 20 20"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -10 -6 L -10 6 M -10 -6 L 0 0 M -10 0 L 0 0 M -10 6 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-many-start-${id}`}
+					viewBox="-20 -10 24 20"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-13"
+						cy="0"
+						r="3"
+						stroke={strokeColor}
+						strokeWidth="1.5"
+						strokeDasharray="none"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -7 -6 L 0 0 M -7 0 L 0 0 M -7 6 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				{/* End Markers */}
+				<marker
+					id={`card-one-end-${id}`}
+					viewBox="-16 -10 20 20"
+					refX="0"
+					refY="0"
+					markerWidth="14"
+					markerHeight="14"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -3 -6 L -3 6 M -8 -6 L -8 6"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-one-end-${id}`}
+					viewBox="-18 -10 22 20"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-10"
+						cy="0"
+						r="3"
+						stroke={strokeColor}
+						strokeWidth="1.5"
+						strokeDasharray="none"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -3 -6 L -3 6"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-one-many-end-${id}`}
+					viewBox="-16 -10 20 20"
+					refX="0"
+					refY="0"
+					markerWidth="16"
+					markerHeight="16"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<path
+						d="M -10 -6 L -10 6 M -10 -6 L 0 0 M -10 0 L 0 0 M -10 6 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+
+				<marker
+					id={`card-zero-many-end-${id}`}
+					viewBox="-20 -10 24 20"
+					refX="0"
+					refY="0"
+					markerWidth="18"
+					markerHeight="18"
+					markerUnits="userSpaceOnUse"
+					orient="auto-start-reverse"
+				>
+					<circle
+						cx="-13"
+						cy="0"
+						r="3"
+						stroke={strokeColor}
+						strokeWidth="1.5"
+						strokeDasharray="none"
+						fill="var(--color-bg, #09090b)"
+					/>
+					<path
+						d="M -7 -6 L 0 0 M -7 0 L 0 0 M -7 6 L 0 0"
+						stroke={strokeColor}
+						strokeWidth="1.75"
+						strokeDasharray="none"
+						fill="none"
+					/>
+				</marker>
+			</defs>
+		</svg>
+	);
+}
 
 export default function CustomRelationEdge({
 	id,
@@ -47,7 +282,10 @@ export default function CustomRelationEdge({
 		data?.startCardinality || "1",
 	);
 	const [endCard, setEndCard] = useState<RelationCardinality>(
-		data?.endCardinality || "N",
+		data?.endCardinality || "0..*",
+	);
+	const [customColor, setCustomColor] = useState<string>(
+		data?.color || "#71717a",
 	);
 
 	// Determine path based on edge settings
@@ -91,6 +329,7 @@ export default function CustomRelationEdge({
 			label: labelInput,
 			startCardinality: startCard,
 			endCardinality: endCard,
+			color: customColor,
 		});
 		setIsOpen(false);
 	};
@@ -100,62 +339,34 @@ export default function CustomRelationEdge({
 		setIsOpen(false);
 	};
 
-	const displayStartCard =
-		data?.startCardinality && data.startCardinality !== "none"
-			? data.startCardinality
-			: null;
-	const displayEndCard =
-		data?.endCardinality && data.endCardinality !== "none"
-			? data.endCardinality
-			: null;
+	const strokeColor = selected
+		? "var(--color-primary, #3b82f6)"
+		: data?.color || (style.stroke as string) || "#71717a";
+
+	const showMarkers = edgeSettings.showRelationMarkers !== false;
+	const startMarkerUrl = showMarkers
+		? getMarkerUrl(startCard, id, true)
+		: undefined;
+	const endMarkerUrl = showMarkers
+		? getMarkerUrl(endCard, id, false) || markerEnd
+		: undefined;
 
 	return (
 		<>
+			<CardinalityMarkersDefs id={id} strokeColor={strokeColor} />
+
 			<BaseEdge
 				path={edgePath}
-				markerEnd={markerEnd}
+				markerStart={startMarkerUrl}
+				markerEnd={endMarkerUrl}
 				style={{
 					strokeWidth: selected ? 2.5 : 2,
-					stroke: selected
-						? "var(--color-primary, #3b82f6)"
-						: style.stroke || "#71717a",
+					stroke: strokeColor,
 					...style,
 				}}
 			/>
 
 			<EdgeLabelRenderer>
-				{/* Start Cardinality Badge near source handle */}
-				{displayStartCard && (
-					<div
-						style={{
-							position: "absolute",
-							transform: `translate(-50%, -50%) translate(${sourceX + (labelX - sourceX) * 0.2}px, ${sourceY + (labelY - sourceY) * 0.2}px)`,
-							pointerEvents: "all",
-						}}
-						className="nodrag nopan"
-					>
-						<span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-background text-foreground border border-border rounded shadow-xs select-none">
-							{displayStartCard}
-						</span>
-					</div>
-				)}
-
-				{/* End Cardinality Badge near target handle */}
-				{displayEndCard && (
-					<div
-						style={{
-							position: "absolute",
-							transform: `translate(-50%, -50%) translate(${targetX + (labelX - targetX) * 0.2}px, ${targetY + (labelY - targetY) * 0.2}px)`,
-							pointerEvents: "all",
-						}}
-						className="nodrag nopan"
-					>
-						<span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-background text-foreground border border-border rounded shadow-xs select-none">
-							{displayEndCard}
-						</span>
-					</div>
-				)}
-
 				{/* Center Edge Label */}
 				<div
 					style={{
@@ -172,6 +383,7 @@ export default function CustomRelationEdge({
 								setLabelInput(data?.label || "");
 								setStartCard(data?.startCardinality || "1");
 								setEndCard(data?.endCardinality || "N");
+								setCustomColor(data?.color || "#71717a");
 								setIsOpen(true);
 							}
 						}}
@@ -207,10 +419,14 @@ export default function CustomRelationEdge({
 
 									{/* Label Input */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`edge-label-input-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											Relation Label / Name
 										</label>
 										<input
+											id={`edge-label-input-${id}`}
 											type="text"
 											value={labelInput}
 											onChange={(e) => setLabelInput(e.target.value)}
@@ -219,12 +435,54 @@ export default function CustomRelationEdge({
 										/>
 									</div>
 
+									{/* Custom Color Selector */}
+									<div className="flex flex-col gap-1">
+										<label
+											htmlFor={`edge-color-input-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
+											Edge Line Color
+										</label>
+										<div className="flex items-center gap-1.5 pt-1">
+											{COLOR_PRESETS.map((color) => (
+												<button
+													key={color}
+													type="button"
+													onClick={() => setCustomColor(color)}
+													style={{ backgroundColor: color }}
+													className={clsx(
+														"w-6 h-6 rounded-full border transition-transform hover:scale-110 flex items-center justify-center",
+														customColor === color
+															? "border-foreground scale-110 shadow-sm"
+															: "border-transparent opacity-80",
+													)}
+												>
+													{customColor === color && (
+														<Check className="w-3 h-3 text-white drop-shadow-xs" />
+													)}
+												</button>
+											))}
+											<input
+												id={`edge-color-input-${id}`}
+												type="color"
+												value={customColor}
+												onChange={(e) => setCustomColor(e.target.value)}
+												className="w-6 h-6 p-0 border-0 rounded-full cursor-pointer bg-transparent overflow-hidden"
+												title="Choose custom color"
+											/>
+										</div>
+									</div>
+
 									{/* Start Cardinality */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`start-card-select-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											Start Symbol / Cardinality
 										</label>
 										<select
+											id={`start-card-select-${id}`}
 											value={startCard}
 											onChange={(e) =>
 												setStartCard(e.target.value as RelationCardinality)
@@ -241,10 +499,14 @@ export default function CustomRelationEdge({
 
 									{/* End Cardinality */}
 									<div className="flex flex-col gap-1">
-										<label className="text-xs font-medium text-muted-foreground">
+										<label
+											htmlFor={`end-card-select-${id}`}
+											className="text-xs font-medium text-muted-foreground"
+										>
 											End Symbol / Cardinality
 										</label>
 										<select
+											id={`end-card-select-${id}`}
 											value={endCard}
 											onChange={(e) =>
 												setEndCard(e.target.value as RelationCardinality)

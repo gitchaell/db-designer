@@ -4,7 +4,6 @@ import { useStore } from "@/app/store/useStore";
 import { toJpeg, toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import {
-	Check,
 	Download,
 	FileText,
 	Grid,
@@ -25,11 +24,20 @@ interface PrintExportModalProps {
 	onClose: () => void;
 }
 
+const PAPER_DIMENSIONS_MM: Record<
+	"a4" | "letter" | "a3",
+	{ portrait: [number, number]; landscape: [number, number] }
+> = {
+	a4: { portrait: [210, 297], landscape: [297, 210] },
+	letter: { portrait: [215.9, 279.4], landscape: [279.4, 215.9] },
+	a3: { portrait: [297, 420], landscape: [420, 297] },
+};
+
 export default function PrintExportModal({
 	isOpen,
 	onClose,
 }: PrintExportModalProps) {
-	const { project, isReadOnly, toggleReadOnly } = useStore();
+	const { project, isReadOnly, toggleReadOnly, nodes } = useStore();
 	const { resolvedTheme } = useTheme();
 
 	const [activeTab, setActiveTab] = useState<"pdf" | "image">("pdf");
@@ -51,28 +59,112 @@ export default function PrintExportModal({
 
 	if (!isOpen) return null;
 
-	const captureCanvas = async (includeBg: boolean, scaleMultiplier = 2) => {
-		const viewport = document.querySelector(
+	const captureCanvas = async (includeBg: boolean, scaleMultiplier = 3) => {
+		const viewportElement = document.querySelector(
 			".react-flow__viewport",
 		) as HTMLElement;
-		if (!viewport) throw new Error("Viewport element not found");
+		if (!viewportElement) throw new Error("Flow element not found");
 
-		const bgColor = includeBg
-			? resolvedTheme === "dark"
-				? "#09090b"
-				: "#f9fafb"
-			: "transparent";
+		// Compute bounding box covering ALL nodes in the diagram
+		let minX = Number.POSITIVE_INFINITY;
+		let minY = Number.POSITIVE_INFINITY;
+		let maxX = Number.NEGATIVE_INFINITY;
+		let maxY = Number.NEGATIVE_INFINITY;
+
+		if (nodes.length === 0) {
+			minX = 0;
+			minY = 0;
+			maxX = 800;
+			maxY = 600;
+		} else {
+			for (const node of nodes) {
+				const w =
+					(node.style?.width as number) ||
+					(node.measured?.width as number) ||
+					320;
+				const h =
+					(node.style?.height as number) ||
+					(node.measured?.height as number) ||
+					200;
+
+				minX = Math.min(minX, node.position.x);
+				minY = Math.min(minY, node.position.y);
+				maxX = Math.max(maxX, node.position.x + w);
+				maxY = Math.max(maxY, node.position.y + h);
+			}
+		}
+
+		const padding = 80;
+		const width = Math.max(600, Math.ceil(maxX - minX + padding * 2));
+		const height = Math.max(400, Math.ceil(maxY - minY + padding * 2));
+		const translateX = -minX + padding;
+		const translateY = -minY + padding;
 
 		const exportFn = imageFormat === "jpeg" ? toJpeg : toPng;
-		const dataUrl = await exportFn(viewport, {
-			backgroundColor: bgColor,
+
+		// Render viewport element transformed to fit bounds
+		const rawDataUrl = await exportFn(viewportElement, {
+			width,
+			height,
 			pixelRatio: scaleMultiplier,
 			style: {
-				// preserve background dots if includeBg is true
+				transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
+				width: `${width}px`,
+				height: `${height}px`,
+			},
+			filter: (node) => {
+				const el = node as HTMLElement;
+				if (
+					el.classList?.contains("react-flow__controls") ||
+					el.classList?.contains("react-flow__panel") ||
+					el.classList?.contains("react-flow__background")
+				) {
+					return false;
+				}
+				return true;
 			},
 		});
 
-		return dataUrl;
+		// Create composite canvas with reliable dot grid background
+		const img = new Image();
+		img.src = rawDataUrl;
+		await new Promise((resolve, reject) => {
+			img.onload = resolve;
+			img.onerror = reject;
+		});
+
+		const finalCanvas = document.createElement("canvas");
+		finalCanvas.width = width * scaleMultiplier;
+		finalCanvas.height = height * scaleMultiplier;
+		const ctx = finalCanvas.getContext("2d");
+
+		if (ctx) {
+			const isDark = resolvedTheme === "dark";
+			const bgColor = isDark ? "#09090b" : "#f9fafb";
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+			if (includeBg) {
+				const dotColor = isDark ? "#27272a" : "#e4e4e7";
+				const dotRadius = 1.5 * scaleMultiplier;
+				const gap = 20 * scaleMultiplier;
+
+				ctx.fillStyle = dotColor;
+				for (let x = gap / 2; x < finalCanvas.width; x += gap) {
+					for (let y = gap / 2; y < finalCanvas.height; y += gap) {
+						ctx.beginPath();
+						ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+						ctx.fill();
+					}
+				}
+			}
+
+			ctx.drawImage(img, 0, 0);
+		}
+
+		return finalCanvas.toDataURL(
+			imageFormat === "jpeg" ? "image/jpeg" : "image/png",
+		);
 	};
 
 	const handleExportPdf = async () => {
@@ -81,10 +173,10 @@ export default function PrintExportModal({
 		if (wasEditing) toggleReadOnly();
 
 		try {
-			// Wait for read-only toggle to render cleanly
 			await new Promise((r) => setTimeout(r, 200));
 
-			const dataUrl = await captureCanvas(includeBackgroundPdf, 2);
+			// Capture high resolution image (3x scale) with complete bounds
+			const dataUrl = await captureCanvas(includeBackgroundPdf, 3);
 
 			const img = new Image();
 			img.src = dataUrl;
@@ -93,8 +185,8 @@ export default function PrintExportModal({
 				img.onerror = reject;
 			});
 
-			const imgWidth = img.width;
-			const imgHeight = img.height;
+			const [pdfPageWidthMM, pdfPageHeightMM] =
+				PAPER_DIMENSIONS_MM[paperSize][orientation];
 
 			// Initialize PDF
 			const pdf = new jsPDF({
@@ -103,44 +195,82 @@ export default function PrintExportModal({
 				format: paperSize,
 			});
 
-			const pdfWidth = pdf.internal.pageSize.getWidth();
-			const pdfHeight = pdf.internal.pageSize.getHeight();
+			// Standard high resolution pixel dimension per page tile
+			const tilePxWidth = 1600;
+			const tilePxHeight = Math.round(
+				tilePxWidth * (pdfPageHeightMM / pdfPageWidthMM),
+			);
 
-			const tileWidth = Math.floor(imgWidth / gridCols);
-			const tileHeight = Math.floor(imgHeight / gridRows);
+			const totalGridWidthPx = gridCols * tilePxWidth;
+			const totalGridHeightPx = gridRows * tilePxHeight;
 
-			for (let r = 0; r < gridRows; r++) {
-				for (let c = 0; c < gridCols; c++) {
-					if (r > 0 || c > 0) {
-						pdf.addPage(paperSize, orientation);
-					}
+			const gridRatio = totalGridWidthPx / totalGridHeightPx;
+			const imgRatio = img.width / img.height;
 
-					// Create temp canvas for tiling slice
-					const canvas = document.createElement("canvas");
-					canvas.width = tileWidth;
-					canvas.height = tileHeight;
-					const ctx = canvas.getContext("2d");
+			// Fit image into the grid canvas preserving exact aspect ratio
+			let drawW = totalGridWidthPx;
+			let drawH = totalGridHeightPx;
+			let offsetX = 0;
+			let offsetY = 0;
 
-					if (ctx) {
-						if (includeBackgroundPdf) {
-							ctx.fillStyle = resolvedTheme === "dark" ? "#09090b" : "#f9fafb";
-							ctx.fillRect(0, 0, tileWidth, tileHeight);
+			if (imgRatio > gridRatio) {
+				drawW = totalGridWidthPx;
+				drawH = totalGridWidthPx / imgRatio;
+				offsetY = (totalGridHeightPx - drawH) / 2;
+			} else {
+				drawH = totalGridHeightPx;
+				drawW = totalGridHeightPx * imgRatio;
+				offsetX = (totalGridWidthPx - drawW) / 2;
+			}
+
+			// Render composite canvas
+			const fullCanvas = document.createElement("canvas");
+			fullCanvas.width = totalGridWidthPx;
+			fullCanvas.height = totalGridHeightPx;
+			const fullCtx = fullCanvas.getContext("2d");
+
+			if (fullCtx) {
+				const isDark = resolvedTheme === "dark";
+				fullCtx.fillStyle = isDark ? "#09090b" : "#f9fafb";
+				fullCtx.fillRect(0, 0, totalGridWidthPx, totalGridHeightPx);
+
+				fullCtx.drawImage(img, offsetX, offsetY, drawW, drawH);
+
+				// Slice page tiles
+				for (let r = 0; r < gridRows; r++) {
+					for (let c = 0; c < gridCols; c++) {
+						if (r > 0 || c > 0) {
+							pdf.addPage(paperSize, orientation);
 						}
 
-						ctx.drawImage(
-							img,
-							c * tileWidth,
-							r * tileHeight,
-							tileWidth,
-							tileHeight,
-							0,
-							0,
-							tileWidth,
-							tileHeight,
-						);
+						const pageCanvas = document.createElement("canvas");
+						pageCanvas.width = tilePxWidth;
+						pageCanvas.height = tilePxHeight;
+						const pageCtx = pageCanvas.getContext("2d");
 
-						const tileDataUrl = canvas.toDataURL("image/png");
-						pdf.addImage(tileDataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+						if (pageCtx) {
+							pageCtx.drawImage(
+								fullCanvas,
+								c * tilePxWidth,
+								r * tilePxHeight,
+								tilePxWidth,
+								tilePxHeight,
+								0,
+								0,
+								tilePxWidth,
+								tilePxHeight,
+							);
+
+							const pageDataUrl = pageCanvas.toDataURL("image/png");
+							pdf.addImage(
+								pageDataUrl,
+								"PNG",
+								0,
+								0,
+								pdfPageWidthMM,
+								pdfPageHeightMM,
+							);
+						}
 					}
 				}
 			}
@@ -180,9 +310,11 @@ export default function PrintExportModal({
 		}
 	};
 
+	const [pageW, pageH] = PAPER_DIMENSIONS_MM[paperSize][orientation];
+
 	return (
 		<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs font-sans">
-			<div className="bg-popover border border-border text-popover-foreground rounded-2xl p-6 w-[480px] shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150">
+			<div className="bg-popover border border-border text-popover-foreground rounded-2xl p-6 w-[520px] shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150">
 				{/* Modal Header */}
 				<div className="flex items-center justify-between border-b border-border pb-3">
 					<div className="flex items-center gap-2">
@@ -211,7 +343,7 @@ export default function PrintExportModal({
 								: "text-muted-foreground hover:text-foreground"
 						}`}
 					>
-						<FileText className="w-3.5 h-3.5" /> Multi-Page PDF Print
+						<FileText className="w-3.5 h-3.5" /> Multi-Page PDF Poster
 					</button>
 					<button
 						type="button"
@@ -232,9 +364,47 @@ export default function PrintExportModal({
 						<div className="bg-muted/40 p-3 rounded-xl border border-border/50 text-xs text-muted-foreground flex items-center gap-2">
 							<Grid className="w-4 h-4 text-primary flex-none" />
 							<span>
-								Splits large diagrams across an <b>N &times; M page grid</b> for
-								poster printing and seamless assembly.
+								Splits large diagrams across an <b>N &times; M page grid</b>{" "}
+								while preserving aspect ratio and HD sharpness.
 							</span>
+						</div>
+
+						{/* PDF Layout Visual Preview */}
+						<div className="flex flex-col gap-1.5">
+							<div className="flex items-center justify-between text-xs font-semibold text-muted-foreground px-1">
+								<span>Page Grid Layout Preview</span>
+								<span>
+									{gridCols * gridRows} Page{gridCols * gridRows > 1 ? "s" : ""}{" "}
+									({paperSize.toUpperCase()} {orientation}, {pageW} &times;{" "}
+									{pageH} mm)
+								</span>
+							</div>
+
+							<div className="bg-muted/60 border border-border rounded-xl p-4 flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden">
+								<div
+									className="grid gap-1 p-2 bg-background/80 rounded-lg border border-border shadow-inner max-w-full"
+									style={{
+										gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+										gridTemplateRows: `repeat(${gridRows}, minmax(0, 1fr))`,
+										aspectRatio: `${gridCols * pageW} / ${gridRows * pageH}`,
+										maxHeight: "130px",
+									}}
+								>
+									{Array.from({ length: gridCols * gridRows }).map(
+										(_, pageIdx) => (
+											<div
+												key={`page-grid-${pageIdx + 1}`}
+												className="border border-dashed border-primary/40 bg-primary/5 rounded flex items-center justify-center text-[10px] font-mono text-primary/80 font-bold p-2 min-w-[32px] min-h-[24px]"
+											>
+												P{pageIdx + 1}
+											</div>
+										),
+									)}
+								</div>
+								<span className="text-[10px] text-muted-foreground mt-2 font-mono">
+									Proportional aspect ratio preserved across all pages
+								</span>
+							</div>
 						</div>
 
 						{/* Grid Rows & Columns */}
@@ -246,7 +416,7 @@ export default function PrintExportModal({
 								<Select
 									value={String(gridCols)}
 									onChange={(val) => setGridCols(Number(val))}
-									options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({
+									options={[1, 2, 3, 4, 5, 6].map((n) => ({
 										label: `${n} Page${n > 1 ? "s" : ""}`,
 										value: String(n),
 									}))}
@@ -260,7 +430,7 @@ export default function PrintExportModal({
 								<Select
 									value={String(gridRows)}
 									onChange={(val) => setGridRows(Number(val))}
-									options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({
+									options={[1, 2, 3, 4, 5, 6].map((n) => ({
 										label: `${n} Page${n > 1 ? "s" : ""}`,
 										value: String(n),
 									}))}
@@ -330,7 +500,7 @@ export default function PrintExportModal({
 							) : (
 								<Printer className="w-4 h-4 mr-2" />
 							)}
-							Generate {gridCols} × {gridRows} Page PDF Poster
+							Generate {gridCols} &times; {gridRows} Page PDF Poster
 						</Button>
 					</div>
 				)}

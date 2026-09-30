@@ -15,6 +15,7 @@ export type Column = {
 	type: ColumnType;
 	isPk: boolean;
 	isFk: boolean;
+	isAudit?: boolean;
 };
 
 export type TableNodeData = {
@@ -46,6 +47,7 @@ export type RelationEdgeData = {
 	label?: string;
 	startCardinality?: RelationCardinality;
 	endCardinality?: RelationCardinality;
+	color?: string;
 };
 
 export type AppEdge = Edge<RelationEdgeData>;

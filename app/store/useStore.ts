@@ -31,7 +31,7 @@ export type HistoryState = {
 export const defaultColumnStyleSettings: ColumnStyleSettings = {
 	pk: { textColor: "#f59e0b", bold: true, badge: true },
 	fk: { textColor: "#3b82f6", bold: false, badge: true },
-	audit: { textColor: "#a855f7", italic: true, badge: false },
+	audit: { textColor: "#a855f7", italic: false, badge: false },
 };
 
 type AppState = {
@@ -294,7 +294,71 @@ export const useStore = create<AppState>((set, get) => ({
 
 	onNodesChange: (changes) => {
 		const { nodes, edges, project } = get();
-		const newNodes = applyNodeChanges(changes, nodes);
+
+		// Detect moved container nodes
+		const containerPositionChanges = changes.filter(
+			(c): c is Extract<typeof c, { type: "position" }> =>
+				c.type === "position" &&
+				!!c.position &&
+				nodes.some((n) => n.id === c.id && n.type === "container"),
+		);
+
+		let newNodes = applyNodeChanges(changes, nodes);
+
+		if (containerPositionChanges.length > 0) {
+			const directlyMovedNodeIds = new Set(
+				changes
+					.filter(
+						(c): c is Extract<typeof c, { type: "position" }> =>
+							c.type === "position",
+					)
+					.map((c) => c.id),
+			);
+
+			for (const change of containerPositionChanges) {
+				const oldContainer = nodes.find((n) => n.id === change.id);
+				if (!oldContainer || !change.position) continue;
+
+				const dx = change.position.x - oldContainer.position.x;
+				const dy = change.position.y - oldContainer.position.y;
+
+				if (dx === 0 && dy === 0) continue;
+
+				const containerWidth =
+					(oldContainer.style?.width as number) ||
+					(oldContainer.measured?.width as number) ||
+					400;
+				const containerHeight =
+					(oldContainer.style?.height as number) ||
+					(oldContainer.measured?.height as number) ||
+					300;
+
+				const minX = oldContainer.position.x;
+				const maxX = minX + containerWidth;
+				const minY = oldContainer.position.y;
+				const maxY = minY + containerHeight;
+
+				newNodes = newNodes.map((node) => {
+					if (
+						node.type === "table" &&
+						!directlyMovedNodeIds.has(node.id) &&
+						node.position.x >= minX &&
+						node.position.x <= maxX &&
+						node.position.y >= minY &&
+						node.position.y <= maxY
+					) {
+						return {
+							...node,
+							position: {
+								x: node.position.x + dx,
+								y: node.position.y + dy,
+							},
+						};
+					}
+					return node;
+				});
+			}
+		}
 
 		// Only recalculate edges if nodes moved (position change)
 		const movedNodeIds = changes

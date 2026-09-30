@@ -26,7 +26,10 @@ export function TableField({
 }: TableFieldProps) {
 	if (isReadOnly) {
 		return (
-			<span style={style} className={clsx("truncate", className, readOnlyClassName)}>
+			<span
+				style={style}
+				className={clsx("truncate", className, readOnlyClassName)}
+			>
 				{value}
 			</span>
 		);

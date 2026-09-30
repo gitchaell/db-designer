@@ -1,5 +1,19 @@
 import { useStore } from "@/app/store/useStore";
 import type { AppNode } from "@/app/types";
+import {
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	closestCenter,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { type NodeProps, NodeResizer } from "@xyflow/react";
 import { clsx } from "clsx";
 import { GripVertical, Minimize, Palette, Plus, Trash2 } from "lucide-react";
@@ -7,20 +21,6 @@ import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TableField } from "./TableField";
 import { TableRow } from "./TableRow";
-import {
-	DndContext,
-	closestCenter,
-	KeyboardSensor,
-	PointerSensor,
-	useSensor,
-	useSensors,
-	DragEndEvent,
-} from "@dnd-kit/core";
-import {
-	SortableContext,
-	sortableKeyboardCoordinates,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
 
 // Expanded color palette
 const COLORS = [
@@ -38,7 +38,7 @@ const COLORS = [
 	"bg-lime-600",
 ];
 
-export default function TableNode({ id, data, selected }: NodeProps<AppNode>) {
+export default function TableNode({ id, data, selected }: NodeProps<Extract<AppNode, { type: "table" }>>) {
 	const {
 		updateNodeData,
 		updateNode,

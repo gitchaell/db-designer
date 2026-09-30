@@ -24,6 +24,7 @@ export default function SqlPreviewModal({
 		let generated = "";
 
 		for (const node of nodes) {
+			if (node.type !== "table") continue;
 			const tableName = node.data.label || "untitled_table";
 			generated += `CREATE TABLE ${tableName} (\n`;
 

@@ -34,6 +34,7 @@ const { nodes, edges } = parseMermaidToNodesAndEdges(sampleMermaid);
 
 console.log("Nodes count:", nodes.length);
 for (const node of nodes) {
+	if (node.type !== "table") continue;
 	console.log(`Table: ${node.data.label}`);
 	for (const col of node.data.columns) {
 		console.log(

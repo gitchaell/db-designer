@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { Database, Prisma, TypeScript } from "@react-symbols/icons";
 import { ChevronRight, FileCode2 } from "lucide-react";
-import { Prisma, TypeScript, Database } from "@react-symbols/icons";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ExportDropdownProps {
 	onExport: (type: "sql" | "ts" | "prisma") => void;

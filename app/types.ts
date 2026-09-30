@@ -23,8 +23,32 @@ export type TableNodeData = {
 	columns: Column[];
 };
 
-export type AppNode = Node<TableNodeData, "table">;
-export type AppEdge = Edge;
+export type ContainerNodeData = {
+	label: string;
+	color?: string;
+};
+
+export type AppNode =
+	| Node<TableNodeData, "table">
+	| Node<ContainerNodeData, "container">;
+
+export type RelationCardinality =
+	| "none"
+	| "1"
+	| "0..1"
+	| "1..1"
+	| "0..*"
+	| "1..*"
+	| "N"
+	| "*";
+
+export type RelationEdgeData = {
+	label?: string;
+	startCardinality?: RelationCardinality;
+	endCardinality?: RelationCardinality;
+};
+
+export type AppEdge = Edge<RelationEdgeData>;
 
 export type EdgeMarkerType = "none" | "arrow";
 
@@ -35,6 +59,20 @@ export type EdgeSettings = {
 	showRelationMarkers?: boolean;
 };
 
+export type ColumnHighlightStyle = {
+	textColor?: string;
+	bgColor?: string;
+	bold?: boolean;
+	italic?: boolean;
+	badge?: boolean;
+};
+
+export type ColumnStyleSettings = {
+	pk: ColumnHighlightStyle;
+	fk: ColumnHighlightStyle;
+	audit: ColumnHighlightStyle;
+};
+
 export type Project = {
 	id: string;
 	name: string;
@@ -43,4 +81,5 @@ export type Project = {
 	nodes: AppNode[];
 	edges: AppEdge[];
 	edgeSettings?: EdgeSettings;
+	columnStyleSettings?: ColumnStyleSettings;
 };

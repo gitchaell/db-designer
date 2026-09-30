@@ -1,10 +1,12 @@
+import { isAuditField } from "@/app/lib/column-utils";
+import { useStore } from "@/app/store/useStore";
 import type { ColumnType } from "@/app/types";
-import { Handle, Position } from "@xyflow/react";
-import { clsx } from "clsx";
-import { GripVertical, Key, Link, Trash2 } from "lucide-react";
-import { TableField } from "./TableField";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Handle, Position } from "@xyflow/react";
+import { clsx } from "clsx";
+import { Clock, GripVertical, Key, Link, Trash2 } from "lucide-react";
+import { TableField } from "./TableField";
 
 interface TableRowProps {
 	nodeId: string;
@@ -41,6 +43,9 @@ export function TableRow({
 	updateColumn,
 	deleteColumn,
 }: TableRowProps) {
+	const { columnStyleSettings } = useStore();
+	const isAudit = isAuditField(col.name);
+
 	const {
 		attributes,
 		listeners,
@@ -56,6 +61,20 @@ export function TableRow({
 		zIndex: isDragging ? 10 : 1,
 		opacity: isDragging ? 0.5 : 1,
 	};
+
+	// Determine active column style based on classification
+	const activeStyle = col.isPk
+		? columnStyleSettings.pk
+		: col.isFk
+			? columnStyleSettings.fk
+			: isAudit
+				? columnStyleSettings.audit
+				: null;
+
+	const nameStyleInline: React.CSSProperties = {};
+	if (activeStyle?.textColor) {
+		nameStyleInline.color = activeStyle.textColor;
+	}
 
 	return (
 		<div
@@ -93,7 +112,7 @@ export function TableRow({
 				isConnectable={true}
 			/>
 
-			{/* PK/FK Indicators */}
+			{/* PK/FK/Audit Indicators */}
 			<div className="flex items-center gap-1 min-w-[36px] flex-none">
 				{(!isReadOnly || col.isPk) && (
 					<button
@@ -129,6 +148,14 @@ export function TableRow({
 						<Link className="w-3 h-3" />
 					</button>
 				)}
+				{!col.isPk && !col.isFk && isAudit && (
+					<div
+						className="p-0.5 rounded text-purple-500 bg-purple-500/10 flex items-center justify-center"
+						title="Audit Field"
+					>
+						<Clock className="w-3 h-3" />
+					</div>
+				)}
 			</div>
 
 			{/* Column Name */}
@@ -136,9 +163,14 @@ export function TableRow({
 				value={col.name}
 				isReadOnly={isReadOnly}
 				onChange={(val) => updateColumn(nodeId, col.id, { name: val })}
+				style={nameStyleInline}
 				className={clsx(
 					"flex-1 font-sans min-w-0 h-6 px-1 rounded transition-all",
-					col.isPk ? "text-foreground font-medium" : "text-muted-foreground",
+					activeStyle?.bold && "font-bold",
+					activeStyle?.italic && "italic",
+					!activeStyle?.bold &&
+						!col.isPk &&
+						"text-muted-foreground font-normal",
 					!isReadOnly &&
 						"hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring",
 				)}

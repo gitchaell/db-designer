@@ -1,13 +1,13 @@
+import Editor from "@monaco-editor/react";
+import { Database, Import, Loader2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Database, Loader2, X, Import } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import { Button } from "./Button";
-import { parseSqlToNodesAndEdges } from "../lib/sql-parser";
-import type { Project } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { saveProject } from "../lib/db";
-import { useRouter } from "next/navigation";
+import { parseSqlToNodesAndEdges } from "../lib/sql-parser";
+import type { Project } from "../types";
+import { Button } from "./Button";
 
 interface SqlImportModalProps {
 	isOpen: boolean;

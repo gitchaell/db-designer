@@ -2,7 +2,17 @@ import dagre from "dagre";
 import type { AppEdge, AppNode } from "../types";
 
 const NODE_WIDTH = 320;
-const NODE_HEIGHT = 180; // estimated average height
+const NODE_HEIGHT = 180;
+
+// Helper to safely extract numeric values
+const getNumeric = (val: unknown): number | undefined => {
+	if (typeof val === "number" && !Number.isNaN(val)) return val;
+	if (typeof val === "string") {
+		const parsed = Number.parseFloat(val);
+		if (!Number.isNaN(parsed)) return parsed;
+	}
+	return undefined;
+};
 
 export const getLayoutedElements = (
 	nodes: AppNode[],
@@ -14,12 +24,214 @@ export const getLayoutedElements = (
 	const tableNodes = nodes.filter((n) => n.type === "table");
 	const containerNodes = nodes.filter((n) => n.type === "container");
 
-	// Fast grid layout for large diagrams (> 50 nodes) to prevent Dagre freezing
+	// If containers exist, group table nodes by their container
+	if (containerNodes.length > 0) {
+		const containerTablesMap = new Map<string, AppNode[]>();
+		const assignedTableIds = new Set<string>();
+
+		// Map tables to containers based on spatial bounding box
+		for (const container of containerNodes) {
+			const cX = container.position.x;
+			const cY = container.position.y;
+			const cW =
+				getNumeric(container.width) ??
+				getNumeric(container.style?.width) ??
+				getNumeric(container.measured?.width) ??
+				400;
+			const cH =
+				getNumeric(container.height) ??
+				getNumeric(container.style?.height) ??
+				getNumeric(container.measured?.height) ??
+				300;
+
+			const cMaxX = cX + cW;
+			const cMaxY = cY + cH;
+
+			const tablesInContainer = tableNodes.filter((table) => {
+				if (assignedTableIds.has(table.id)) return false;
+				const tX = table.position.x;
+				const tY = table.position.y;
+				const tW =
+					getNumeric(table.width) ??
+					getNumeric(table.style?.width) ??
+					getNumeric(table.measured?.width) ??
+					NODE_WIDTH;
+				const tH =
+					getNumeric(table.height) ??
+					getNumeric(table.style?.height) ??
+					getNumeric(table.measured?.height) ??
+					NODE_HEIGHT;
+
+				const centerX = tX + tW / 2;
+				const centerY = tY + tH / 2;
+
+				return (
+					(tX >= cX && tX <= cMaxX && tY >= cY && tY <= cMaxY) ||
+					(centerX >= cX &&
+						centerX <= cMaxX &&
+						centerY >= cY &&
+						centerY <= cMaxY)
+				);
+			});
+
+			for (const t of tablesInContainer) {
+				assignedTableIds.add(t.id);
+			}
+			containerTablesMap.set(container.id, tablesInContainer);
+		}
+
+		const ungroupedTables = tableNodes.filter(
+			(t) => !assignedTableIds.has(t.id),
+		);
+
+		const layoutedContainerNodes: AppNode[] = [];
+		const layoutedTableNodes: AppNode[] = [];
+
+		let currentX = 50;
+		let currentY = 50;
+		let maxRowHeight = 0;
+		const CONTAINER_GAP = 60;
+		const MAX_CANVAS_WIDTH = 3200;
+		const PADDING_X = 40;
+		const PADDING_TOP = 50;
+		const PADDING_BOTTOM = 40;
+		const TABLE_GAP_X = 40;
+		const TABLE_GAP_Y = 40;
+
+		// Layout each container and its contained tables
+		for (const container of containerNodes) {
+			const tables = containerTablesMap.get(container.id) || [];
+
+			if (tables.length === 0) {
+				// Empty container
+				const emptyW =
+					getNumeric(container.width) ??
+					getNumeric(container.style?.width) ??
+					360;
+				const emptyH =
+					getNumeric(container.height) ??
+					getNumeric(container.style?.height) ??
+					240;
+
+				layoutedContainerNodes.push({
+					...container,
+					position: { x: currentX, y: currentY },
+					style: {
+						...container.style,
+						width: emptyW,
+						height: emptyH,
+						zIndex: -1,
+					},
+				});
+
+				maxRowHeight = Math.max(maxRowHeight, emptyH);
+				currentX += emptyW + CONTAINER_GAP;
+				if (currentX > MAX_CANVAS_WIDTH) {
+					currentX = 50;
+					currentY += maxRowHeight + CONTAINER_GAP;
+					maxRowHeight = 0;
+				}
+				continue;
+			}
+
+			const cols = Math.min(
+				4,
+				Math.max(1, Math.ceil(Math.sqrt(tables.length))),
+			);
+
+			let localMaxX = 0;
+			let localMaxY = 0;
+
+			tables.forEach((table, idx) => {
+				const col = idx % cols;
+				const row = Math.floor(idx / cols);
+
+				const tW =
+					getNumeric(table.width) ??
+					getNumeric(table.style?.width) ??
+					getNumeric(table.measured?.width) ??
+					NODE_WIDTH;
+				const tH =
+					getNumeric(table.height) ??
+					getNumeric(table.style?.height) ??
+					getNumeric(table.measured?.height) ??
+					NODE_HEIGHT;
+
+				const tableX = currentX + PADDING_X + col * (NODE_WIDTH + TABLE_GAP_X);
+				const tableY =
+					currentY + PADDING_TOP + row * (NODE_HEIGHT + TABLE_GAP_Y);
+
+				layoutedTableNodes.push({
+					...table,
+					position: { x: tableX, y: tableY },
+				});
+
+				localMaxX = Math.max(localMaxX, tableX + tW);
+				localMaxY = Math.max(localMaxY, tableY + tH);
+			});
+
+			const containerW = Math.max(360, localMaxX - currentX + PADDING_X);
+			const containerH = Math.max(240, localMaxY - currentY + PADDING_BOTTOM);
+
+			layoutedContainerNodes.push({
+				...container,
+				position: { x: currentX, y: currentY },
+				style: {
+					...container.style,
+					width: containerW,
+					height: containerH,
+					zIndex: -1,
+				},
+			});
+
+			maxRowHeight = Math.max(maxRowHeight, containerH);
+			currentX += containerW + CONTAINER_GAP;
+
+			if (currentX > MAX_CANVAS_WIDTH) {
+				currentX = 50;
+				currentY += maxRowHeight + CONTAINER_GAP;
+				maxRowHeight = 0;
+			}
+		}
+
+		// Layout ungrouped tables if any
+		if (ungroupedTables.length > 0) {
+			if (currentX !== 50) {
+				currentX = 50;
+				currentY += maxRowHeight + CONTAINER_GAP;
+			}
+
+			const cols = Math.min(
+				6,
+				Math.max(2, Math.ceil(Math.sqrt(ungroupedTables.length))),
+			);
+
+			ungroupedTables.forEach((table, idx) => {
+				const col = idx % cols;
+				const row = Math.floor(idx / cols);
+
+				layoutedTableNodes.push({
+					...table,
+					position: {
+						x: currentX + col * (NODE_WIDTH + TABLE_GAP_X),
+						y: currentY + row * (NODE_HEIGHT + TABLE_GAP_Y),
+					},
+				});
+			});
+		}
+
+		return {
+			nodes: [...layoutedContainerNodes, ...layoutedTableNodes],
+			edges,
+		};
+	}
+
+	// No containers: Fast grid layout for large diagrams (> 50 nodes) to prevent Dagre freezing
 	let layoutedTableNodes: AppNode[];
 
 	if (tableNodes.length > 50) {
 		const cols = Math.min(
-			12,
+			10,
 			Math.max(4, Math.ceil(Math.sqrt(tableNodes.length))),
 		);
 		const colWidth = 360;
@@ -37,14 +249,22 @@ export const getLayoutedElements = (
 			};
 		});
 	} else {
-		// Dagre layout for table nodes only
+		// Dagre layout for small diagrams without containers
 		const dagreGraph = new dagre.graphlib.Graph();
 		dagreGraph.setDefaultEdgeLabel(() => ({}));
 		dagreGraph.setGraph({ rankdir: direction, nodesep: 50, ranksep: 70 });
 
 		for (const node of tableNodes) {
-			const width = node.measured?.width || NODE_WIDTH;
-			const height = node.measured?.height || NODE_HEIGHT;
+			const width =
+				getNumeric(node.width) ??
+				getNumeric(node.style?.width) ??
+				getNumeric(node.measured?.width) ??
+				NODE_WIDTH;
+			const height =
+				getNumeric(node.height) ??
+				getNumeric(node.style?.height) ??
+				getNumeric(node.measured?.height) ??
+				NODE_HEIGHT;
 			dagreGraph.setNode(node.id, { width, height });
 		}
 
@@ -61,8 +281,16 @@ export const getLayoutedElements = (
 
 		layoutedTableNodes = tableNodes.map((node) => {
 			const nodeWithPosition = dagreGraph.node(node.id);
-			const width = node.measured?.width || NODE_WIDTH;
-			const height = node.measured?.height || NODE_HEIGHT;
+			const width =
+				getNumeric(node.width) ??
+				getNumeric(node.style?.width) ??
+				getNumeric(node.measured?.width) ??
+				NODE_WIDTH;
+			const height =
+				getNumeric(node.height) ??
+				getNumeric(node.style?.height) ??
+				getNumeric(node.measured?.height) ??
+				NODE_HEIGHT;
 
 			return {
 				...node,
@@ -74,76 +302,8 @@ export const getLayoutedElements = (
 		});
 	}
 
-	// Reposition container nodes around their contained tables if any existed near them
-	const layoutedContainerNodes = containerNodes.map((container, idx) => {
-		// Find table nodes that were original children or nearest
-		const originalMinX = container.position.x;
-		const originalMinY = container.position.y;
-		const originalW =
-			(container.style?.width as number) ||
-			(container.measured?.width as number) ||
-			400;
-		const originalH =
-			(container.style?.height as number) ||
-			(container.measured?.height as number) ||
-			300;
-
-		const originalMaxX = originalMinX + originalW;
-		const originalMaxY = originalMinY + originalH;
-
-		const insideTables = layoutedTableNodes.filter((t) => {
-			const orig = nodes.find((n) => n.id === t.id);
-			if (!orig) return false;
-			return (
-				orig.position.x >= originalMinX &&
-				orig.position.x <= originalMaxX &&
-				orig.position.y >= originalMinY &&
-				orig.position.y <= originalMaxY
-			);
-		});
-
-		if (insideTables.length > 0) {
-			let minX = Number.POSITIVE_INFINITY;
-			let minY = Number.POSITIVE_INFINITY;
-			let maxX = Number.NEGATIVE_INFINITY;
-			let maxY = Number.NEGATIVE_INFINITY;
-
-			for (const t of insideTables) {
-				const w = t.measured?.width || NODE_WIDTH;
-				const h = t.measured?.height || NODE_HEIGHT;
-				minX = Math.min(minX, t.position.x);
-				minY = Math.min(minY, t.position.y);
-				maxX = Math.max(maxX, t.position.x + w);
-				maxY = Math.max(maxY, t.position.y + h);
-			}
-
-			const padding = 30;
-			return {
-				...container,
-				position: {
-					x: minX - padding,
-					y: minY - padding - 20, // Extra top space for container title
-				},
-				style: {
-					...container.style,
-					width: maxX - minX + padding * 2,
-					height: maxY - minY + padding * 2 + 20,
-				},
-			};
-		}
-
-		// Default fallback for empty container
-		return {
-			...container,
-			position: {
-				x: 50 + idx * 420,
-				y: 50,
-			},
-		};
-	});
-
 	return {
-		nodes: [...layoutedContainerNodes, ...layoutedTableNodes],
+		nodes: layoutedTableNodes,
 		edges,
 	};
 };

@@ -295,6 +295,16 @@ export const useStore = create<AppState>((set, get) => ({
 	onNodesChange: (changes) => {
 		const { nodes, edges, project } = get();
 
+		// Helper to safely extract numeric values for width/height
+		const getNumeric = (val: unknown): number | undefined => {
+			if (typeof val === "number" && !Number.isNaN(val)) return val;
+			if (typeof val === "string") {
+				const parsed = Number.parseFloat(val);
+				if (!Number.isNaN(parsed)) return parsed;
+			}
+			return undefined;
+		};
+
 		// Detect moved container nodes
 		const containerPositionChanges = changes.filter(
 			(c): c is Extract<typeof c, { type: "position" }> =>
@@ -325,12 +335,14 @@ export const useStore = create<AppState>((set, get) => ({
 				if (dx === 0 && dy === 0) continue;
 
 				const containerWidth =
-					(oldContainer.style?.width as number) ||
-					(oldContainer.measured?.width as number) ||
+					getNumeric(oldContainer.width) ??
+					getNumeric(oldContainer.style?.width) ??
+					getNumeric(oldContainer.measured?.width) ??
 					400;
 				const containerHeight =
-					(oldContainer.style?.height as number) ||
-					(oldContainer.measured?.height as number) ||
+					getNumeric(oldContainer.height) ??
+					getNumeric(oldContainer.style?.height) ??
+					getNumeric(oldContainer.measured?.height) ??
 					300;
 
 				const minX = oldContainer.position.x;
@@ -339,21 +351,40 @@ export const useStore = create<AppState>((set, get) => ({
 				const maxY = minY + containerHeight;
 
 				newNodes = newNodes.map((node) => {
-					if (
-						node.type === "table" &&
-						!directlyMovedNodeIds.has(node.id) &&
-						node.position.x >= minX &&
-						node.position.x <= maxX &&
-						node.position.y >= minY &&
-						node.position.y <= maxY
-					) {
-						return {
-							...node,
-							position: {
-								x: node.position.x + dx,
-								y: node.position.y + dy,
-							},
-						};
+					if (node.type === "table" && !directlyMovedNodeIds.has(node.id)) {
+						const tableWidth =
+							getNumeric(node.width) ??
+							getNumeric(node.style?.width) ??
+							getNumeric(node.measured?.width) ??
+							320;
+						const tableHeight =
+							getNumeric(node.height) ??
+							getNumeric(node.style?.height) ??
+							getNumeric(node.measured?.height) ??
+							180;
+
+						const centerX = node.position.x + tableWidth / 2;
+						const centerY = node.position.y + tableHeight / 2;
+
+						const isInside =
+							(node.position.x >= minX &&
+								node.position.x <= maxX &&
+								node.position.y >= minY &&
+								node.position.y <= maxY) ||
+							(centerX >= minX &&
+								centerX <= maxX &&
+								centerY >= minY &&
+								centerY <= maxY);
+
+						if (isInside) {
+							return {
+								...node,
+								position: {
+									x: node.position.x + dx,
+									y: node.position.y + dy,
+								},
+							};
+						}
 					}
 					return node;
 				});
@@ -361,18 +392,34 @@ export const useStore = create<AppState>((set, get) => ({
 		}
 
 		// Only recalculate edges if nodes moved (position change)
-		const movedNodeIds = changes
-			.filter(
-				(c): c is Extract<typeof c, { type: "position" }> =>
-					c.type === "position" && !!c.dragging,
-			)
-			.map((c) => c.id);
+		const movedNodeIds = new Set(
+			changes
+				.filter(
+					(c): c is Extract<typeof c, { type: "position" }> =>
+						c.type === "position" && !!c.dragging,
+				)
+				.map((c) => c.id),
+		);
+
+		// Include tables that moved along with container
+		if (containerPositionChanges.length > 0) {
+			for (const node of newNodes) {
+				const oldNode = nodes.find((n) => n.id === node.id);
+				if (
+					oldNode &&
+					(node.position.x !== oldNode.position.x ||
+						node.position.y !== oldNode.position.y)
+				) {
+					movedNodeIds.add(node.id);
+				}
+			}
+		}
 
 		let newEdges = edges;
-		if (movedNodeIds.length > 0) {
+		if (movedNodeIds.size > 0) {
+			const movedArray = Array.from(movedNodeIds);
 			const relevantEdges = edges.filter(
-				(e) =>
-					movedNodeIds.includes(e.source) || movedNodeIds.includes(e.target),
+				(e) => movedArray.includes(e.source) || movedArray.includes(e.target),
 			);
 			const updatedRelevantEdges = recalculateEdges(relevantEdges, newNodes);
 

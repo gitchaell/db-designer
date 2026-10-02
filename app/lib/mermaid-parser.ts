@@ -36,6 +36,15 @@ function cleanIdentifier(str: string): string {
 	return str.replace(/^["'`]|["'`]$/g, "").trim();
 }
 
+const CONTAINER_COLOR_CLASSES = [
+	"text-blue-500",
+	"text-emerald-500",
+	"text-purple-500",
+	"text-amber-500",
+	"text-rose-500",
+	"text-zinc-500",
+];
+
 export function parseMermaidToNodesAndEdges(code: string): {
 	nodes: AppNode[];
 	edges: AppEdge[];
@@ -57,36 +66,20 @@ export function parseMermaidToNodesAndEdges(code: string): {
 			columns: Column[];
 			colMap: Map<string, Column>;
 			nodeRef: AppNode;
+			groupName?: string;
 		}
 	>();
 
-	let xPos = 50;
-	let yPos = 50;
-
-	const getOrCreateEntity = (entityName: string) => {
-		const cleanName = cleanIdentifier(entityName);
-		const key = cleanName.toLowerCase();
-		if (!entityMap.has(key)) {
-			const nodeId = uuidv4();
-			const columns: Column[] = [];
-			const colMap = new Map<string, Column>();
-			const nodeRef: AppNode = {
-				id: nodeId,
-				type: "table",
-				position: { x: xPos, y: yPos },
-				data: { label: cleanName, columns },
-			};
-			nodes.push(nodeRef);
-			entityMap.set(key, { nodeId, columns, colMap, nodeRef });
-
-			xPos += 300;
-			if (xPos > 900) {
-				xPos = 50;
-				yPos += 300;
-			}
+	const subgraphsMap = new Map<
+		string,
+		{
+			title: string;
+			entities: string[]; // key list
 		}
-		return { key, cleanName, ...entityMap.get(key)! };
-	};
+	>();
+
+	let currentSubgraphTitle: string | null = null;
+	let currentEntityKey: string | null = null;
 
 	const rawRelationships: Array<{
 		entity1Name: string;
@@ -95,9 +88,66 @@ export function parseMermaidToNodesAndEdges(code: string): {
 		label?: string;
 	}> = [];
 
-	let currentEntityKey: string | null = null;
+	const getOrCreateEntity = (entityName: string) => {
+		const cleanName = cleanIdentifier(entityName);
+		const key = cleanName.toLowerCase();
+
+		if (!entityMap.has(key)) {
+			const nodeId = uuidv4();
+			const columns: Column[] = [];
+			const colMap = new Map<string, Column>();
+			const nodeRef: AppNode = {
+				id: nodeId,
+				type: "table",
+				position: { x: 0, y: 0 },
+				data: { label: cleanName, columns },
+			};
+			entityMap.set(key, {
+				nodeId,
+				columns,
+				colMap,
+				nodeRef,
+				groupName: currentSubgraphTitle || undefined,
+			});
+
+			if (currentSubgraphTitle) {
+				const group = subgraphsMap.get(currentSubgraphTitle);
+				if (group && !group.entities.includes(key)) {
+					group.entities.push(key);
+				}
+			}
+		} else if (currentSubgraphTitle) {
+			const existing = entityMap.get(key);
+			if (existing && !existing.groupName) {
+				existing.groupName = currentSubgraphTitle;
+				const group = subgraphsMap.get(currentSubgraphTitle);
+				if (group && !group.entities.includes(key)) {
+					group.entities.push(key);
+				}
+			}
+		}
+		return { key, cleanName, ...entityMap.get(key)! };
+	};
 
 	for (const line of lines) {
+		// Handle Subgraph Start: subgraph "System" or subgraph System [System Group]
+		if (line.toLowerCase().startsWith("subgraph")) {
+			const subMatch =
+				/^subgraph\s+["']?([^"'\[\]]+)["']?(?:\s*\[.*\])?$/i.exec(line);
+			const title = subMatch ? cleanIdentifier(subMatch[1]) : "Group";
+			currentSubgraphTitle = title;
+			if (!subgraphsMap.has(title)) {
+				subgraphsMap.set(title, { title, entities: [] });
+			}
+			continue;
+		}
+
+		// Handle Subgraph End or Entity Block End
+		if (line.toLowerCase() === "end") {
+			currentSubgraphTitle = null;
+			continue;
+		}
+
 		if (line === "}") {
 			currentEntityKey = null;
 			continue;
@@ -171,6 +221,109 @@ export function parseMermaidToNodesAndEdges(code: string): {
 		if (standaloneMatch) {
 			getOrCreateEntity(standaloneMatch[1]);
 		}
+	}
+
+	// Layout calculation for Subgraphs & Entities
+	const TABLE_WIDTH = 320;
+	const TABLE_HEIGHT_EST = 220;
+	const PADDING_X = 40;
+	const PADDING_Y = 50;
+
+	let currentContainerX = 50;
+	let currentContainerY = 50;
+	let maxRowHeight = 0;
+	const CONTAINER_GAP = 60;
+	const MAX_CANVAS_WIDTH = 3200;
+
+	let colorIdx = 0;
+
+	// Process grouped subgraphs first
+	for (const [title, group] of subgraphsMap.entries()) {
+		if (group.entities.length === 0) continue;
+
+		const groupEntities = group.entities
+			.map((k) => entityMap.get(k))
+			.filter(Boolean);
+
+		const cols = Math.min(
+			4,
+			Math.max(1, Math.ceil(Math.sqrt(groupEntities.length))),
+		);
+
+		let localMaxX = 0;
+		let localMaxY = 0;
+
+		groupEntities.forEach((entity, idx) => {
+			if (!entity) return;
+			const col = idx % cols;
+			const row = Math.floor(idx / cols);
+
+			const tableX = currentContainerX + PADDING_X + col * (TABLE_WIDTH + 30);
+			const tableY =
+				currentContainerY + PADDING_Y + row * (TABLE_HEIGHT_EST + 30);
+
+			entity.nodeRef.position = { x: tableX, y: tableY };
+			nodes.push(entity.nodeRef);
+
+			localMaxX = Math.max(localMaxX, tableX + TABLE_WIDTH);
+			localMaxY = Math.max(localMaxY, tableY + TABLE_HEIGHT_EST);
+		});
+
+		const containerWidth = Math.max(
+			400,
+			localMaxX - currentContainerX + PADDING_X,
+		);
+		const containerHeight = Math.max(
+			280,
+			localMaxY - currentContainerY + PADDING_Y,
+		);
+
+		const containerNode: AppNode = {
+			id: uuidv4(),
+			type: "container",
+			position: { x: currentContainerX, y: currentContainerY },
+			style: { width: containerWidth, height: containerHeight, zIndex: -1 },
+			zIndex: -1,
+			data: {
+				label: title,
+				color:
+					CONTAINER_COLOR_CLASSES[colorIdx % CONTAINER_COLOR_CLASSES.length],
+			},
+		};
+		colorIdx++;
+		nodes.push(containerNode);
+
+		maxRowHeight = Math.max(maxRowHeight, containerHeight);
+		currentContainerX += containerWidth + CONTAINER_GAP;
+
+		if (currentContainerX > MAX_CANVAS_WIDTH) {
+			currentContainerX = 50;
+			currentContainerY += maxRowHeight + CONTAINER_GAP;
+			maxRowHeight = 0;
+		}
+	}
+
+	// Process un-grouped entities
+	const ungroupedEntities = Array.from(entityMap.values()).filter(
+		(e) => !e.groupName,
+	);
+
+	if (ungroupedEntities.length > 0) {
+		const cols = Math.min(
+			6,
+			Math.max(2, Math.ceil(Math.sqrt(ungroupedEntities.length))),
+		);
+
+		ungroupedEntities.forEach((entity, idx) => {
+			const col = idx % cols;
+			const row = Math.floor(idx / cols);
+
+			entity.nodeRef.position = {
+				x: currentContainerX + col * (TABLE_WIDTH + 40),
+				y: currentContainerY + row * (TABLE_HEIGHT_EST + 40),
+			};
+			nodes.push(entity.nodeRef);
+		});
 	}
 
 	// Create edges

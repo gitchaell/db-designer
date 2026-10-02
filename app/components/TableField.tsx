@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { useState } from "react";
 import { Select } from "./Select";
 
 interface TableFieldProps {
@@ -11,6 +12,7 @@ interface TableFieldProps {
 	readOnlyClassName?: string;
 	placeholder?: string;
 	style?: React.CSSProperties;
+	autoFocus?: boolean;
 }
 
 export function TableField({
@@ -23,7 +25,10 @@ export function TableField({
 	readOnlyClassName,
 	placeholder,
 	style,
+	autoFocus = false,
 }: TableFieldProps) {
+	const [isEditing, setIsEditing] = useState(autoFocus);
+
 	if (isReadOnly) {
 		return (
 			<span
@@ -35,22 +40,48 @@ export function TableField({
 		);
 	}
 
+	if (!isEditing) {
+		return (
+			<span
+				tabIndex={0}
+				data-tablefield="true"
+				onClick={() => setIsEditing(true)}
+				onFocus={() => setIsEditing(true)}
+				style={style}
+				className={clsx(
+					"cursor-pointer truncate focus:outline-none focus:ring-1 focus:ring-ring rounded px-1 min-h-[24px] flex items-center",
+					className,
+					readOnlyClassName,
+				)}
+			>
+				{value || placeholder}
+			</span>
+		);
+	}
+
 	if (type === "select" && options) {
 		return (
-			<Select
-				value={value}
-				onChange={(val) => onChange?.(val)}
-				className={className}
-				options={options}
-			/>
+			<div onBlur={() => setIsEditing(false)} className="inline-block">
+				<Select
+					value={value}
+					onChange={(val) => {
+						onChange?.(val);
+						setIsEditing(false);
+					}}
+					className={className}
+					options={options}
+				/>
+			</div>
 		);
 	}
 
 	return (
 		<input
 			type="text"
+			autoFocus
 			value={value}
 			onChange={(e) => onChange?.(e.target.value)}
+			onBlur={() => setIsEditing(false)}
 			onKeyDown={(e) => {
 				if (e.key === "Enter" && type === "text") {
 					e.currentTarget.dispatchEvent(

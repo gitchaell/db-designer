@@ -14,9 +14,17 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { type NodeProps, NodeResizer } from "@xyflow/react";
+import { Handle, type NodeProps, NodeResizer, Position } from "@xyflow/react";
 import { clsx } from "clsx";
-import { GripVertical, Minimize, Palette, Plus, Trash2 } from "lucide-react";
+import {
+	GripVertical,
+	Maximize2,
+	Minimize,
+	Minimize2,
+	Palette,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TableField } from "./TableField";
@@ -52,7 +60,14 @@ export default function TableNode({
 		reorderColumn,
 		deleteNode,
 		isReadOnly,
+		isCompactView,
 	} = useStore();
+
+	const [isHovered, setIsHovered] = useState(false);
+	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+	const nodeRef = useRef<HTMLDivElement>(null);
+
+	const isCompact = isCompactView || data.isCollapsed;
 
 	const handleAddColumnWithFocus = useRef((afterColId?: string) => {
 		const newColId = uuidv4();
@@ -68,33 +83,22 @@ export default function TableNode({
 			afterColId,
 		);
 
-		// Attempt to focus the new column input after a short delay
 		setTimeout(() => {
-			const inputs = Array.from(
-				nodeRef.current?.querySelectorAll("input") || [],
-			);
-			if (inputs.length > 0) {
-				let targetInput = inputs[inputs.length - 1];
-
-				const rowWithNewCol = nodeRef.current?.querySelector(
-					`[data-colid="${newColId}"]`,
+			const rowWithNewCol = nodeRef.current?.querySelector(
+				`[data-colid="${newColId}"]`,
+			) as HTMLElement;
+			if (rowWithNewCol) {
+				const fieldEl = rowWithNewCol.querySelector(
+					"[data-tablefield], input",
 				) as HTMLElement;
-				if (rowWithNewCol) {
-					const inputInRow = rowWithNewCol.querySelector("input");
-					if (inputInRow) {
-						targetInput = inputInRow;
-					}
-				}
-
-				if (targetInput) {
-					targetInput.focus();
-					targetInput.select();
+				if (fieldEl) {
+					fieldEl.focus();
+					fieldEl.click();
 				}
 			}
 		}, 50);
 	});
 
-	// Update the ref so the event listener doesn't need to depend on the function directly
 	useEffect(() => {
 		handleAddColumnWithFocus.current = (afterColId?: string) => {
 			const newColId = uuidv4();
@@ -111,25 +115,16 @@ export default function TableNode({
 			);
 
 			setTimeout(() => {
-				const inputs = Array.from(
-					nodeRef.current?.querySelectorAll("input") || [],
-				);
-				if (inputs.length > 0) {
-					let targetInput = inputs[inputs.length - 1];
-
-					const rowWithNewCol = nodeRef.current?.querySelector(
-						`[data-colid="${newColId}"]`,
+				const rowWithNewCol = nodeRef.current?.querySelector(
+					`[data-colid="${newColId}"]`,
+				) as HTMLElement;
+				if (rowWithNewCol) {
+					const fieldEl = rowWithNewCol.querySelector(
+						"[data-tablefield], input",
 					) as HTMLElement;
-					if (rowWithNewCol) {
-						const inputInRow = rowWithNewCol.querySelector("input");
-						if (inputInRow) {
-							targetInput = inputInRow;
-						}
-					}
-
-					if (targetInput) {
-						targetInput.focus();
-						targetInput.select();
+					if (fieldEl) {
+						fieldEl.focus();
+						fieldEl.click();
 					}
 				}
 			}, 50);
@@ -157,8 +152,6 @@ export default function TableNode({
 			reorderColumn(id, oldIndex, newIndex);
 		}
 	};
-	const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-	const nodeRef = useRef<HTMLDivElement>(null);
 
 	// Color Picker Outside Click Handler
 	useEffect(() => {
@@ -203,7 +196,6 @@ export default function TableNode({
 	}, []);
 
 	const handleAutofit = () => {
-		// Fully clear the explicitly set width and height from the node to allow it to shrink
 		updateNode(id, {
 			width: undefined,
 			height: undefined,
@@ -214,30 +206,65 @@ export default function TableNode({
 		});
 	};
 
-	// Determine header color. Default is transparent/zinc-900 styled via class.
 	const headerColor = data.color || "bg-zinc-900";
+
+	const renderColumnRows = () => {
+		const rows = data.columns.map((col) => (
+			<TableRow
+				key={col.id}
+				nodeId={id}
+				col={col}
+				isReadOnly={isReadOnly}
+				updateColumn={updateColumn}
+				deleteColumn={deleteColumn}
+			/>
+		));
+
+		if (!isReadOnly && (isHovered || selected)) {
+			return (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
+				>
+					<SortableContext
+						items={data.columns.map((col) => col.id)}
+						strategy={verticalListSortingStrategy}
+					>
+						{rows}
+					</SortableContext>
+				</DndContext>
+			);
+		}
+
+		return rows;
+	};
 
 	return (
 		<>
 			<NodeResizer
 				color="#71717a"
 				isVisible={selected}
-				minWidth={320}
-				minHeight={100}
+				minWidth={isCompact ? 200 : 320}
+				minHeight={isCompact ? 40 : 100}
 			/>
 			<div
 				ref={nodeRef}
+				onMouseEnter={() => setIsHovered(true)}
+				onMouseLeave={() => setIsHovered(false)}
 				className={clsx(
-					"min-w-[320px] rounded-lg border shadow-xl transition-all bg-card flex flex-col h-full",
+					"rounded-lg border shadow-xl transition-all bg-card flex flex-col relative",
+					isCompact ? "w-full min-w-[240px] h-auto" : "min-w-[320px] h-full",
 					selected ? "border-ring ring-1 ring-ring/50" : "border-border",
 				)}
-				style={{ width: "100%", height: "100%" }}
+				style={isCompact ? undefined : { width: "100%", height: "100%" }}
 			>
-				{/* Header - Applies color only here */}
+				{/* Header */}
 				<div
 					className={clsx(
-						"px-3 py-2 border-b border-white/10 flex items-center gap-2 group/header transition-colors flex-none rounded-t-lg",
+						"px-3 py-2 border-b border-white/10 flex items-center gap-2 group/header transition-colors flex-none rounded-t-lg relative",
 						headerColor,
+						isCompact && "rounded-b-lg border-b-0",
 					)}
 				>
 					<GripVertical className="w-4 h-4 text-white/50 cursor-grab active:cursor-grabbing flex-none" />
@@ -251,16 +278,39 @@ export default function TableNode({
 						placeholder="Table Name"
 					/>
 
+					{/* Column Count Badge */}
+					<span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white flex-none shrink-0">
+						{data.columns.length} {data.columns.length === 1 ? "col" : "cols"}
+					</span>
+
 					<div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity flex-none ml-auto shrink-0">
-						{/* Autofit Button */}
+						{/* Toggle Individual Collapse */}
 						<button
 							type="button"
-							onClick={handleAutofit}
+							onClick={() =>
+								updateNodeData(id, { isCollapsed: !data.isCollapsed })
+							}
 							className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-white transition-colors"
-							title="Autofit Size"
+							title={data.isCollapsed ? "Expand Table" : "Collapse Table"}
 						>
-							<Minimize className="w-3.5 h-3.5" />
+							{data.isCollapsed ? (
+								<Maximize2 className="w-3.5 h-3.5" />
+							) : (
+								<Minimize2 className="w-3.5 h-3.5" />
+							)}
 						</button>
+
+						{/* Autofit Button */}
+						{!isCompact && (
+							<button
+								type="button"
+								onClick={handleAutofit}
+								className="p-1.5 hover:bg-white/20 rounded-md text-white/70 hover:text-white transition-colors"
+								title="Autofit Size"
+							>
+								<Minimize className="w-3.5 h-3.5" />
+							</button>
+						)}
 
 						{!isReadOnly && (
 							<>
@@ -301,42 +351,59 @@ export default function TableNode({
 							</>
 						)}
 					</div>
-				</div>
 
-				{/* Columns */}
-				<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
-					>
-						<SortableContext
-							items={data.columns.map((col) => col.id)}
-							strategy={verticalListSortingStrategy}
-						>
+					{/* Hidden Handles Container for Compact View */}
+					{isCompact && (
+						<div className="absolute inset-0 pointer-events-none opacity-0">
 							{data.columns.map((col) => (
-								<TableRow
-									key={col.id}
-									nodeId={id}
-									col={col}
-									isReadOnly={isReadOnly}
-									updateColumn={updateColumn}
-									deleteColumn={deleteColumn}
-								/>
+								<div key={col.id}>
+									<Handle
+										type="source"
+										position={Position.Left}
+										id={`sl-${col.id}`}
+										className="!w-1 !h-1 !left-0 !top-1/2 -translate-y-1/2"
+									/>
+									<Handle
+										type="target"
+										position={Position.Left}
+										id={`tl-${col.id}`}
+										className="!w-1 !h-1 !left-0 !top-1/2 -translate-y-1/2"
+									/>
+									<Handle
+										type="source"
+										position={Position.Right}
+										id={`sr-${col.id}`}
+										className="!w-1 !h-1 !right-0 !top-1/2 -translate-y-1/2"
+									/>
+									<Handle
+										type="target"
+										position={Position.Right}
+										id={`tr-${col.id}`}
+										className="!w-1 !h-1 !right-0 !top-1/2 -translate-y-1/2"
+									/>
+								</div>
 							))}
-						</SortableContext>
-					</DndContext>
+						</div>
+					)}
 				</div>
 
-				{/* Footer Action */}
-				{!isReadOnly && (
-					<button
-						type="button"
-						onClick={() => handleAddColumnWithFocus.current()}
-						className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
-					>
-						<Plus className="w-3 h-3" /> Add Column
-					</button>
+				{/* Columns & Footer (Full Mode Only) */}
+				{!isCompact && (
+					<>
+						<div className="flex flex-col py-1 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
+							{renderColumnRows()}
+						</div>
+
+						{!isReadOnly && (
+							<button
+								type="button"
+								onClick={() => handleAddColumnWithFocus.current()}
+								className="w-full py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border rounded-b-lg flex-none"
+							>
+								<Plus className="w-3 h-3" /> Add Column
+							</button>
+						)}
+					</>
 				)}
 			</div>
 		</>

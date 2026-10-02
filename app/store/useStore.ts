@@ -40,11 +40,14 @@ type AppState = {
 	edges: AppEdge[];
 	isLoading: boolean;
 	isReadOnly: boolean;
+	isCompactView: boolean;
 	edgeSettings: EdgeSettings;
 	columnStyleSettings: ColumnStyleSettings;
 
 	// Actions
 	toggleReadOnly: () => void;
+	toggleCompactView: () => void;
+	setCompactView: (compact: boolean) => void;
 	loadProject: (id: string) => Promise<void>;
 	setProjectName: (name: string) => void;
 	// History
@@ -193,6 +196,7 @@ export const useStore = create<AppState>((set, get) => ({
 	edges: [],
 	isLoading: false,
 	isReadOnly: false,
+	isCompactView: false,
 	edgeSettings: {
 		type: "bezier",
 		animated: true,
@@ -255,6 +259,21 @@ export const useStore = create<AppState>((set, get) => ({
 		}
 	},
 	toggleReadOnly: () => set((state) => ({ isReadOnly: !state.isReadOnly })),
+	toggleCompactView: () => {
+		const newCompact = !get().isCompactView;
+		set({ isCompactView: newCompact });
+		const { project } = get();
+		if (project) {
+			debouncedSave({ ...project, isCompactView: newCompact });
+		}
+	},
+	setCompactView: (compact: boolean) => {
+		set({ isCompactView: compact });
+		const { project } = get();
+		if (project) {
+			debouncedSave({ ...project, isCompactView: compact });
+		}
+	},
 	loadProject: async (id: string) => {
 		set({ isLoading: true });
 		try {
@@ -267,6 +286,7 @@ export const useStore = create<AppState>((set, get) => ({
 					nodes: project.nodes,
 					edges: smartEdges,
 					isLoading: false,
+					isCompactView: project.isCompactView ?? false,
 					history: [{ nodes: project.nodes, edges: smartEdges }],
 					historyIndex: 0,
 					edgeSettings: project.edgeSettings || {

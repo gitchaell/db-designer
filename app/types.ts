@@ -22,6 +22,7 @@ export type TableNodeData = {
 	label: string;
 	color?: string;
 	columns: Column[];
+	isCollapsed?: boolean;
 };
 
 export type ContainerNodeData = {
@@ -84,4 +85,5 @@ export type Project = {
 	edges: AppEdge[];
 	edgeSettings?: EdgeSettings;
 	columnStyleSettings?: ColumnStyleSettings;
+	isCompactView?: boolean;
 };

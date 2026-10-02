@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { useStore } from "@/app/store/useStore";
 import { toPng } from "html-to-image";
-import { ArrowLeft, Plus, Waypoints } from "lucide-react";
+import { ArrowLeft, Plus, Waypoints, Maximize2, Minimize2 } from "lucide-react";
 import { Download, Eye, LayoutGrid, Loader2, Printer } from "lucide-react";
 import { Folder } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -73,6 +73,8 @@ function Flow({ projectId }: { projectId: string }) {
 		setNodes: setStoreNodes,
 		isReadOnly,
 		toggleReadOnly,
+		isCompactView,
+		toggleCompactView,
 		undo,
 		redo,
 	} = useStore();
@@ -252,6 +254,24 @@ function Flow({ projectId }: { projectId: string }) {
 						Add Container
 					</Button>
 
+					<Button
+						size="sm"
+						variant="secondary"
+						onClick={toggleCompactView}
+						title={
+							isCompactView
+								? "Switch to Full View"
+								: "Switch to Simple View (Headers Only)"
+						}
+					>
+						{isCompactView ? (
+							<Maximize2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+						) : (
+							<Minimize2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+						)}
+						{isCompactView ? "Full View" : "Simple View"}
+					</Button>
+
 					<SettingsPopover>
 						<div className="flex flex-col gap-3 w-full">
 							{/* Layout Group */}
@@ -267,6 +287,23 @@ function Flow({ projectId }: { projectId: string }) {
 								>
 									<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
 									Auto Layout
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={toggleCompactView}
+									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
+									title={
+										isCompactView
+											? "Switch to Full Table View"
+											: "Switch to Simple View (Headers Only)"
+									}
+								>
+									{isCompactView ? (
+										<Maximize2 className="w-4 h-4 mr-2 text-muted-foreground" />
+									) : (
+										<Minimize2 className="w-4 h-4 mr-2 text-muted-foreground" />
+									)}
+									{isCompactView ? "Full View" : "Simple View"}
 								</Button>
 							</div>
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { useStore } from "@/app/store/useStore";
-import type { AppNode } from "@/app/types";
 import { type NodeProps, NodeResizer } from "@xyflow/react";
 import { clsx } from "clsx";
 import { Folder, Palette, Trash2 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useStore } from "@/app/store/useStore";
+import type { AppNode } from "@/app/types";
 
 const CONTAINER_COLORS = [
 	{

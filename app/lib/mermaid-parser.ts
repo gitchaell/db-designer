@@ -132,8 +132,9 @@ export function parseMermaidToNodesAndEdges(code: string): {
 	for (const line of lines) {
 		// Handle Subgraph Start: subgraph "System" or subgraph System [System Group]
 		if (line.toLowerCase().startsWith("subgraph")) {
-			const subMatch =
-				/^subgraph\s+["']?([^"'\[\]]+)["']?(?:\s*\[.*\])?$/i.exec(line);
+			const subMatch = /^subgraph\s+["']?([^"'[\]]+)["']?(?:\s*\[.*\])?$/i.exec(
+				line,
+			);
 			const title = subMatch ? cleanIdentifier(subMatch[1]) : "Group";
 			currentSubgraphTitle = title;
 			if (!subgraphsMap.has(title)) {

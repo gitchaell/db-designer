@@ -41,9 +41,12 @@ export function findMissingRelations(
 		return n;
 	};
 
+	// Common generic primary key names to exclude from cross-table id <-> id false positives
+	const GENERIC_PK_NAMES = new Set(["id", "pk", "uuid", "key", "_id"]);
+
 	for (const sourceNode of tableNodes) {
 		const sourceTableLabel = sourceNode.data.label || "Untitled Table";
-		const normSourceLabel = normalizeTableName(sourceTableLabel);
+		const _normSourceLabel = normalizeTableName(sourceTableLabel);
 
 		for (const sourceCol of sourceNode.data.columns) {
 			const normColName = sourceCol.name.toLowerCase().trim();
@@ -65,12 +68,20 @@ export function findMissingRelations(
 
 					const normTargetColName = targetCol.name.toLowerCase().trim();
 
-					// Matching rule 1: Direct Foreign Key reference (e.g. user_id -> id on users table)
+					// CRITICAL SAFETY CHECK: NEVER match generic "id" <-> "id" across independent tables!
+					if (
+						GENERIC_PK_NAMES.has(normColName) &&
+						GENERIC_PK_NAMES.has(normTargetColName)
+					) {
+						continue;
+					}
+
+					// Matching Rule 1: Exact FK pattern match (e.g. user_id or userId referencing target table "users" PK "id")
 					if (
 						targetCol.isPk &&
 						(normColName === `${normTargetLabel}_id` ||
 							normColName === `${normTargetLabel}id` ||
-							normColName === normTargetColName)
+							normColName === `${normTargetLabel}_uuid`)
 					) {
 						suggestions.push({
 							id: `${sourceNode.id}-${sourceCol.id}_${targetNode.id}-${targetCol.id}`,
@@ -83,18 +94,19 @@ export function findMissingRelations(
 							targetColId: targetCol.id,
 							targetColName: targetCol.name,
 							confidence: "high",
-							reason: `Field '${sourceCol.name}' matches primary key '${targetCol.name}' of table '${targetTableLabel}'`,
+							reason: `Foreign key '${sourceTableLabel}.${sourceCol.name}' targets primary key '${targetTableLabel}.${targetCol.name}'`,
 						});
 						continue;
 					}
 
-					// Matching rule 2: Explicit Foreign Key flag set on column matching a PK
+					// Matching Rule 2: Explicit Foreign Key flag (isFk) on source column targeting a PK
 					if (
 						sourceCol.isFk &&
 						targetCol.isPk &&
-						sourceCol.type === targetCol.type &&
+						!GENERIC_PK_NAMES.has(normColName) &&
 						(normColName.includes(normTargetLabel) ||
-							normTargetColName === normColName)
+							normColName.endsWith("_id") ||
+							normColName.endsWith("id"))
 					) {
 						suggestions.push({
 							id: `${sourceNode.id}-${sourceCol.id}_${targetNode.id}-${targetCol.id}`,
@@ -107,20 +119,27 @@ export function findMissingRelations(
 							targetColId: targetCol.id,
 							targetColName: targetCol.name,
 							confidence: "high",
-							reason: `Foreign key field '${sourceCol.name}' in '${sourceTableLabel}' matches primary key in '${targetTableLabel}'`,
+							reason: `FK field '${sourceTableLabel}.${sourceCol.name}' matches primary key in '${targetTableLabel}'`,
 						});
 						continue;
 					}
 
-					// Matching rule 3: Conventional _id naming pattern matching target table name
+					// Matching Rule 3: Conventional prefix match (e.g. author_id or creator_id)
 					if (
-						normColName.endsWith("_id") ||
-						normColName.endsWith("id")
+						targetCol.isPk &&
+						(normColName.endsWith("_id") || normColName.endsWith("id")) &&
+						!GENERIC_PK_NAMES.has(normColName)
 					) {
 						const prefix = normColName
 							.replace(/_?id$/, "")
+							.replace(/_?uuid$/, "")
 							.toLowerCase();
-						if (prefix && normTargetLabel.includes(prefix)) {
+
+						if (
+							prefix &&
+							(normTargetLabel.includes(prefix) ||
+								prefix.includes(normTargetLabel))
+						) {
 							suggestions.push({
 								id: `${sourceNode.id}-${sourceCol.id}_${targetNode.id}-${targetCol.id}`,
 								sourceNodeId: sourceNode.id,
@@ -132,7 +151,7 @@ export function findMissingRelations(
 								targetColId: targetCol.id,
 								targetColName: targetCol.name,
 								confidence: "medium",
-								reason: `Column '${sourceCol.name}' suggests a link to '${targetTableLabel}.${targetCol.name}'`,
+								reason: `Column '${sourceCol.name}' suggests a foreign key link to '${targetTableLabel}.${targetCol.name}'`,
 							});
 						}
 					}

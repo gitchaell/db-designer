@@ -1,7 +1,5 @@
 "use client";
 
-import { useStore } from "@/app/store/useStore";
-import type { AppEdge, RelationCardinality } from "@/app/types";
 import {
 	BaseEdge,
 	EdgeLabelRenderer,
@@ -12,8 +10,10 @@ import {
 } from "@xyflow/react";
 import { clsx } from "clsx";
 import { Check, Settings2, Trash2, X } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useStore } from "@/app/store/useStore";
+import type { AppEdge, RelationCardinality } from "@/app/types";
 
 const CARDINALITY_OPTIONS: { label: string; value: RelationCardinality }[] = [
 	{ label: "None", value: "none" },
@@ -55,7 +55,10 @@ function getMarkerUrl(
 function CardinalityMarkersDefs({
 	id,
 	strokeColor,
-}: { id: string; strokeColor: string }) {
+}: {
+	id: string;
+	strokeColor: string;
+}) {
 	return (
 		<svg
 			style={{
@@ -341,7 +344,10 @@ export default function CustomRelationEdge({
 
 	const strokeColor = selected
 		? "var(--color-primary, #3b82f6)"
-		: data?.color || edgeSettings.defaultColor || (style.stroke as string) || "#71717a";
+		: data?.color ||
+			edgeSettings.defaultColor ||
+			(style.stroke as string) ||
+			"#71717a";
 
 	const showMarkers = edgeSettings.showRelationMarkers !== false;
 	const startMarkerUrl = showMarkers

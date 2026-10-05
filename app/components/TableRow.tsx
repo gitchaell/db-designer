@@ -1,15 +1,13 @@
-import { isAuditField } from "@/app/lib/column-utils";
-import { useStore } from "@/app/store/useStore";
-import type { ColumnType } from "@/app/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Handle, Position } from "@xyflow/react";
 import { clsx } from "clsx";
 import { Clock, GripVertical, Key, Link, Trash2 } from "lucide-react";
-import { TableField } from "./TableField";
+import { isAuditField } from "@/app/lib/column-utils";
+import { useStore } from "@/app/store/useStore";
+import type { Column, ColumnType } from "@/app/types";
 import { Select } from "./Select";
-
-import type { Column } from "@/app/types";
+import { TableField } from "./TableField";
 
 interface TableRowProps {
 	nodeId: string;

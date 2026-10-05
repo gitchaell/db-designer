@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 
 import {
 	Background,
@@ -11,34 +10,29 @@ import {
 	ReactFlowProvider,
 	useReactFlow,
 } from "@xyflow/react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
-import { useStore } from "@/app/store/useStore";
 import { toPng } from "html-to-image";
-import { ArrowLeft, Plus, Waypoints, Maximize2, Minimize2 } from "lucide-react";
-import { Download, Eye, LayoutGrid, Loader2, Printer } from "lucide-react";
-import { Folder } from "lucide-react";
-import { useTheme } from "next-themes";
+import { ArrowLeft, ChevronDown, Folder, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
+import { useStore } from "@/app/store/useStore";
 import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
-import { Checkbox } from "./Checkbox";
 import ContainerNode from "./ContainerNode";
 import CustomRelationEdge from "./CustomRelationEdge";
-import ExportDropdown from "./ExportDropdown";
-import { Select } from "./Select";
 import SettingsModal from "./SettingsModal";
-import { ChevronDown } from "lucide-react";
-import { createPortal } from "react-dom";
 import TableNode from "./TableNode";
-import { ThemeToggle } from "./ThemeToggle";
 
 const SqlPreviewModal = dynamic(() => import("./SqlPreviewModal"));
 const TsExportModal = dynamic(() => import("./TsExportModal"));
 const PrismaExportModal = dynamic(() => import("./PrismaExportModal"));
 const PrintExportModal = dynamic(() => import("./PrintExportModal"));
-const RelationSuggestionsModal = dynamic(() => import("./RelationSuggestionsModal"));
+const RelationSuggestionsModal = dynamic(
+	() => import("./RelationSuggestionsModal"),
+);
 
 const nodeTypes = {
 	table: TableNode,

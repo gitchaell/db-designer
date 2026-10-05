@@ -41,7 +41,7 @@ export function parsePrismaSchemaToNodesAndEdges(code: string) {
 	}
 
 	for (const [modelName, { body, nodeId }] of models.entries()) {
-		const fieldRegex = /^\s*(\w+)\s+([\w\[\]?]+)(?:\s+(.+))?/gm;
+		const fieldRegex = /^\s*(\w+)\s+([\w[\]?]+)(?:\s+(.+))?/gm;
 		let fieldMatch;
 
 		const columns: Column[] = [];
@@ -97,7 +97,7 @@ export function parsePrismaSchemaToNodesAndEdges(code: string) {
 	}
 
 	for (const [, { body, nodeId }] of models.entries()) {
-		const fieldRegex = /^\s*(\w+)\s+([\w\[\]?]+)(?:\s+(.+))?/gm;
+		const fieldRegex = /^\s*(\w+)\s+([\w[\]?]+)(?:\s+(.+))?/gm;
 		let fieldMatch;
 
 		while ((fieldMatch = fieldRegex.exec(body)) !== null) {

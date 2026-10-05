@@ -1,13 +1,13 @@
 import {
-	type Edge,
-	type OnConnect,
-	type OnEdgesChange,
-	type OnNodesChange,
 	addEdge,
 	applyEdgeChanges,
 	applyNodeChanges,
+	type Edge,
+	MarkerType,
+	type OnConnect,
+	type OnEdgesChange,
+	type OnNodesChange,
 } from "@xyflow/react";
-import { MarkerType } from "@xyflow/react";
 import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";

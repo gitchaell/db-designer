@@ -43,7 +43,6 @@ export function TableField({
 	if (!isEditing) {
 		return (
 			<span
-				tabIndex={0}
 				data-tablefield="true"
 				onClick={() => setIsEditing(true)}
 				onFocus={() => setIsEditing(true)}
@@ -76,7 +75,6 @@ export function TableField({
 	return (
 		<input
 			type="text"
-			autoFocus
 			value={value}
 			onChange={(e) => onChange?.(e.target.value)}
 			onBlur={() => setIsEditing(false)}

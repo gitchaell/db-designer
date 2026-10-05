@@ -80,7 +80,12 @@
 		color: var(--foreground);
 		font-family: var(--font-sans);
 		font-variation-settings: "wght" 400;
-		font-feature-settings: "liga" 1, "dlig" 1, "tnum" 1, "ss02" 1, "ss05" 1,
+		font-feature-settings:
+			"liga" 1,
+			"dlig" 1,
+			"tnum" 1,
+			"ss02" 1,
+			"ss05" 1,
 			"ss09" 1;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
@@ -94,7 +99,12 @@
 	h6 {
 		font-family: var(--font-display);
 		font-variation-settings: "wght" 600;
-		font-feature-settings: "liga" 1, "tnum" 1, "zero" 1, "salt" 1, "ss05" 1;
+		font-feature-settings:
+			"liga" 1,
+			"tnum" 1,
+			"zero" 1,
+			"salt" 1,
+			"ss05" 1;
 	}
 }
 
@@ -168,24 +178,29 @@
 .monaco-editor .margin,
 .monaco-editor .view-lines,
 .monaco-editor .mtk1 {
-	font-family: var(--font-mono) !important;
-	font-variation-settings: "wght" 400 !important;
-	font-feature-settings: "liga" 1, "ss02" 1, "ss03" 1 !important;
+	font-family: var(--font-mono);
+	font-variation-settings: "wght" 400;
+	font-feature-settings:
+		"liga" 1,
+		"ss02" 1,
+		"ss03" 1;
 }
 
 /* Edge Interactions */
 .react-flow__edge-path {
-	transition: stroke 0.2s ease, stroke-width 0.2s ease;
+	transition:
+		stroke 0.2s ease,
+		stroke-width 0.2s ease;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-	stroke: var(--destructive) !important;
-	stroke-width: 3 !important;
+	stroke: var(--destructive);
+	stroke-width: 3;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-	stroke: var(--destructive) !important;
-	stroke-width: 4 !important;
+	stroke: var(--destructive);
+	stroke-width: 4;
 }
 
 .react-flow__edge:hover .react-flow__edge-interaction,

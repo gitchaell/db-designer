@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "@/app/store/useStore";
 import { toJpeg, toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import {
@@ -11,12 +10,13 @@ import {
 	Loader2,
 	Printer,
 	Sliders,
-	X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import React, { useState } from "react";
+import { useState } from "react";
+import { useStore } from "@/app/store/useStore";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
+import { FloatingWindow } from "./FloatingWindow";
 import { Select } from "./Select";
 
 interface PrintExportModalProps {
@@ -58,8 +58,6 @@ export default function PrintExportModal({
 	const [imageFormat, setImageFormat] = useState<"png" | "jpeg">("png");
 	const [imageScale, setImageScale] = useState(3); // 1x, 2x, 3x, 4x, 5x
 	const [includeBackgroundImg, setIncludeBackgroundImg] = useState(true);
-
-	if (!isOpen) return null;
 
 	const updateProgress = async (pct: number, stepMsg: string) => {
 		setProgress(pct);
@@ -113,7 +111,10 @@ export default function PrintExportModal({
 		const translateX = -minX + padding;
 		const translateY = -minY + padding;
 
-		await updateProgress(30, `Capturing high-res nodes (${scaleMultiplier}x)...`);
+		await updateProgress(
+			30,
+			`Capturing high-res nodes (${scaleMultiplier}x)...`,
+		);
 		const exportFn = format === "jpeg" ? toJpeg : toPng;
 
 		const rawDataUrl = await exportFn(viewportElement, {
@@ -158,7 +159,6 @@ export default function PrintExportModal({
 			ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
 			if (includeBg) {
-				// Fast pattern tile creation for dot background
 				const gap = 20 * scaleMultiplier;
 				const dotRadius = 1.5 * scaleMultiplier;
 				const tileCanvas = document.createElement("canvas");
@@ -343,312 +343,294 @@ export default function PrintExportModal({
 	const [pageW, pageH] = PAPER_DIMENSIONS_MM[paperSize][orientation];
 
 	return (
-		<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs font-sans">
-			<div className="bg-popover border border-border text-popover-foreground rounded-2xl p-6 w-[520px] shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150">
-				{/* Modal Header */}
-				<div className="flex items-center justify-between border-b border-border pb-3">
-					<div className="flex items-center gap-2">
-						<Printer className="w-5 h-5 text-primary" />
-						<h2 className="text-base font-bold text-foreground">
-							Advanced Print & Image Export
-						</h2>
-					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors"
-					>
-						<X className="w-4 h-4" />
-					</button>
-				</div>
-
-				{/* Tabs */}
-				<div className="flex bg-muted p-1 rounded-lg gap-1">
-					<button
-						type="button"
-						onClick={() => setActiveTab("pdf")}
-						className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
-							activeTab === "pdf"
-								? "bg-background text-foreground shadow-xs"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						<FileText className="w-3.5 h-3.5" /> Multi-Page PDF Poster
-					</button>
-					<button
-						type="button"
-						onClick={() => setActiveTab("image")}
-						className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
-							activeTab === "image"
-								? "bg-background text-foreground shadow-xs"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						<ImageIcon className="w-3.5 h-3.5" /> High-Res Image Export
-					</button>
-				</div>
-
-				{/* PDF Print Tab Content */}
-				{activeTab === "pdf" && (
-					<div className="flex flex-col gap-4">
-						<div className="bg-muted/40 p-3 rounded-xl border border-border/50 text-xs text-muted-foreground flex items-center gap-2">
-							<Grid className="w-4 h-4 text-primary flex-none" />
-							<span>
-								Splits large diagrams across an <b>N &times; M page grid</b>{" "}
-								while preserving aspect ratio and HD sharpness.
-							</span>
-						</div>
-
-						{/* PDF Layout Visual Preview */}
-						<div className="flex flex-col gap-1.5">
-							<div className="flex items-center justify-between text-xs font-semibold text-muted-foreground px-1">
-								<span>Page Grid Layout Preview</span>
-								<span>
-									{gridCols * gridRows} Page{gridCols * gridRows > 1 ? "s" : ""}{" "}
-									({paperSize.toUpperCase()} {orientation}, {pageW} &times;{" "}
-									{pageH} mm)
-								</span>
-							</div>
-
-							<div className="bg-muted/60 border border-border rounded-xl p-4 flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden">
-								<div
-									className="grid gap-1 p-2 bg-background/80 rounded-lg border border-border shadow-inner max-w-full"
-									style={{
-										gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
-										gridTemplateRows: `repeat(${gridRows}, minmax(0, 1fr))`,
-										aspectRatio: `${gridCols * pageW} / ${gridRows * pageH}`,
-										maxHeight: "130px",
-									}}
-								>
-									{Array.from({ length: gridCols * gridRows }).map(
-										(_, pageIdx) => (
-											<div
-												key={`page-grid-${pageIdx + 1}`}
-												className="border border-dashed border-primary/40 bg-primary/5 rounded flex items-center justify-center text-[10px] font-mono text-primary/80 font-bold p-2 min-w-[32px] min-h-[24px]"
-											>
-												P{pageIdx + 1}
-											</div>
-										),
-									)}
-								</div>
-								<span className="text-[10px] text-muted-foreground mt-2 font-mono">
-									Proportional aspect ratio preserved across all pages
-								</span>
-							</div>
-						</div>
-
-						{/* Grid Rows & Columns */}
-						<div className="grid grid-cols-2 gap-3">
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Horizontal Pages (Columns)
-								</span>
-								<Select
-									value={String(gridCols)}
-									onChange={(val) => setGridCols(Number(val))}
-									options={[1, 2, 3, 4, 5, 6].map((n) => ({
-										label: `${n} Page${n > 1 ? "s" : ""}`,
-										value: String(n),
-									}))}
-								/>
-							</div>
-
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Vertical Pages (Rows)
-								</span>
-								<Select
-									value={String(gridRows)}
-									onChange={(val) => setGridRows(Number(val))}
-									options={[1, 2, 3, 4, 5, 6].map((n) => ({
-										label: `${n} Page${n > 1 ? "s" : ""}`,
-										value: String(n),
-									}))}
-								/>
-							</div>
-						</div>
-
-						{/* Paper Format & Orientation */}
-						<div className="grid grid-cols-2 gap-3">
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Paper Size
-								</span>
-								<Select
-									value={paperSize}
-									onChange={(val) =>
-										setPaperSize(val as "a4" | "letter" | "a3")
-									}
-									options={[
-										{ label: "A4", value: "a4" },
-										{ label: "Letter", value: "letter" },
-										{ label: "A3", value: "a3" },
-									]}
-								/>
-							</div>
-
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Orientation
-								</span>
-								<Select
-									value={orientation}
-									onChange={(val) =>
-										setOrientation(val as "portrait" | "landscape")
-									}
-									options={[
-										{ label: "Landscape", value: "landscape" },
-										{ label: "Portrait", value: "portrait" },
-									]}
-								/>
-							</div>
-						</div>
-
-						{/* Background Toggle */}
-						<label
-							htmlFor="include-bg-pdf"
-							className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl border border-border/50 cursor-pointer"
-						>
-							<span className="text-xs font-medium text-foreground">
-								Include Blackboard Dot Grid Background
-							</span>
-							<Checkbox
-								id="include-bg-pdf"
-								checked={includeBackgroundPdf}
-								onChange={(e) => setIncludeBackgroundPdf(e.target.checked)}
-							/>
-						</label>
-
-						{/* Progress Bar Display */}
-						{isProcessing && (
-							<div className="flex flex-col gap-1.5 p-3 bg-muted/50 rounded-xl border border-border">
-								<div className="flex items-center justify-between text-xs font-semibold text-foreground">
-									<span className="flex items-center gap-1.5">
-										<Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-										{progressStep}
-									</span>
-									<span className="font-mono">{progress}%</span>
-								</div>
-								<div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-border/50">
-									<div
-										className="h-full bg-primary transition-all duration-150 ease-out"
-										style={{ width: `${progress}%` }}
-									/>
-								</div>
-							</div>
-						)}
-
-						{/* Print PDF Button */}
-						<Button
-							onClick={handleExportPdf}
-							disabled={isProcessing}
-							className="w-full mt-1"
-						>
-							{isProcessing ? (
-								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-							) : (
-								<Printer className="w-4 h-4 mr-2" />
-							)}
-							Generate {gridCols} &times; {gridRows} Page PDF Poster
-						</Button>
-					</div>
-				)}
-
-				{/* High-Res Image Tab Content */}
-				{activeTab === "image" && (
-					<div className="flex flex-col gap-4">
-						<div className="bg-muted/40 p-3 rounded-xl border border-border/50 text-xs text-muted-foreground flex items-center gap-2">
-							<Sliders className="w-4 h-4 text-primary flex-none" />
-							<span>
-								Export ultra high-definition PNG or JPEG images up to{" "}
-								<b>5x resolution</b> for large prints or documentation.
-							</span>
-						</div>
-
-						{/* Scale & Format */}
-						<div className="grid grid-cols-2 gap-3">
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Resolution Scale Multiplier
-								</span>
-								<Select
-									value={String(imageScale)}
-									onChange={(val) => setImageScale(Number(val))}
-									options={[
-										{ label: "1x Standard", value: "1" },
-										{ label: "2x High Res", value: "2" },
-										{ label: "3x Ultra HD", value: "3" },
-										{ label: "4x Poster HD", value: "4" },
-										{ label: "5x Extreme HD", value: "5" },
-									]}
-								/>
-							</div>
-
-							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-muted-foreground">
-									Format
-								</span>
-								<Select
-									value={imageFormat}
-									onChange={(val) => setImageFormat(val as "png" | "jpeg")}
-									options={[
-										{ label: "PNG (Lossless)", value: "png" },
-										{ label: "JPEG (Compressed)", value: "jpeg" },
-									]}
-								/>
-							</div>
-						</div>
-
-						{/* Background Toggle */}
-						<label
-							htmlFor="include-bg-img"
-							className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl border border-border/50 cursor-pointer"
-						>
-							<span className="text-xs font-medium text-foreground">
-								Include Blackboard Dot Grid Background
-							</span>
-							<Checkbox
-								id="include-bg-img"
-								checked={includeBackgroundImg}
-								onChange={(e) => setIncludeBackgroundImg(e.target.checked)}
-							/>
-						</label>
-
-						{/* Progress Bar Display */}
-						{isProcessing && (
-							<div className="flex flex-col gap-1.5 p-3 bg-muted/50 rounded-xl border border-border">
-								<div className="flex items-center justify-between text-xs font-semibold text-foreground">
-									<span className="flex items-center gap-1.5">
-										<Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-										{progressStep}
-									</span>
-									<span className="font-mono">{progress}%</span>
-								</div>
-								<div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-border/50">
-									<div
-										className="h-full bg-primary transition-all duration-150 ease-out"
-										style={{ width: `${progress}%` }}
-									/>
-								</div>
-							</div>
-						)}
-
-						{/* Export Image Button */}
-						<Button
-							onClick={handleExportImage}
-							disabled={isProcessing}
-							className="w-full mt-1"
-						>
-							{isProcessing ? (
-								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-							) : (
-								<Download className="w-4 h-4 mr-2" />
-							)}
-							Export {imageScale}x {imageFormat.toUpperCase()} Image
-						</Button>
-					</div>
-				)}
+		<FloatingWindow
+			isOpen={isOpen}
+			onClose={onClose}
+			title="Advanced Print & HD Export"
+			subtitle="Export ultra high-definition PNG/JPEG images or multi-page poster PDFs"
+			icon={<Printer className="w-5 h-5 text-primary" />}
+			defaultPosition={{ x: 180, y: 70 }}
+			className="w-[560px]"
+		>
+			{/* Tabs */}
+			<div className="flex bg-muted/60 p-1 rounded-lg gap-1">
+				<button
+					type="button"
+					onClick={() => setActiveTab("pdf")}
+					className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+						activeTab === "pdf"
+							? "bg-background text-foreground shadow-xs"
+							: "text-muted-foreground hover:text-foreground"
+					}`}
+				>
+					<FileText className="w-3.5 h-3.5" /> Multi-Page PDF Poster
+				</button>
+				<button
+					type="button"
+					onClick={() => setActiveTab("image")}
+					className={`flex-1 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+						activeTab === "image"
+							? "bg-background text-foreground shadow-xs"
+							: "text-muted-foreground hover:text-foreground"
+					}`}
+				>
+					<ImageIcon className="w-3.5 h-3.5" /> High-Res Image Export
+				</button>
 			</div>
-		</div>
+
+			{/* PDF Print Tab Content */}
+			{activeTab === "pdf" && (
+				<div className="flex flex-col gap-3.5">
+					<div className="bg-muted/30 p-2.5 rounded-xl border border-border/50 text-xs text-muted-foreground flex items-center gap-2">
+						<Grid className="w-4 h-4 text-primary flex-none" />
+						<span>
+							Splits large diagrams across an <b>N &times; M page grid</b> while
+							preserving aspect ratio and HD sharpness.
+						</span>
+					</div>
+
+					{/* Grid Layout Preview */}
+					<div className="flex flex-col gap-1.5">
+						<div className="flex items-center justify-between text-xs font-semibold text-muted-foreground px-1">
+							<span>Page Grid Layout Preview</span>
+							<span>
+								{gridCols * gridRows} Page{gridCols * gridRows > 1 ? "s" : ""} (
+								{paperSize.toUpperCase()} {orientation}, {pageW} &times; {pageH}{" "}
+								mm)
+							</span>
+						</div>
+
+						<div className="bg-muted/40 border border-border rounded-xl p-3 flex flex-col items-center justify-center min-h-[120px] relative overflow-hidden">
+							<div
+								className="grid gap-1 p-2 bg-background/80 rounded-lg border border-border shadow-inner max-w-full"
+								style={{
+									gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+									gridTemplateRows: `repeat(${gridRows}, minmax(0, 1fr))`,
+									aspectRatio: `${gridCols * pageW} / ${gridRows * pageH}`,
+									maxHeight: "110px",
+								}}
+							>
+								{Array.from({ length: gridCols * gridRows }).map(
+									(_, pageIdx) => (
+										<div
+											key={`page-grid-${pageIdx + 1}`}
+											className="border border-dashed border-primary/40 bg-primary/5 rounded flex items-center justify-center text-[10px] font-mono text-primary/80 font-bold p-1 min-w-[28px] min-h-[20px]"
+										>
+											P{pageIdx + 1}
+										</div>
+									),
+								)}
+							</div>
+						</div>
+					</div>
+
+					{/* Grid Controls */}
+					<div className="grid grid-cols-2 gap-3">
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Horizontal Pages (Cols)
+							</span>
+							<Select
+								value={String(gridCols)}
+								onChange={(val) => setGridCols(Number(val))}
+								options={[1, 2, 3, 4, 5, 6].map((n) => ({
+									label: `${n} Page${n > 1 ? "s" : ""}`,
+									value: String(n),
+								}))}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Vertical Pages (Rows)
+							</span>
+							<Select
+								value={String(gridRows)}
+								onChange={(val) => setGridRows(Number(val))}
+								options={[1, 2, 3, 4, 5, 6].map((n) => ({
+									label: `${n} Page${n > 1 ? "s" : ""}`,
+									value: String(n),
+								}))}
+							/>
+						</div>
+					</div>
+
+					{/* Paper Format & Orientation */}
+					<div className="grid grid-cols-2 gap-3">
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Paper Size
+							</span>
+							<Select
+								value={paperSize}
+								onChange={(val) => setPaperSize(val as "a4" | "letter" | "a3")}
+								options={[
+									{ label: "A4", value: "a4" },
+									{ label: "Letter", value: "letter" },
+									{ label: "A3", value: "a3" },
+								]}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Orientation
+							</span>
+							<Select
+								value={orientation}
+								onChange={(val) =>
+									setOrientation(val as "portrait" | "landscape")
+								}
+								options={[
+									{ label: "Landscape", value: "landscape" },
+									{ label: "Portrait", value: "portrait" },
+								]}
+							/>
+						</div>
+					</div>
+
+					{/* Background Toggle */}
+					<label
+						htmlFor="include-bg-pdf"
+						className="flex items-center justify-between p-2.5 bg-background rounded-xl border border-border/80 cursor-pointer"
+					>
+						<span className="text-xs font-medium text-foreground">
+							Include Dot Grid Background
+						</span>
+						<Checkbox
+							id="include-bg-pdf"
+							checked={includeBackgroundPdf}
+							onChange={(e) => setIncludeBackgroundPdf(e.target.checked)}
+						/>
+					</label>
+
+					{/* Progress Bar Display */}
+					{isProcessing && (
+						<div className="flex flex-col gap-1.5 p-2.5 bg-muted/50 rounded-xl border border-border">
+							<div className="flex items-center justify-between text-xs font-semibold text-foreground">
+								<span className="flex items-center gap-1.5">
+									<Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+									{progressStep}
+								</span>
+								<span className="font-mono">{progress}%</span>
+							</div>
+							<div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-border/50">
+								<div
+									className="h-full bg-primary transition-all duration-150 ease-out"
+									style={{ width: `${progress}%` }}
+								/>
+							</div>
+						</div>
+					)}
+
+					<Button
+						onClick={handleExportPdf}
+						disabled={isProcessing}
+						className="w-full mt-1 h-9"
+					>
+						{isProcessing ? (
+							<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+						) : (
+							<Printer className="w-4 h-4 mr-2" />
+						)}
+						Generate {gridCols} &times; {gridRows} Page PDF Poster
+					</Button>
+				</div>
+			)}
+
+			{/* High-Res Image Tab Content */}
+			{activeTab === "image" && (
+				<div className="flex flex-col gap-3.5">
+					<div className="bg-muted/30 p-2.5 rounded-xl border border-border/50 text-xs text-muted-foreground flex items-center gap-2">
+						<Sliders className="w-4 h-4 text-primary flex-none" />
+						<span>
+							Export ultra high-definition PNG or JPEG images up to{" "}
+							<b>5x resolution</b>.
+						</span>
+					</div>
+
+					{/* Scale & Format */}
+					<div className="grid grid-cols-2 gap-3">
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Resolution Scale
+							</span>
+							<Select
+								value={String(imageScale)}
+								onChange={(val) => setImageScale(Number(val))}
+								options={[
+									{ label: "1x Standard", value: "1" },
+									{ label: "2x High Res", value: "2" },
+									{ label: "3x Ultra HD", value: "3" },
+									{ label: "4x Poster HD", value: "4" },
+									{ label: "5x Extreme HD", value: "5" },
+								]}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-semibold text-muted-foreground">
+								Format
+							</span>
+							<Select
+								value={imageFormat}
+								onChange={(val) => setImageFormat(val as "png" | "jpeg")}
+								options={[
+									{ label: "PNG (Lossless)", value: "png" },
+									{ label: "JPEG (Compressed)", value: "jpeg" },
+								]}
+							/>
+						</div>
+					</div>
+
+					{/* Background Toggle */}
+					<label
+						htmlFor="include-bg-img"
+						className="flex items-center justify-between p-2.5 bg-background rounded-xl border border-border/80 cursor-pointer"
+					>
+						<span className="text-xs font-medium text-foreground">
+							Include Dot Grid Background
+						</span>
+						<Checkbox
+							id="include-bg-img"
+							checked={includeBackgroundImg}
+							onChange={(e) => setIncludeBackgroundImg(e.target.checked)}
+						/>
+					</label>
+
+					{/* Progress Bar Display */}
+					{isProcessing && (
+						<div className="flex flex-col gap-1.5 p-2.5 bg-muted/50 rounded-xl border border-border">
+							<div className="flex items-center justify-between text-xs font-semibold text-foreground">
+								<span className="flex items-center gap-1.5">
+									<Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+									{progressStep}
+								</span>
+								<span className="font-mono">{progress}%</span>
+							</div>
+							<div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-border/50">
+								<div
+									className="h-full bg-primary transition-all duration-150 ease-out"
+									style={{ width: `${progress}%` }}
+								/>
+							</div>
+						</div>
+					)}
+
+					<Button
+						onClick={handleExportImage}
+						disabled={isProcessing}
+						className="w-full mt-1 h-9"
+					>
+						{isProcessing ? (
+							<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+						) : (
+							<Download className="w-4 h-4 mr-2" />
+						)}
+						Export {imageScale}x {imageFormat.toUpperCase()} Image
+					</Button>
+				</div>
+			)}
+		</FloatingWindow>
 	);
 }

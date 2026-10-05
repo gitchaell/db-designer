@@ -61,17 +61,15 @@ export function TableField({
 
 	if (type === "select" && options) {
 		return (
-			<div onBlur={() => setIsEditing(false)} className="inline-block">
-				<Select
-					value={value}
-					onChange={(val) => {
-						onChange?.(val);
-						setIsEditing(false);
-					}}
-					className={className}
-					options={options}
-				/>
-			</div>
+			<Select
+				value={value}
+				onChange={(val) => {
+					onChange?.(val);
+					setIsEditing(false);
+				}}
+				className={className}
+				options={options}
+			/>
 		);
 	}
 

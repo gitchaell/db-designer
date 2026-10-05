@@ -60,6 +60,7 @@ export type EdgeSettings = {
 	animated: boolean;
 	markerEnd?: EdgeMarkerType;
 	showRelationMarkers?: boolean;
+	defaultColor?: string;
 };
 
 export type ColumnHighlightStyle = {
@@ -86,4 +87,6 @@ export type Project = {
 	edgeSettings?: EdgeSettings;
 	columnStyleSettings?: ColumnStyleSettings;
 	isCompactView?: boolean;
+	snapToGrid?: boolean;
+	snapGridSize?: number;
 };

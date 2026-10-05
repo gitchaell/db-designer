@@ -44,6 +44,42 @@ const CONTAINER_COLORS = [
 		bg: "bg-rose-500/10",
 		text: "text-rose-500",
 	},
+	{
+		label: "Indigo",
+		border: "border-indigo-500/50",
+		bg: "bg-indigo-500/10",
+		text: "text-indigo-500",
+	},
+	{
+		label: "Cyan",
+		border: "border-cyan-500/50",
+		bg: "bg-cyan-500/10",
+		text: "text-cyan-500",
+	},
+	{
+		label: "Teal",
+		border: "border-teal-500/50",
+		bg: "bg-teal-500/10",
+		text: "text-teal-500",
+	},
+	{
+		label: "Orange",
+		border: "border-orange-500/50",
+		bg: "bg-orange-500/10",
+		text: "text-orange-500",
+	},
+	{
+		label: "Pink",
+		border: "border-pink-500/50",
+		bg: "bg-pink-500/10",
+		text: "text-pink-500",
+	},
+	{
+		label: "Red",
+		border: "border-red-500/50",
+		bg: "bg-red-500/10",
+		text: "text-red-500",
+	},
 ];
 
 export default function ContainerNode({
@@ -131,11 +167,12 @@ export default function ContainerNode({
 								</button>
 
 								{isColorPickerOpen && (
-									<div className="absolute right-0 top-full mt-1 p-1.5 bg-popover border border-border rounded-lg shadow-xl grid grid-cols-3 gap-1.5 z-[100] w-36">
+									<div className="absolute right-0 top-full mt-1 p-1.5 bg-popover border border-border rounded-lg shadow-xl grid grid-cols-4 gap-1.5 z-[100] w-48">
 										{CONTAINER_COLORS.map((c) => (
 											<button
 												type="button"
 												key={c.label}
+												title={c.label}
 												className={clsx(
 													"w-8 h-8 rounded border transition-transform hover:scale-105 cursor-pointer flex items-center justify-center text-xs font-bold",
 													c.bg,

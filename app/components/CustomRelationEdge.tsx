@@ -341,7 +341,7 @@ export default function CustomRelationEdge({
 
 	const strokeColor = selected
 		? "var(--color-primary, #3b82f6)"
-		: data?.color || (style.stroke as string) || "#71717a";
+		: data?.color || edgeSettings.defaultColor || (style.stroke as string) || "#71717a";
 
 	const showMarkers = edgeSettings.showRelationMarkers !== false;
 	const startMarkerUrl = showMarkers

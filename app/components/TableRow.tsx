@@ -7,6 +7,7 @@ import { Handle, Position } from "@xyflow/react";
 import { clsx } from "clsx";
 import { Clock, GripVertical, Key, Link, Trash2 } from "lucide-react";
 import { TableField } from "./TableField";
+import { Select } from "./Select";
 
 import type { Column } from "@/app/types";
 

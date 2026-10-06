@@ -17,23 +17,13 @@ import {
 	Waypoints,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Button } from "@/app/components/Button";
+import { Checkbox } from "@/app/components/Checkbox";
+import { ColorPicker } from "@/app/components/ColorPicker";
+import ExportDropdown from "@/app/components/ExportDropdown";
+import { FloatingWindow } from "@/app/components/FloatingWindow";
+import { Select } from "@/app/components/Select";
 import { useStore } from "@/app/store/useStore";
-import { Button } from "./Button";
-import { Checkbox } from "./Checkbox";
-import ExportDropdown from "./ExportDropdown";
-import { FloatingWindow } from "./FloatingWindow";
-import { Select } from "./Select";
-
-const COLOR_PALETTE = [
-	"#71717a",
-	"#3b82f6",
-	"#10b981",
-	"#f59e0b",
-	"#ef4444",
-	"#8b5cf6",
-	"#ec4899",
-	"#06b6d4",
-];
 
 interface SettingsModalProps {
 	isOpen: boolean;
@@ -87,7 +77,7 @@ export default function SettingsModal({
 				{/* Section 1: Canvas & Grid */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
 					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-						<Grid className="w-3.5 h-3.5" /> Canvas & Grid Layout
+						<Grid className="w-3.5 h-3.5 text-primary" /> Canvas & Grid Layout
 					</h3>
 
 					<div className="flex flex-col gap-2 pt-0.5">
@@ -179,7 +169,7 @@ export default function SettingsModal({
 				{/* Section 2: Edges & Links */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
 					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-						<Waypoints className="w-3.5 h-3.5" /> Relationship Links & Edges
+						<Waypoints className="w-3.5 h-3.5 text-primary" /> Relationship Links & Edges
 					</h3>
 
 					<div className="flex flex-col gap-2 pt-0.5">
@@ -206,33 +196,15 @@ export default function SettingsModal({
 						</div>
 
 						{/* Default Edge Color */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80">
+						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80">
 							<span className="text-xs font-medium text-foreground">
 								Default Edge Color
 							</span>
-							<div className="flex items-center gap-1.5">
-								{COLOR_PALETTE.slice(0, 5).map((color) => (
-									<button
-										key={color}
-										type="button"
-										onClick={() => updateEdgeSettings({ defaultColor: color })}
-										style={{ backgroundColor: color }}
-										className={`w-4 h-4 rounded-full transition-transform hover:scale-125 cursor-pointer ${
-											edgeSettings.defaultColor === color
-												? "ring-2 ring-primary ring-offset-1"
-												: "opacity-80"
-										}`}
-									/>
-								))}
-								<input
-									type="color"
-									value={edgeSettings.defaultColor || "#71717a"}
-									onChange={(e) =>
-										updateEdgeSettings({ defaultColor: e.target.value })
-									}
-									className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
-								/>
-							</div>
+							<ColorPicker
+								value={edgeSettings.defaultColor || "#71717a"}
+								onChange={(color) => updateEdgeSettings({ defaultColor: color })}
+								size="sm"
+							/>
 						</div>
 
 						{/* Relation Markers */}
@@ -241,7 +213,7 @@ export default function SettingsModal({
 							className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 cursor-pointer hover:border-primary/50 transition-colors"
 						>
 							<span className="text-xs font-medium text-foreground">
-								Show Crow's Foot Markers
+								Show Crow&apos;s Foot Markers
 							</span>
 							<Checkbox
 								id="relation-markers-checkbox"
@@ -276,70 +248,67 @@ export default function SettingsModal({
 				{/* Section 3: Field Styles & Colors */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
 					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-						<Palette className="w-3.5 h-3.5" /> Column Field Highlighting
+						<Palette className="w-3.5 h-3.5 text-primary" /> Column Field Highlighting
 					</h3>
 
-					<div className="flex flex-col gap-2 pt-0.5">
+					<div className="flex flex-col gap-2.5 pt-0.5">
 						{/* PK Color */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 text-xs">
+						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
 							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-amber-500" />{" "}
-								Primary Key (PK)
+								<span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />{" "}
+								Primary Key (PK) Highlight Color
 							</span>
-							<input
-								type="color"
+							<ColorPicker
 								value={columnStyleSettings?.pk?.textColor || "#f59e0b"}
-								onChange={(e) =>
+								onChange={(color) =>
 									updateColumnStyleSettings({
 										pk: {
 											...columnStyleSettings?.pk,
-											textColor: e.target.value,
+											textColor: color,
 										},
 									})
 								}
-								className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+								size="sm"
 							/>
 						</div>
 
 						{/* FK Color */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 text-xs">
+						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
 							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{" "}
-								Foreign Key (FK)
+								<span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />{" "}
+								Foreign Key (FK) Highlight Color
 							</span>
-							<input
-								type="color"
+							<ColorPicker
 								value={columnStyleSettings?.fk?.textColor || "#3b82f6"}
-								onChange={(e) =>
+								onChange={(color) =>
 									updateColumnStyleSettings({
 										fk: {
 											...columnStyleSettings?.fk,
-											textColor: e.target.value,
+											textColor: color,
 										},
 									})
 								}
-								className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+								size="sm"
 							/>
 						</div>
 
 						{/* Audit Fields Color */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 text-xs">
+						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
 							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-purple-500" />{" "}
-								Audit Fields
+								<span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />{" "}
+								Audit Fields Highlight Color
 							</span>
-							<input
-								type="color"
+							<ColorPicker
 								value={columnStyleSettings?.audit?.textColor || "#a855f7"}
-								onChange={(e) =>
+								onChange={(color) =>
 									updateColumnStyleSettings({
 										audit: {
 											...columnStyleSettings?.audit,
-											textColor: e.target.value,
+											textColor: color,
 										},
 									})
 								}
-								className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+								size="sm"
 							/>
 						</div>
 					</div>
@@ -348,7 +317,7 @@ export default function SettingsModal({
 				{/* Section 4: Export & System Preferences */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
 					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-						<Download className="w-3.5 h-3.5" /> Export & Preferences
+						<Download className="w-3.5 h-3.5 text-primary" /> Export & Preferences
 					</h3>
 
 					<div className="flex flex-col gap-2 pt-0.5">
@@ -403,7 +372,7 @@ export default function SettingsModal({
 								variant="ghost"
 								size="sm"
 								onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-								className="h-7 text-xs px-2 bg-muted/60 hover:bg-muted font-medium"
+								className="h-7 text-xs px-2 bg-muted/60 hover:bg-muted font-medium cursor-pointer"
 							>
 								{theme === "dark" ? (
 									<>

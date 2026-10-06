@@ -46,7 +46,6 @@ export function findMissingRelations(
 
 	for (const sourceNode of tableNodes) {
 		const sourceTableLabel = sourceNode.data.label || "Untitled Table";
-		const _normSourceLabel = normalizeTableName(sourceTableLabel);
 
 		for (const sourceCol of sourceNode.data.columns) {
 			const normColName = sourceCol.name.toLowerCase().trim();

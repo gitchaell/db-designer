@@ -29,12 +29,12 @@ const normalizeTableName = (name: string): string => {
 // e.g. "author_id" -> "author", "postId" -> "post", "creator_uuid" -> "creator", "User_Id" -> "user"
 const extractFkEntityBase = (colName: string): string | null => {
 	const trimmed = colName.trim();
-	// Check snake_case / kebab-case with _id, _uuid, _fk
-	const snakeMatch = trimmed.match(/^(.+?)[_-\s](id|uuid|fk|key)$/i);
+	// Check snake_case / kebab-case with _id, _uuid, _fk, _by, _to
+	const snakeMatch = trimmed.match(/^(.+?)[_-\s](id|uuid|fk|key|by|to)$/i);
 	if (snakeMatch) return normalizeTableName(snakeMatch[1]);
 
-	// Check camelCase / PascalCase with Id, Uuid, Fk
-	const camelMatch = trimmed.match(/^(.+?)(Id|Uuid|Fk|Key)$/);
+	// Check camelCase / PascalCase with Id, Uuid, Fk, By, To
+	const camelMatch = trimmed.match(/^(.+?)(Id|Uuid|Fk|Key|By|To)$/);
 	if (camelMatch) return normalizeTableName(camelMatch[1]);
 
 	return null;
@@ -55,6 +55,11 @@ const GENERIC_PK_NAMES = new Set([
 const ENTITY_ALIASES: Record<string, string[]> = {
 	author: ["user", "account", "profile", "admin", "member", "person"],
 	creator: ["user", "account", "profile", "admin", "member", "person"],
+	created: ["user", "account", "profile", "admin", "member", "person"],
+	updated: ["user", "account", "profile", "admin", "member", "person"],
+	deleted: ["user", "account", "profile", "admin", "member", "person"],
+	assigned: ["user", "account", "profile", "admin", "member", "person"],
+	managed: ["user", "account", "profile", "admin", "member", "person"],
 	owner: ["user", "account", "organization", "company", "team"],
 	sender: ["user", "account", "profile"],
 	recipient: ["user", "account", "profile"],

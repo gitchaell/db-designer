@@ -1,40 +1,48 @@
 import dagre from "dagre";
 import type { AppEdge, AppNode } from "../types";
 
-const DEFAULT_NODE_WIDTH = 300;
+const DEFAULT_NODE_WIDTH = 280;
 
 // Helper to safely extract numeric values
 const getNumeric = (val: unknown): number | undefined => {
-	if (typeof val === "number" && !Number.isNaN(val)) return val;
+	if (typeof val === "number" && !Number.isNaN(val) && val > 0) return val;
 	if (typeof val === "string") {
 		const parsed = Number.parseFloat(val);
-		if (!Number.isNaN(parsed)) return parsed;
+		if (!Number.isNaN(parsed) && parsed > 0) return parsed;
 	}
 	return undefined;
 };
 
-// Calculate node height based on column count if explicit height is missing
-const getNodeHeight = (node: AppNode): number => {
+// Calculate node height based on measured React Flow DOM bounds, collapsed state, or column count
+const getNodeHeight = (node: AppNode, isGlobalCompact = false): number => {
+	const isTableCollapsed =
+		node.type === "table" && (Boolean(node.data?.isCollapsed) || isGlobalCompact);
+
+	if (isTableCollapsed) {
+		return 48; // Fixed header height when simple/compact view is active
+	}
+
 	const explicitH =
+		getNumeric(node.measured?.height) ??
 		getNumeric(node.height) ??
-		getNumeric(node.style?.height) ??
-		getNumeric(node.measured?.height);
+		getNumeric(node.style?.height);
+
 	if (explicitH) return explicitH;
 
 	if (node.type === "table" && Array.isArray(node.data?.columns)) {
 		const cols = node.data.columns.length;
-		return Math.max(120, 50 + cols * 28 + 20); // Header + columns + padding
+		return Math.max(100, 48 + cols * 32 + 16); // Header + columns + padding
 	}
 
 	return 180;
 };
 
-// Calculate node width
+// Calculate node width based on measured React Flow DOM bounds or style
 const getNodeWidth = (node: AppNode): number => {
 	return (
+		getNumeric(node.measured?.width) ??
 		getNumeric(node.width) ??
 		getNumeric(node.style?.width) ??
-		getNumeric(node.measured?.width) ??
 		DEFAULT_NODE_WIDTH
 	);
 };
@@ -43,6 +51,7 @@ export const getLayoutedElements = (
 	nodes: AppNode[],
 	edges: AppEdge[],
 	direction = "TB",
+	isGlobalCompact = false,
 ) => {
 	if (nodes.length === 0) return { nodes, edges };
 
@@ -64,7 +73,7 @@ export const getLayoutedElements = (
 		for (const node of tableNodes) {
 			dagreGraph.setNode(node.id, {
 				width: getNodeWidth(node),
-				height: getNodeHeight(node),
+				height: getNodeHeight(node, isGlobalCompact),
 			});
 		}
 
@@ -82,7 +91,7 @@ export const getLayoutedElements = (
 		const layoutedTables = tableNodes.map((node) => {
 			const dagreNode = dagreGraph.node(node.id);
 			const width = getNodeWidth(node);
-			const height = getNodeHeight(node);
+			const height = getNodeHeight(node, isGlobalCompact);
 
 			return {
 				...node,
@@ -120,7 +129,7 @@ export const getLayoutedElements = (
 			const tX = table.position.x;
 			const tY = table.position.y;
 			const tW = getNodeWidth(table);
-			const tH = getNodeHeight(table);
+			const tH = getNodeHeight(table, isGlobalCompact);
 			const centerX = tX + tW / 2;
 			const centerY = tY + tH / 2;
 
@@ -174,7 +183,7 @@ export const getLayoutedElements = (
 		for (const t of tables) {
 			microGraph.setNode(t.id, {
 				width: getNodeWidth(t),
-				height: getNodeHeight(t),
+				height: getNodeHeight(t, isGlobalCompact),
 			});
 		}
 
@@ -198,7 +207,7 @@ export const getLayoutedElements = (
 		for (const t of tables) {
 			const dagreNode = microGraph.node(t.id);
 			const w = getNodeWidth(t);
-			const h = getNodeHeight(t);
+			const h = getNodeHeight(t, isGlobalCompact);
 			const x = dagreNode.x - w / 2;
 			const y = dagreNode.y - h / 2;
 
@@ -253,7 +262,7 @@ export const getLayoutedElements = (
 	for (const table of ungroupedTables) {
 		macroGraph.setNode(table.id, {
 			width: getNodeWidth(table),
-			height: getNodeHeight(table),
+			height: getNodeHeight(table, isGlobalCompact),
 		});
 	}
 
@@ -322,7 +331,7 @@ export const getLayoutedElements = (
 	for (const table of ungroupedTables) {
 		const macroNode = macroGraph.node(table.id);
 		const w = getNodeWidth(table);
-		const h = getNodeHeight(table);
+		const h = getNodeHeight(table, isGlobalCompact);
 
 		finalTableNodes.push({
 			...table,

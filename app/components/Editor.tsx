@@ -71,6 +71,7 @@ function Flow({ projectId }: { projectId: string }) {
 		toggleReadOnly,
 		undo,
 		redo,
+		isCompactView,
 	} = useStore();
 	const { fitView } = useReactFlow();
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -157,7 +158,7 @@ function Flow({ projectId }: { projectId: string }) {
 	}, [isReadOnly, undo, redo]);
 
 	const onLayout = useCallback(() => {
-		const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, "LR");
+		const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, "LR", isCompactView);
 
 		// Update store nodes so changes are persisted
 		setStoreNodes([...layoutedNodes]);
@@ -165,7 +166,7 @@ function Flow({ projectId }: { projectId: string }) {
 		window.requestAnimationFrame(() => {
 			fitView({ duration: 800, padding: 0.2 });
 		});
-	}, [nodes, edges, setStoreNodes, fitView]);
+	}, [nodes, edges, setStoreNodes, fitView, isCompactView]);
 
 	const downloadImage = useCallback(async () => {
 		setIsDownloading(true);

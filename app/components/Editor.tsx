@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 
 import {
 	Background,
@@ -11,31 +10,29 @@ import {
 	ReactFlowProvider,
 	useReactFlow,
 } from "@xyflow/react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
-import { useStore } from "@/app/store/useStore";
 import { toPng } from "html-to-image";
-import { ArrowLeft, Plus, Waypoints, Maximize2, Minimize2 } from "lucide-react";
-import { Download, Eye, LayoutGrid, Loader2, Printer } from "lucide-react";
-import { Folder } from "lucide-react";
-import { useTheme } from "next-themes";
+import { ArrowLeft, ChevronDown, Folder, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 import { v4 as uuidv4 } from "uuid";
+import { useStore } from "@/app/store/useStore";
 import { getLayoutedElements } from "../lib/autoLayout";
 import { Button } from "./Button";
-import { Checkbox } from "./Checkbox";
 import ContainerNode from "./ContainerNode";
 import CustomRelationEdge from "./CustomRelationEdge";
-import ExportDropdown from "./ExportDropdown";
-import { Select } from "./Select";
-import SettingsPopover from "./SettingsPopover";
+import SettingsModal from "./SettingsModal";
 import TableNode from "./TableNode";
-import { ThemeToggle } from "./ThemeToggle";
 
 const SqlPreviewModal = dynamic(() => import("./SqlPreviewModal"));
 const TsExportModal = dynamic(() => import("./TsExportModal"));
 const PrismaExportModal = dynamic(() => import("./PrismaExportModal"));
 const PrintExportModal = dynamic(() => import("./PrintExportModal"));
+const RelationSuggestionsModal = dynamic(
+	() => import("./RelationSuggestionsModal"),
+);
 
 const nodeTypes = {
 	table: TableNode,
@@ -67,16 +64,14 @@ function Flow({ projectId }: { projectId: string }) {
 		setProjectName,
 		isLoading,
 		edgeSettings,
-		updateEdgeSettings,
-		columnStyleSettings,
-		updateColumnStyleSettings,
+		snapToGrid,
+		snapGridSize,
 		setNodes: setStoreNodes,
 		isReadOnly,
 		toggleReadOnly,
-		isCompactView,
-		toggleCompactView,
 		undo,
 		redo,
+		isCompactView,
 	} = useStore();
 	const { fitView } = useReactFlow();
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -87,6 +82,9 @@ function Flow({ projectId }: { projectId: string }) {
 		null,
 	);
 	const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+	const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
 	const navigateTo = (url: string) => {
 		if (document.startViewTransition) {
 			document.startViewTransition(() => {
@@ -160,7 +158,7 @@ function Flow({ projectId }: { projectId: string }) {
 	}, [isReadOnly, undo, redo]);
 
 	const onLayout = useCallback(() => {
-		const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, "LR");
+		const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, "LR", isCompactView);
 
 		// Update store nodes so changes are persisted
 		setStoreNodes([...layoutedNodes]);
@@ -168,7 +166,7 @@ function Flow({ projectId }: { projectId: string }) {
 		window.requestAnimationFrame(() => {
 			fitView({ duration: 800, padding: 0.2 });
 		});
-	}, [nodes, edges, setStoreNodes, fitView]);
+	}, [nodes, edges, setStoreNodes, fitView, isCompactView]);
 
 	const downloadImage = useCallback(async () => {
 		setIsDownloading(true);
@@ -242,267 +240,60 @@ function Flow({ projectId }: { projectId: string }) {
 
 				<div className="h-6 w-px bg-border mx-2" />
 
-				{/* Group 2: Add Table, Add Container and Settings */}
-				<div className="flex items-center gap-2">
-					<Button size="sm" onClick={handleAddTable}>
-						<Plus className="w-3.5 h-3.5 mr-1.5" />
-						Add Table
-					</Button>
+				{/* Group 2: Add Dropdown & Settings Modal Trigger */}
+				<div className="flex items-center gap-2 relative">
+					{/* Add Dropdown */}
+					<div className="relative">
+						<Button
+							size="sm"
+							onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+							title="Add Node"
+						>
+							<Plus className="w-3.5 h-3.5 mr-1" />
+							Add
+							<ChevronDown className="w-3.5 h-3.5 ml-1 opacity-70" />
+						</Button>
 
-					<Button size="sm" variant="secondary" onClick={handleAddContainer}>
-						<Folder className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-						Add Container
-					</Button>
+						{isAddMenuOpen && (
+							<div
+								className="absolute left-0 top-full mt-1.5 w-40 bg-popover border border-border text-popover-foreground rounded-lg shadow-xl p-1 z-[9999] flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
+								onMouseLeave={() => setIsAddMenuOpen(false)}
+							>
+								<button
+									type="button"
+									onClick={() => {
+										handleAddTable();
+										setIsAddMenuOpen(false);
+									}}
+									className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-md hover:bg-muted transition-colors"
+								>
+									<Plus className="w-3.5 h-3.5 text-primary" />
+									Add Table
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										handleAddContainer();
+										setIsAddMenuOpen(false);
+									}}
+									className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-md hover:bg-muted transition-colors"
+								>
+									<Folder className="w-3.5 h-3.5 text-blue-500" />
+									Add Container
+								</button>
+							</div>
+						)}
+					</div>
 
+					{/* Settings Button */}
 					<Button
 						size="sm"
 						variant="secondary"
-						onClick={toggleCompactView}
-						title={
-							isCompactView
-								? "Switch to Full View"
-								: "Switch to Simple View (Headers Only)"
-						}
+						onClick={() => setIsSettingsOpen(true)}
+						title="Open Settings"
 					>
-						{isCompactView ? (
-							<Maximize2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-						) : (
-							<Minimize2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-						)}
-						{isCompactView ? "Full View" : "Simple View"}
+						Settings
 					</Button>
-
-					<SettingsPopover>
-						<div className="flex flex-col gap-3 w-full">
-							{/* Layout Group */}
-							<div className="flex flex-col gap-1 w-full">
-								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-									Layout & Canvas
-								</h4>
-								<Button
-									variant="ghost"
-									onClick={onLayout}
-									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title="Auto Layout"
-								>
-									<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
-									Auto Layout
-								</Button>
-								<Button
-									variant="ghost"
-									onClick={toggleCompactView}
-									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title={
-										isCompactView
-											? "Switch to Full Table View"
-											: "Switch to Simple View (Headers Only)"
-									}
-								>
-									{isCompactView ? (
-										<Maximize2 className="w-4 h-4 mr-2 text-muted-foreground" />
-									) : (
-										<Minimize2 className="w-4 h-4 mr-2 text-muted-foreground" />
-									)}
-									{isCompactView ? "Full View" : "Simple View"}
-								</Button>
-							</div>
-
-							<div className="h-px bg-border w-full" />
-
-							{/* Field Styles Group */}
-							<div className="flex flex-col gap-1 w-full">
-								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-									Field Highlighting
-								</h4>
-								<div className="flex flex-col gap-2 px-2 py-1">
-									{/* PK Color */}
-									<div className="flex items-center justify-between text-xs font-medium">
-										<span className="flex items-center gap-1.5 text-foreground">
-											<span className="w-2.5 h-2.5 rounded-full bg-amber-500" />{" "}
-											PK Color
-										</span>
-										<input
-											type="color"
-											value={columnStyleSettings?.pk?.textColor || "#f59e0b"}
-											onChange={(e) =>
-												updateColumnStyleSettings({
-													pk: {
-														...columnStyleSettings?.pk,
-														textColor: e.target.value,
-													},
-												})
-											}
-											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
-										/>
-									</div>
-									{/* FK Color */}
-									<div className="flex items-center justify-between text-xs font-medium">
-										<span className="flex items-center gap-1.5 text-foreground">
-											<span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{" "}
-											FK Color
-										</span>
-										<input
-											type="color"
-											value={columnStyleSettings?.fk?.textColor || "#3b82f6"}
-											onChange={(e) =>
-												updateColumnStyleSettings({
-													fk: {
-														...columnStyleSettings?.fk,
-														textColor: e.target.value,
-													},
-												})
-											}
-											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
-										/>
-									</div>
-									{/* Audit Color */}
-									<div className="flex items-center justify-between text-xs font-medium">
-										<span className="flex items-center gap-1.5 text-foreground">
-											<span className="w-2.5 h-2.5 rounded-full bg-purple-500" />{" "}
-											Audit Fields Color
-										</span>
-										<input
-											type="color"
-											value={columnStyleSettings?.audit?.textColor || "#a855f7"}
-											onChange={(e) =>
-												updateColumnStyleSettings({
-													audit: {
-														...columnStyleSettings?.audit,
-														textColor: e.target.value,
-													},
-												})
-											}
-											className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
-										/>
-									</div>
-								</div>
-							</div>
-
-							<div className="h-px bg-border w-full" />
-
-							{/* Edges Group */}
-							<div className="flex flex-col gap-1 w-full">
-								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-									Edges
-								</h4>
-								<div className="flex items-center gap-2 px-2 py-1.5">
-									<Waypoints className="w-4 h-4 text-muted-foreground" />
-									<Select
-										value={edgeSettings.type}
-										onChange={(val) =>
-											updateEdgeSettings({
-												type: val as
-													| "step"
-													| "smoothstep"
-													| "straight"
-													| "bezier",
-											})
-										}
-										className="w-full flex-1"
-										options={[
-											{ label: "Smooth Step", value: "smoothstep" },
-											{ label: "Step", value: "step" },
-											{ label: "Straight", value: "straight" },
-											{ label: "Bezier", value: "bezier" },
-										]}
-									/>
-								</div>
-
-								<label
-									htmlFor="show-relation-markers"
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
-								>
-									<span className="text-sm text-foreground font-medium select-none">
-										Show Relation Markers
-									</span>
-									<Checkbox
-										id="show-relation-markers"
-										checked={edgeSettings.showRelationMarkers || false}
-										onChange={(e) =>
-											updateEdgeSettings({
-												showRelationMarkers: e.target.checked,
-											})
-										}
-									/>
-								</label>
-
-								<label
-									htmlFor="animated-edges"
-									className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors group"
-								>
-									<span className="text-sm text-foreground font-medium select-none">
-										Animated Edges
-									</span>
-									<Checkbox
-										id="animated-edges"
-										checked={edgeSettings.animated}
-										onChange={(e) =>
-											updateEdgeSettings({ animated: e.target.checked })
-										}
-									/>
-								</label>
-							</div>
-
-							<div className="h-px bg-border w-full" />
-
-							{/* Actions Group */}
-							<div className="flex flex-col gap-1 w-full">
-								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-									Actions
-								</h4>
-								<ExportDropdown onExport={setExportType} />
-
-								<Button
-									variant="ghost"
-									onClick={() => setIsPrintModalOpen(true)}
-									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title="Advanced Print & HD Image Export"
-								>
-									<Printer className="w-4 h-4 mr-2 text-muted-foreground" />
-									Print & HD Export
-								</Button>
-
-								<Button
-									variant="ghost"
-									onClick={downloadImage}
-									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title="Download Diagram as Quick PNG"
-									disabled={isDownloading}
-								>
-									{isDownloading ? (
-										<Loader2 className="w-4 h-4 mr-2 text-muted-foreground animate-spin" />
-									) : (
-										<Download className="w-4 h-4 mr-2 text-muted-foreground" />
-									)}
-									Download PNG
-								</Button>
-							</div>
-
-							<div className="h-px bg-border w-full" />
-
-							{/* Preferences Group */}
-							<div className="flex flex-col gap-1 w-full">
-								<h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
-									Preferences
-								</h4>
-								<Button
-									variant="ghost"
-									onClick={toggleReadOnly}
-									className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground"
-									title={
-										isReadOnly
-											? "Switch to Edit Mode"
-											: "Switch to Read Only Mode"
-									}
-								>
-									<Eye className="w-4 h-4 mr-2 text-muted-foreground" />
-									{isReadOnly ? "Disable Read Only" : "Read Only"}
-								</Button>
-
-								<ThemeToggle className="w-full justify-start h-8 px-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground flex rounded-md [&>svg]:mr-2 [&>svg]:w-4 [&>svg]:h-4 !p-2 !h-8 bg-transparent border-none [&>span.sr-only]:not-sr-only [&>span.sr-only]:ml-0 [&>span]:ml-0" />
-							</div>
-						</div>
-					</SettingsPopover>
 				</div>
 			</Panel>
 
@@ -514,6 +305,8 @@ function Flow({ projectId }: { projectId: string }) {
 				onConnect={onConnect}
 				nodeTypes={nodeTypes}
 				edgeTypes={edgeTypes}
+				snapToGrid={snapToGrid}
+				snapGrid={[snapGridSize, snapGridSize]}
 				colorMode={resolvedTheme === "dark" ? "dark" : "light"}
 				connectionLineType={
 					edgeSettings.type === "step"
@@ -562,6 +355,20 @@ function Flow({ projectId }: { projectId: string }) {
 			<PrintExportModal
 				isOpen={isPrintModalOpen}
 				onClose={() => setIsPrintModalOpen(false)}
+			/>
+			<RelationSuggestionsModal
+				isOpen={isSuggestionsOpen}
+				onClose={() => setIsSuggestionsOpen(false)}
+			/>
+			<SettingsModal
+				isOpen={isSettingsOpen}
+				onClose={() => setIsSettingsOpen(false)}
+				onAutoLayout={onLayout}
+				onOpenPrintModal={() => setIsPrintModalOpen(true)}
+				onOpenSuggestionsModal={() => setIsSuggestionsOpen(true)}
+				onDownloadImage={downloadImage}
+				isDownloadingImage={isDownloading}
+				onExportType={setExportType}
 			/>
 		</div>
 	);

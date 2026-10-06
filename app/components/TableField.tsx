@@ -43,7 +43,6 @@ export function TableField({
 	if (!isEditing) {
 		return (
 			<span
-				tabIndex={0}
 				data-tablefield="true"
 				onClick={() => setIsEditing(true)}
 				onFocus={() => setIsEditing(true)}
@@ -61,24 +60,21 @@ export function TableField({
 
 	if (type === "select" && options) {
 		return (
-			<div onBlur={() => setIsEditing(false)} className="inline-block">
-				<Select
-					value={value}
-					onChange={(val) => {
-						onChange?.(val);
-						setIsEditing(false);
-					}}
-					className={className}
-					options={options}
-				/>
-			</div>
+			<Select
+				value={value}
+				onChange={(val) => {
+					onChange?.(val);
+					setIsEditing(false);
+				}}
+				className={className}
+				options={options}
+			/>
 		);
 	}
 
 	return (
 		<input
 			type="text"
-			autoFocus
 			value={value}
 			onChange={(e) => onChange?.(e.target.value)}
 			onBlur={() => setIsEditing(false)}

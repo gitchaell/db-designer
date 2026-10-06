@@ -1,11 +1,9 @@
-import { useStore } from "@/app/store/useStore";
-import type { AppNode } from "@/app/types";
 import {
+	closestCenter,
 	DndContext,
 	type DragEndEvent,
 	KeyboardSensor,
 	PointerSensor,
-	closestCenter,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
@@ -27,6 +25,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { useStore } from "@/app/store/useStore";
+import type { AppNode } from "@/app/types";
 import { TableField } from "./TableField";
 import { TableRow } from "./TableRow";
 

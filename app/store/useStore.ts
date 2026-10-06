@@ -1,13 +1,13 @@
 import {
-	type Edge,
-	type OnConnect,
-	type OnEdgesChange,
-	type OnNodesChange,
 	addEdge,
 	applyEdgeChanges,
 	applyNodeChanges,
+	type Edge,
+	MarkerType,
+	type OnConnect,
+	type OnEdgesChange,
+	type OnNodesChange,
 } from "@xyflow/react";
-import { MarkerType } from "@xyflow/react";
 import { create } from "zustand";
 import { getProject, saveProject } from "../lib/db";
 import { extractColumnId, getSmartHandleIds } from "../lib/smart-edges";
@@ -41,6 +41,8 @@ type AppState = {
 	isLoading: boolean;
 	isReadOnly: boolean;
 	isCompactView: boolean;
+	snapToGrid: boolean;
+	snapGridSize: number;
 	edgeSettings: EdgeSettings;
 	columnStyleSettings: ColumnStyleSettings;
 
@@ -48,6 +50,8 @@ type AppState = {
 	toggleReadOnly: () => void;
 	toggleCompactView: () => void;
 	setCompactView: (compact: boolean) => void;
+	toggleSnapToGrid: () => void;
+	setSnapGridSize: (size: number) => void;
 	loadProject: (id: string) => Promise<void>;
 	setProjectName: (name: string) => void;
 	// History
@@ -197,10 +201,13 @@ export const useStore = create<AppState>((set, get) => ({
 	isLoading: false,
 	isReadOnly: false,
 	isCompactView: false,
+	snapToGrid: true,
+	snapGridSize: 15,
 	edgeSettings: {
 		type: "bezier",
 		animated: true,
 		showRelationMarkers: false,
+		defaultColor: "#71717a",
 	},
 	columnStyleSettings: defaultColumnStyleSettings,
 	history: [],
@@ -274,6 +281,21 @@ export const useStore = create<AppState>((set, get) => ({
 			debouncedSave({ ...project, isCompactView: compact });
 		}
 	},
+	toggleSnapToGrid: () => {
+		const newSnap = !get().snapToGrid;
+		set({ snapToGrid: newSnap });
+		const { project } = get();
+		if (project) {
+			debouncedSave({ ...project, snapToGrid: newSnap });
+		}
+	},
+	setSnapGridSize: (size: number) => {
+		set({ snapGridSize: size });
+		const { project } = get();
+		if (project) {
+			debouncedSave({ ...project, snapGridSize: size });
+		}
+	},
 	loadProject: async (id: string) => {
 		set({ isLoading: true });
 		try {
@@ -287,12 +309,15 @@ export const useStore = create<AppState>((set, get) => ({
 					edges: smartEdges,
 					isLoading: false,
 					isCompactView: project.isCompactView ?? false,
+					snapToGrid: project.snapToGrid ?? true,
+					snapGridSize: project.snapGridSize ?? 15,
 					history: [{ nodes: project.nodes, edges: smartEdges }],
 					historyIndex: 0,
 					edgeSettings: project.edgeSettings || {
 						type: "bezier",
 						animated: true,
 						showRelationMarkers: false,
+						defaultColor: "#71717a",
 					},
 				});
 			} else {

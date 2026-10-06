@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SchemaMarkup } from "./components/SchemaMarkup";
-import { ThemeProvider } from "./components/ThemeProvider";
 
 import type { Viewport } from "next";
+import { SchemaMarkup } from "./components/SchemaMarkup";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 export const viewport: Viewport = {
 	themeColor: "#000000",

@@ -1,14 +1,13 @@
-import { isAuditField } from "@/app/lib/column-utils";
-import { useStore } from "@/app/store/useStore";
-import type { ColumnType } from "@/app/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Handle, Position } from "@xyflow/react";
 import { clsx } from "clsx";
 import { Clock, GripVertical, Key, Link, Trash2 } from "lucide-react";
+import { isAuditField } from "@/app/lib/column-utils";
+import { useStore } from "@/app/store/useStore";
+import type { Column, ColumnType } from "@/app/types";
+import { Select } from "./Select";
 import { TableField } from "./TableField";
-
-import type { Column } from "@/app/types";
 
 interface TableRowProps {
 	nodeId: string;
@@ -181,17 +180,20 @@ export function TableRow({
 			/>
 
 			{/* Column Type */}
-			<TableField
-				type="select"
-				value={col.type}
-				isReadOnly={isReadOnly}
-				onChange={(val) =>
-					updateColumn(nodeId, col.id, { type: val as ColumnType })
-				}
-				options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
-				className="w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0 !bg-transparent !p-0 h-6"
-				readOnlyClassName="w-28 flex-none text-right font-mono text-muted-foreground px-0 h-6 flex items-center justify-end"
-			/>
+			{isReadOnly ? (
+				<span className="w-28 flex-none text-right font-mono text-muted-foreground px-0 h-6 flex items-center justify-end">
+					{col.type}
+				</span>
+			) : (
+				<Select
+					value={col.type}
+					onChange={(val) =>
+						updateColumn(nodeId, col.id, { type: val as ColumnType })
+					}
+					options={COLUMN_TYPES.map((t) => ({ label: t, value: t }))}
+					className="w-28 flex-none text-right font-mono text-muted-foreground hover:text-foreground !border-none !shadow-none !ring-0 !bg-transparent !p-0 h-6"
+				/>
+			)}
 
 			{/* Delete Column */}
 			{!isReadOnly && (

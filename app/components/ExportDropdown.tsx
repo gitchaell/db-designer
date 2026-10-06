@@ -18,13 +18,11 @@ export default function ExportDropdown({ onExport }: ExportDropdownProps) {
 			const rect = buttonRef.current.getBoundingClientRect();
 			setPosition({
 				top: rect.top,
-				left: rect.left - 180, // Position to the left of the SettingsPopover
+				left: rect.left - 180, // Position to the left of the Settings window
 			});
 		}
 	}, [isOpen]);
 
-	// In the parent `SettingsPopover`, we are already tracking pointer down.
-	// To prevent immediate closing from parent pointer down, we need to stop propagation on the dropdown.
 	useEffect(() => {
 		const handleClickOutside = (event: Event) => {
 			if (
@@ -52,13 +50,13 @@ export default function ExportDropdown({ onExport }: ExportDropdownProps) {
 				ref={buttonRef}
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
-				className="w-full flex items-center justify-between h-8 px-2 text-sm font-medium text-foreground hover:bg-muted transition-colors rounded-sm cursor-pointer"
+				className="w-full text-left min-h-11 px-3 py-2 rounded-lg bg-background hover:bg-muted/50 border border-border/70 hover:border-border transition-all flex items-center justify-between gap-3 cursor-pointer group shadow-xs"
 			>
-				<div className="flex items-center">
-					<FileCode2 className="w-4 h-4 mr-2 text-muted-foreground" />
-					Export Code
+				<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+					<FileCode2 className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+					<span>Export Code</span>
 				</div>
-				<ChevronRight className="w-4 h-4 opacity-50" />
+				<ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-foreground transition-colors" />
 			</button>
 
 			{isOpen &&
@@ -66,42 +64,42 @@ export default function ExportDropdown({ onExport }: ExportDropdownProps) {
 				createPortal(
 					<div
 						ref={dropdownRef}
-						className="export-portal-dropdown fixed z-[10000] w-44 bg-popover text-popover-foreground rounded-md border border-border shadow-md p-1 flex flex-col gap-0.5 animate-in fade-in zoom-in duration-200"
+						className="export-portal-dropdown fixed z-[10000] w-48 bg-popover text-popover-foreground rounded-lg border border-border shadow-lg p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in duration-150"
 						style={{ top: position.top, left: position.left }}
-						onPointerDown={(e) => e.stopPropagation()} // Keep popover open
+						onPointerDown={(e) => e.stopPropagation()}
 					>
 						<button
 							type="button"
-							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
+							className="flex items-center w-full text-left px-2.5 py-2 text-xs font-medium rounded-md hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
 								onExport("sql");
 								setIsOpen(false);
 							}}
 						>
 							<Database className="w-4 h-4 mr-2 flex-none" />
-							SQL Preview
+							SQL Schema
 						</button>
 						<button
 							type="button"
-							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
+							className="flex items-center w-full text-left px-2.5 py-2 text-xs font-medium rounded-md hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
 								onExport("ts");
 								setIsOpen(false);
 							}}
 						>
 							<TypeScript className="w-4 h-4 mr-2 flex-none" />
-							TypeScript
+							TypeScript Types
 						</button>
 						<button
 							type="button"
-							className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors cursor-pointer"
+							className="flex items-center w-full text-left px-2.5 py-2 text-xs font-medium rounded-md hover:bg-muted transition-colors cursor-pointer"
 							onClick={() => {
 								onExport("prisma");
 								setIsOpen(false);
 							}}
 						>
 							<Prisma className="w-4 h-4 mr-2 flex-none text-foreground" />
-							Prisma
+							Prisma Schema
 						</button>
 					</div>,
 					document.body,

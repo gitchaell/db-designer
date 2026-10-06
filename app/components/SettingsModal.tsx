@@ -17,7 +17,6 @@ import {
 	Waypoints,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/app/components/Button";
 import { Checkbox } from "@/app/components/Checkbox";
 import { ColorPicker } from "@/app/components/ColorPicker";
 import ExportDropdown from "@/app/components/ExportDropdown";
@@ -63,6 +62,11 @@ export default function SettingsModal({
 
 	const { theme, setTheme } = useTheme();
 
+	// Standard option row card styling for uniform layout and padding
+	const rowCardStyle =
+		"min-h-11 px-3 py-2 rounded-lg bg-background border border-border/70 hover:border-border transition-all flex items-center justify-between gap-3 shadow-xs";
+	const clickableRowCardStyle = `${rowCardStyle} cursor-pointer hover:bg-muted/50 group`;
+
 	return (
 		<FloatingWindow
 			isOpen={isOpen}
@@ -71,26 +75,24 @@ export default function SettingsModal({
 			subtitle="Configure grid snapping, layout, styles, edges, and export options"
 			icon={<Settings className="w-5 h-5 text-primary" />}
 			defaultPosition={{ x: 120, y: 70 }}
-			className="w-[680px]"
+			className="w-[720px]"
 		>
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				{/* Section 1: Canvas & Grid */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
-					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5 px-0.5">
 						<Grid className="w-3.5 h-3.5 text-primary" /> Canvas & Grid Layout
 					</h3>
 
-					<div className="flex flex-col gap-2 pt-0.5">
-						{/* Snap to Grid */}
+					<div className="flex flex-col gap-2">
+						{/* Snap to Grid Toggle */}
 						<label
 							htmlFor="snap-to-grid-checkbox"
-							className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 cursor-pointer hover:border-primary/50 transition-colors"
+							className={clickableRowCardStyle}
 						>
-							<div className="flex items-center gap-2">
-								<Grid3x3 className="w-4 h-4 text-muted-foreground" />
-								<span className="text-xs font-medium text-foreground">
-									Snap to Grid
-								</span>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Grid3x3 className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								<span>Snap to Grid</span>
 							</div>
 							<Checkbox
 								id="snap-to-grid-checkbox"
@@ -99,16 +101,17 @@ export default function SettingsModal({
 							/>
 						</label>
 
-						{/* Grid Size Selector */}
+						{/* Grid Cell Size */}
 						{snapToGrid && (
-							<div className="flex items-center justify-between p-2 rounded-lg bg-background border border-border/80 text-xs">
-								<span className="text-muted-foreground font-medium">
-									Grid Cell Size
-								</span>
+							<div className={rowCardStyle}>
+								<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+									<Grid className="w-4 h-4 text-muted-foreground" />
+									<span>Grid Cell Size</span>
+								</div>
 								<Select
 									value={String(snapGridSize)}
 									onChange={(val) => setSnapGridSize(Number(val))}
-									className="w-28 h-7 text-xs"
+									className="w-32 h-7 text-xs"
 									options={[
 										{ label: "10 px (Fine)", value: "10" },
 										{ label: "15 px (Default)", value: "15" },
@@ -119,65 +122,71 @@ export default function SettingsModal({
 							</div>
 						)}
 
-						{/* Auto Layout Action */}
-						<Button
-							variant="secondary"
-							size="sm"
+						{/* Re-arrange Diagram (Auto Layout) */}
+						<button
+							type="button"
 							onClick={() => {
 								onAutoLayout();
 								onClose();
 							}}
-							className="w-full justify-start text-xs font-medium h-9"
+							className={clickableRowCardStyle}
 						>
-							<LayoutGrid className="w-4 h-4 mr-2 text-muted-foreground" />
-							Re-arrange Diagram (Auto Layout)
-						</Button>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								<span>Re-arrange Diagram (Auto Layout)</span>
+							</div>
+						</button>
 
-						{/* Simple View Toggle */}
-						<Button
-							variant="secondary"
-							size="sm"
+						{/* Compact/Full View Toggle */}
+						<button
+							type="button"
 							onClick={toggleCompactView}
-							className="w-full justify-start text-xs font-medium h-9"
+							className={clickableRowCardStyle}
 						>
-							{isCompactView ? (
-								<Maximize2 className="w-4 h-4 mr-2 text-muted-foreground" />
-							) : (
-								<Minimize2 className="w-4 h-4 mr-2 text-muted-foreground" />
-							)}
-							{isCompactView
-								? "Full Table View (All Columns)"
-								: "Simple Table View (Headers Only)"}
-						</Button>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								{isCompactView ? (
+									<Maximize2 className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								) : (
+									<Minimize2 className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								)}
+								<span>
+									{isCompactView
+										? "Full Table View (All Columns)"
+										: "Simple Table View (Headers Only)"}
+								</span>
+							</div>
+						</button>
 
-						{/* Smart Relation Suggestions Modal */}
-						<Button
-							variant="secondary"
-							size="sm"
+						{/* Smart Relation Suggestions */}
+						<button
+							type="button"
 							onClick={() => {
 								onOpenSuggestionsModal();
 								onClose();
 							}}
-							className="w-full justify-start text-xs font-medium h-9 text-amber-500 hover:text-amber-600 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30"
+							className="min-h-11 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 transition-all flex items-center justify-between gap-3 cursor-pointer group shadow-xs text-amber-600 dark:text-amber-400 font-medium text-xs"
 						>
-							<Sparkles className="w-4 h-4 mr-2" />
-							Smart Relation Suggestions
-						</Button>
+							<div className="flex items-center gap-2">
+								<Sparkles className="w-4 h-4 text-amber-500" />
+								<span>Smart Relation Suggestions</span>
+							</div>
+						</button>
 					</div>
 				</div>
 
-				{/* Section 2: Edges & Links */}
+				{/* Section 2: Relationship Links & Edges */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
-					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5 px-0.5">
 						<Waypoints className="w-3.5 h-3.5 text-primary" /> Relationship Links & Edges
 					</h3>
 
-					<div className="flex flex-col gap-2 pt-0.5">
-						{/* Edge Type */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80">
-							<span className="text-xs font-medium text-foreground">
-								Routing Style
-							</span>
+					<div className="flex flex-col gap-2">
+						{/* Routing Style */}
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Waypoints className="w-4 h-4 text-muted-foreground" />
+								<span>Routing Style</span>
+							</div>
 							<Select
 								value={edgeSettings.type}
 								onChange={(val) =>
@@ -196,10 +205,11 @@ export default function SettingsModal({
 						</div>
 
 						{/* Default Edge Color */}
-						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80">
-							<span className="text-xs font-medium text-foreground">
-								Default Edge Color
-							</span>
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Palette className="w-4 h-4 text-muted-foreground" />
+								<span>Default Edge Color</span>
+							</div>
 							<ColorPicker
 								value={edgeSettings.defaultColor || "#71717a"}
 								onChange={(color) => updateEdgeSettings({ defaultColor: color })}
@@ -207,14 +217,14 @@ export default function SettingsModal({
 							/>
 						</div>
 
-						{/* Relation Markers */}
+						{/* Crow's Foot Markers Toggle */}
 						<label
 							htmlFor="relation-markers-checkbox"
-							className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 cursor-pointer hover:border-primary/50 transition-colors"
+							className={clickableRowCardStyle}
 						>
-							<span className="text-xs font-medium text-foreground">
-								Show Crow&apos;s Foot Markers
-							</span>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<span>Show Crow&apos;s Foot Markers</span>
+							</div>
 							<Checkbox
 								id="relation-markers-checkbox"
 								checked={edgeSettings.showRelationMarkers || false}
@@ -226,14 +236,14 @@ export default function SettingsModal({
 							/>
 						</label>
 
-						{/* Animated Edges */}
+						{/* Animated Edges Toggle */}
 						<label
 							htmlFor="animated-edges-checkbox"
-							className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80 cursor-pointer hover:border-primary/50 transition-colors"
+							className={clickableRowCardStyle}
 						>
-							<span className="text-xs font-medium text-foreground">
-								Animated Edges
-							</span>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<span>Animated Edges</span>
+							</div>
 							<Checkbox
 								id="animated-edges-checkbox"
 								checked={edgeSettings.animated}
@@ -245,19 +255,19 @@ export default function SettingsModal({
 					</div>
 				</div>
 
-				{/* Section 3: Field Styles & Colors */}
+				{/* Section 3: Column Field Highlighting */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
-					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5 px-0.5">
 						<Palette className="w-3.5 h-3.5 text-primary" /> Column Field Highlighting
 					</h3>
 
-					<div className="flex flex-col gap-2.5 pt-0.5">
-						{/* PK Color */}
-						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
-							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />{" "}
-								Primary Key (PK) Highlight Color
-							</span>
+					<div className="flex flex-col gap-2">
+						{/* PK Highlight Color */}
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+								<span>Primary Key (PK)</span>
+							</div>
 							<ColorPicker
 								value={columnStyleSettings?.pk?.textColor || "#f59e0b"}
 								onChange={(color) =>
@@ -272,12 +282,12 @@ export default function SettingsModal({
 							/>
 						</div>
 
-						{/* FK Color */}
-						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
-							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />{" "}
-								Foreign Key (FK) Highlight Color
-							</span>
+						{/* FK Highlight Color */}
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+								<span>Foreign Key (FK)</span>
+							</div>
 							<ColorPicker
 								value={columnStyleSettings?.fk?.textColor || "#3b82f6"}
 								onChange={(color) =>
@@ -292,12 +302,12 @@ export default function SettingsModal({
 							/>
 						</div>
 
-						{/* Audit Fields Color */}
-						<div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-background border border-border/80 text-xs">
-							<span className="flex items-center gap-2 font-medium text-foreground">
-								<span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />{" "}
-								Audit Fields Highlight Color
-							</span>
+						{/* Audit Fields Highlight Color */}
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />
+								<span>Audit Fields</span>
+							</div>
 							<ColorPicker
 								value={columnStyleSettings?.audit?.textColor || "#a855f7"}
 								onChange={(color) =>
@@ -316,74 +326,71 @@ export default function SettingsModal({
 
 				{/* Section 4: Export & System Preferences */}
 				<div className="flex flex-col gap-3 p-3.5 bg-muted/30 rounded-xl border border-border/60">
-					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+					<h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5 px-0.5">
 						<Download className="w-3.5 h-3.5 text-primary" /> Export & Preferences
 					</h3>
 
-					<div className="flex flex-col gap-2 pt-0.5">
-						{/* Export Dropdown */}
-						<div className="w-full">
-							<ExportDropdown onExport={onExportType} />
-						</div>
+					<div className="flex flex-col gap-2">
+						{/* Export Code Dropdown */}
+						<ExportDropdown onExport={onExportType} />
 
-						{/* Advanced Print Modal Trigger */}
-						<Button
-							variant="secondary"
-							size="sm"
+						{/* Print & HD Export */}
+						<button
+							type="button"
 							onClick={() => {
 								onOpenPrintModal();
 								onClose();
 							}}
-							className="w-full justify-start text-xs font-medium h-9"
+							className={clickableRowCardStyle}
 						>
-							<Printer className="w-4 h-4 mr-2 text-muted-foreground" />
-							Print & HD Export (Poster / Multi-scale)
-						</Button>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Printer className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								<span>Print & HD Export (Poster / Scaled)</span>
+							</div>
+						</button>
 
-						{/* Quick Download Image */}
-						<Button
-							variant="secondary"
-							size="sm"
+						{/* Download Quick Diagram PNG */}
+						<button
+							type="button"
 							onClick={onDownloadImage}
 							disabled={isDownloadingImage}
-							className="w-full justify-start text-xs font-medium h-9"
+							className={clickableRowCardStyle}
 						>
-							<Download className="w-4 h-4 mr-2 text-muted-foreground" />
-							Download Quick Diagram PNG
-						</Button>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Download className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								<span>Download Quick Diagram PNG</span>
+							</div>
+						</button>
 
 						{/* Read Only Toggle */}
-						<Button
-							variant="secondary"
-							size="sm"
+						<button
+							type="button"
 							onClick={toggleReadOnly}
-							className="w-full justify-start text-xs font-medium h-9"
+							className={clickableRowCardStyle}
 						>
-							<Eye className="w-4 h-4 mr-2 text-muted-foreground" />
-							{isReadOnly ? "Disable Read Only Mode" : "Enable Read Only Mode"}
-						</Button>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
+								<Eye className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+								<span>{isReadOnly ? "Disable Read Only Mode" : "Enable Read Only Mode"}</span>
+							</div>
+						</button>
 
-						{/* Theme Switcher Button */}
-						<div className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/80">
-							<span className="text-xs font-medium text-foreground">
-								App Color Theme
-							</span>
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-								className="h-7 text-xs px-2 bg-muted/60 hover:bg-muted font-medium cursor-pointer"
-							>
+						{/* App Color Theme Switcher */}
+						<div className={rowCardStyle}>
+							<div className="flex items-center gap-2 text-xs font-medium text-foreground">
 								{theme === "dark" ? (
-									<>
-										<Moon className="w-3.5 h-3.5 mr-1.5 text-amber-400" /> Dark
-									</>
+									<Moon className="w-4 h-4 text-amber-400" />
 								) : (
-									<>
-										<Sun className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> Light
-									</>
+									<Sun className="w-4 h-4 text-amber-500" />
 								)}
-							</Button>
+								<span>App Theme</span>
+							</div>
+							<button
+								type="button"
+								onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+								className="h-7 px-3 text-xs font-medium rounded-md bg-muted/60 hover:bg-muted border border-border/60 transition-colors cursor-pointer text-foreground capitalize"
+							>
+								{theme || "system"}
+							</button>
 						</div>
 					</div>
 				</div>
